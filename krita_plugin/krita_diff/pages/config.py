@@ -2,7 +2,7 @@ from functools import partial
 
 from krita import QCheckBox, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
-from ..defaults import DEFAULTS
+from ..defaults import DEFAULTS, STATE_READY
 from ..script import script
 from ..widgets import QLabel
 
@@ -25,20 +25,24 @@ class ConfigTabWidget(QWidget):
             "Override with krita_config.yaml (unrecommended)"
         )
         self.create_mask_layer = QCheckBox("Create transparency mask from selection")
-        self.del_temp_files = QCheckBox("Auto delete temporary image files")
+        self.del_temp_files = QCheckBox("Auto delete debug image files")
         self.fix_aspect_ratio = QCheckBox("Fix aspect ratio for selections")
         self.only_full_img_tiling = QCheckBox("Only allow tiling with no selection")
         self.include_grid = QCheckBox("Include grid for txt2img and img2img")
 
         # webUI/backend settings
         self.filter_nsfw = QCheckBox("Filter NSFW content")
-        self.color_correct = QCheckBox(
-            "Color correct img2img/inpaint for better blending"
+        self.img2img_color_correct = QCheckBox(
+            "Color correct img2img for better blending"
+        )
+        self.inpaint_color_correct = QCheckBox(
+            "Color correct inpaint for better blending"
         )
         self.do_exact_steps = QCheckBox(
             "Don't decrease steps based on denoising strength"
         )
 
+        self.refresh_btn = QPushButton("Auto-Refresh Options Now")
         self.restore_defaults = QPushButton("Restore Defaults")
 
         info_label = QLabel(
@@ -56,7 +60,7 @@ class ConfigTabWidget(QWidget):
 
         layout = QVBoxLayout()
 
-        layout.addWidget(QLabel("<em>Backend url (Remote URL still broken :p):</em>"))
+        layout.addWidget(QLabel("<em>Backend url:</em>"))
         layout.addLayout(inline1)
 
         layout.addWidget(QLabel("<em>Plugin settings:</em>"))
@@ -69,9 +73,11 @@ class ConfigTabWidget(QWidget):
 
         layout.addWidget(QLabel("<em>Backend/webUI settings:</em>"))
         layout.addWidget(self.filter_nsfw)
-        layout.addWidget(self.color_correct)
+        layout.addWidget(self.img2img_color_correct)
+        layout.addWidget(self.inpaint_color_correct)
         layout.addWidget(self.do_exact_steps)
         layout.addStretch()
+        layout.addWidget(self.refresh_btn)
         layout.addWidget(self.restore_defaults)
         layout.addWidget(info_label)
 
@@ -90,31 +96,43 @@ class ConfigTabWidget(QWidget):
         self.only_full_img_tiling.setChecked(script.cfg("only_full_img_tiling", bool))
         self.include_grid.setChecked(script.cfg("include_grid", bool))
         self.filter_nsfw.setChecked(script.cfg("filter_nsfw", bool))
-        self.color_correct.setChecked(script.cfg("color_correct", bool))
+        self.img2img_color_correct.setChecked(script.cfg("img2img_color_correct", bool))
+        self.inpaint_color_correct.setChecked(script.cfg("inpaint_color_correct", bool))
         self.do_exact_steps.setChecked(script.cfg("do_exact_steps", bool))
 
     def cfg_connect(self):
-        self.base_url.textChanged.connect(partial(script.set_cfg, "base_url"))
+        self.base_url.textChanged.connect(partial(script.cfg.set, "base_url"))
         self.base_url_reset.released.connect(
             lambda: self.base_url.setText(DEFAULTS.base_url)
         )
-        self.just_use_yaml.toggled.connect(partial(script.set_cfg, "just_use_yaml"))
+        self.just_use_yaml.toggled.connect(partial(script.cfg.set, "just_use_yaml"))
         self.create_mask_layer.toggled.connect(
-            partial(script.set_cfg, "create_mask_layer")
+            partial(script.cfg.set, "create_mask_layer")
         )
         self.del_temp_files.toggled.connect(
-            partial(script.set_cfg, "delete_temp_files")
+            partial(script.cfg.set, "delete_temp_files")
         )
         self.fix_aspect_ratio.toggled.connect(
-            partial(script.set_cfg, "fix_aspect_ratio")
+            partial(script.cfg.set, "fix_aspect_ratio")
         )
         self.only_full_img_tiling.toggled.connect(
-            partial(script.set_cfg, "only_full_img_tiling")
+            partial(script.cfg.set, "only_full_img_tiling")
         )
-        self.include_grid.toggled.connect(partial(script.set_cfg, "include_grid"))
-        self.filter_nsfw.toggled.connect(partial(script.set_cfg, "filter_nsfw"))
-        self.color_correct.toggled.connect(partial(script.set_cfg, "color_correct"))
-        self.do_exact_steps.toggled.connect(partial(script.set_cfg, "do_exact_steps"))
+        self.include_grid.toggled.connect(partial(script.cfg.set, "include_grid"))
+        self.filter_nsfw.toggled.connect(partial(script.cfg.set, "filter_nsfw"))
+        self.img2img_color_correct.toggled.connect(
+            partial(script.cfg.set, "img2img_color_correct")
+        )
+        self.inpaint_color_correct.toggled.connect(
+            partial(script.cfg.set, "inpaint_color_correct")
+        )
+        self.do_exact_steps.toggled.connect(partial(script.cfg.set, "do_exact_steps"))
+
+        def update_remote_config():
+            if script.update_config():
+                script.set_status(STATE_READY)
+
+            self.update_func()
 
         def restore_defaults():
             script.restore_defaults()
@@ -122,4 +140,5 @@ class ConfigTabWidget(QWidget):
             script.update_config()
             self.update_func()
 
+        self.refresh_btn.released.connect(update_remote_config)
         self.restore_defaults.released.connect(restore_defaults)

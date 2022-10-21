@@ -45,11 +45,11 @@ class InpaintTabWidget(ImgTabBaseWidget):
         self.layout.addLayout(self.fill_layout)
         self.layout.addLayout(inline2)
         self.layout.addWidget(
-            QLabel("<em>Tip:</em> Make sure inpaint layer is selected but hidden!")
+            QLabel("<em>Tip:</em> Ensure the inpaint layer is selected.")
         )
         self.layout.addWidget(
             QLabel(
-                "<em>Tip:</em> Rectangle select what you want the model to see when inpainting. In which case, <em>Inpaint full res</em> is unnecessary."
+                "<em>Tip:</em> Select what the model will see when inpainting. <em>Inpaint full res</em> is unnecessary."
             )
         )
         self.layout.addStretch()
@@ -69,10 +69,10 @@ class InpaintTabWidget(ImgTabBaseWidget):
         self.fill_layout.cfg_connect()
         self.full_res_padding_layout.cfg_connect()
 
-        self.invert_mask.toggled.connect(partial(script.set_cfg, "inpaint_invert_mask"))
+        self.invert_mask.toggled.connect(partial(script.cfg.set, "inpaint_invert_mask"))
 
         def toggle_fullres(enabled):
-            script.set_cfg("inpaint_full_res", enabled)
+            script.cfg.set("inpaint_full_res", enabled)
 
             # hide/show fullres padding
             self.full_res_padding_layout.qlabel.setVisible(enabled)

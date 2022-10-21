@@ -27,41 +27,62 @@ Usage & Workflow Demo:
 
 [![Youtube Video](http://img.youtube.com/vi/nP8MuRwcDN8/0.jpg)](https://youtu.be/nP8MuRwcDN8 "Inpaint like a pro with Stable Diffusion! auto-sd-krita workflow guide")
 
+## UI Changelog
+
+- No need to manually hide inpainting layer anymore; It will be auto-hidden.
+- Color correction can be toggled separately for img2img/inpainting.
+- Status bar:
+  - In middle of page to be more visible even when scrolling.
+  - Warning when using features with no document open.
+- Inpaint is now the default tab.
+
 ## FAQ
 
-Q. How hard is it to install?
+Q: How hard is it to install?
 
-A. It is basically AUTOMATIC1111 + a few extra steps. aka almost one-click install.
-
-<hr/>
-
-Q. How hard is it to run?
-
-A. The launch process is exactly the same as AUTOMATIC1111, to the point the Gradio webUI functions normally.
+A: It is basically AUTOMATIC1111 + a few extra steps. aka almost one-click install.
 
 <hr/>
 
-Q. Outpainting?
+Q: How hard is it to run?
 
-A. No outpainting MK2 yet, but nothing stopping you from doing basic outpainting. 1) expand canvas 2) scribble in blank area 3) img2img on blank area + some of image.
-
-<hr/>
-
-Q. Is the model loaded into memory twice?
-
-A. No, it shares the same backend. Both the Krita plugin and webUI can be used concurrently.
+A: The launch process is exactly the same as AUTOMATIC1111, to the point the Gradio webUI functions normally.
 
 <hr/>
 
-Q. How can you commit to updating regularly?
+Q: How does the base_size, max_size system work?
 
-A. The plugin builds on top the internal API without modifying it, and good documentation practices facilitate adapting to upstream changes and bugfixing.
+A:
+
+It is an alternative to AUTO's highres fix that works for all modes, not just txt2img.
+
+The selection will be resized such that the shorter dimension is base_size. However, if the aforementioned resize causes the longer dimension to exceed max_size, the shorter dimension will be resized to less than base_size. Setting base_size and max_size higher can be used to generate higher resolution images (along with their issues), essentially **disabling the system**, _though it might make sense for img2img mode_.
+
+This is actually smarter than the builtin highres fix + firstphase width/height system. Thank the original plugin writer, @sddebz, for writing this.
 
 <hr/>
 
-Q. Will it work with other Krita plugins?
+Q: Outpainting?
 
-A. Unfortunately no, all plugins so far have different APIs.
+A: No outpainting MK2 yet, but nothing stopping you from doing basic outpainting. 1) expand canvas 2) scribble in blank area 3) img2img on blank area + some of image.
+
+<hr/>
+
+Q: Is the model loaded into memory twice?
+
+A: No, it shares the same backend. Both the Krita plugin and webUI can be used concurrently.
+
+<hr/>
+
+Q: How can you commit to updating regularly?
+
+A: The plugin builds on top the internal API without modifying it, and good documentation practices facilitate adapting to upstream changes and bugfixing.
+
+<hr/>
+
+Q: Will it work with other Krita plugin backends?
+
+A: Unfortunately no, all plugins so far have different APIs. The official API is coming soon though...
 
 ## Credits
 
