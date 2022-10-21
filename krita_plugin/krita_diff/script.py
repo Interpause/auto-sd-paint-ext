@@ -236,7 +236,7 @@ class Script(QObject):
             )
 
     def clear_temp_images(self, files):
-        if self.cfg("delete_temp_files", bool):
+        if False and self.cfg("delete_temp_files", bool):
             for file in files:
                 os.remove(file)
 
