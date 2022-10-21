@@ -206,6 +206,7 @@ class Script(QObject):
             self.clear_temp_images([path, mask_path, *outputs])
         else:
             self.clear_temp_images([path, *outputs])
+        self.doc.refreshProjection()
 
     def apply_simple_upscale(self):
         path = self.cfg("new_img_path", str)
