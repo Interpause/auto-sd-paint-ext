@@ -22,6 +22,7 @@ This repository was originally a fork of [sddebz/stable-diffusion-krita-plugin](
 - [Features](https://github.com/Interpause/auto-sd-krita/wiki/Features)
 - [TODO](https://github.com/Interpause/auto-sd-krita/wiki/TODO)
 - [Contribution Guide](https://github.com/Interpause/auto-sd-krita/wiki/Contribution-Guide)
+- Use Google Colab as the plugin backend: https://github.com/danilw/Krita-StableDiffusion-WebUI-Colab
 
 Usage & Workflow Demo:
 
