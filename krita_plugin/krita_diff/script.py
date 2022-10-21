@@ -170,6 +170,7 @@ class Script(QObject):
         for i, output in enumerate(outputs):
             self.insert_img(f"txt2img {i + 1}", output, i + 1 == len(outputs))
         self.clear_temp_images(outputs)
+        self.doc.refreshProjection()
 
     def apply_img2img(self, mode):
         path = self.cfg("new_img_path", str)
@@ -219,6 +220,7 @@ class Script(QObject):
 
         self.insert_img(f"upscale", output)
         self.clear_temp_images([path, output])
+        self.doc.refreshProjection()
 
     def create_mask_layer_internal(self):
         if self.selection is not None:
