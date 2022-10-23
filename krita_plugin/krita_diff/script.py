@@ -169,18 +169,20 @@ class Script(QObject):
         print(f"Getting images: {outputs}")
         for i, output in enumerate(outputs):
             self.insert_img(f"txt2img {i + 1}", output, i + 1 == len(outputs))
-        self.clear_temp_images(outputs)
         self.doc.refreshProjection()
 
     def apply_img2img(self, mode):
         path = self.cfg("new_img_path", str)
         mask_path = self.cfg("new_img_mask_path", str)
         if mode == 1:
-            save_img(self.mask_image, mask_path)
+            if self.cfg("save_temp_images", bool):
+                save_img(self.mask_image, mask_path)
             # auto-hide mask layer before getting selection image
             self.node.setVisible(False)
             self.doc.refreshProjection()
-        save_img(self.selection_image, path)
+
+        if self.cfg("save_temp_images", bool):
+            save_img(self.selection_image, path)
 
         response = (
             self.client.post_inpaint(
@@ -203,15 +205,12 @@ class Script(QObject):
                 f"{layer_name_prefix} {i + 1}", output, i + 1 == len(outputs)
             )
 
-        if mode == 1:
-            self.clear_temp_images([path, mask_path, *outputs])
-        else:
-            self.clear_temp_images([path, *outputs])
         self.doc.refreshProjection()
 
     def apply_simple_upscale(self):
         path = self.cfg("new_img_path", str)
-        save_img(self.selection_image, path)
+        if self.cfg("save_temp_images", bool):
+            save_img(self.selection_image, path)
 
         response = self.client.post_upscale(self.selection_image)
         assert response is not None, "Backend Error, check terminal"
@@ -219,7 +218,6 @@ class Script(QObject):
         print(f"Getting image: {output}")
 
         self.insert_img(f"upscale", output)
-        self.clear_temp_images([path, output])
         self.doc.refreshProjection()
 
     def create_mask_layer_internal(self):
@@ -234,11 +232,6 @@ class Script(QObject):
                 ADD_MASK_TIMEOUT,
                 lambda: self.create_mask_layer_internal(),
             )
-
-    def clear_temp_images(self, files):
-        if False and self.cfg("delete_temp_files", bool):
-            for file in files:
-                os.remove(file)
 
     # Actions
     def action_txt2img(self):
