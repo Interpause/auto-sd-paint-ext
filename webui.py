@@ -120,7 +120,7 @@ def api_only():
 
 
 def webui():
-    launch_api = cmd_opts.api
+    # launch_api = cmd_opts.api
     initialize()
 
     while 1:
@@ -138,8 +138,8 @@ def webui():
 
         app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-        if (launch_api):
-            create_api(app)
+        # if (launch_api):
+        #     create_api(app)
 
         wait_on_server(demo)
 
@@ -157,7 +157,7 @@ def webui():
 
 task = []
 if __name__ == "__main__":
-    webui(launch_api=False)
+    webui()
     # if cmd_opts.nowebui:
     #     api_only()
     # else:
