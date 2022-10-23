@@ -52,4 +52,4 @@ def start():
     root_logger.setLevel(logging.INFO)
 
     with server.run_in_thread():
-        webui(launch_api=False)
+        webui()
