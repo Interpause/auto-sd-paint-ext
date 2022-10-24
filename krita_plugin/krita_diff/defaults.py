@@ -6,7 +6,7 @@ ERROR_MSG = "Retrieval Failed"
 
 # Used for status bar
 STATE_READY = "Ready"
-STATE_INIT = "Initializing..."
+STATE_INIT = "Errors will be shown here"
 STATE_URLERROR = "Network error"
 STATE_RESET_DEFAULT = "All settings reset"
 STATE_WAIT = "Please wait..."
@@ -18,7 +18,7 @@ STATE_UPSCALE = "upscale done!"
 # Other currently hardcoded stuff
 GET_CONFIG_TIMEOUT = 2  # 2 second timeout as getting config should be near instant
 POST_TIMEOUT = None  # post might take forever depending on batch size/count
-REFRESH_INTERVAL = 4000  # 4 seconds between auto-config refresh
+REFRESH_INTERVAL = 1000  # 4 seconds between auto-config refresh
 CFG_FOLDER = "krita"  # which folder in ~/.config to store config
 CFG_NAME = "krita_diff_plugin"  # name of config file
 # selection mask can only be added after image is added, so timeout is needed

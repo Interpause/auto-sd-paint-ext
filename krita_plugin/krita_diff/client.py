@@ -11,6 +11,9 @@ from .config import Config
 from .defaults import GET_CONFIG_TIMEOUT, POST_TIMEOUT, STATE_READY, STATE_URLERROR
 from .utils import fix_prompt, img_to_b64
 
+# NOTE: backend queues up responses, so no explicit need to block multiple requests
+# except to prevent user from spamming themselves
+
 
 # krita doesn't reexport QtNetwork
 class AsyncRequest(QObject):
@@ -166,7 +169,11 @@ class Client(QObject):
             self.cfg.set("inpaint_sampler_list", obj["samplers_img2img"])
             self.cfg.set("face_restorer_model_list", obj["face_restorers"])
             self.cfg.set("sd_model_list", obj["sd_models"])
-            self.status.emit(f"{STATE_READY}")
+
+        # only get config if there are no pending post requests jamming the backend
+        # NOTE: this might prevent get_config() from ever working if zombie requests can happen
+        if len(self.reqs) > 0:
+            return
 
         req, start = AsyncRequest.request(
             urljoin(self.cfg("base_url", str), "config"), None, GET_CONFIG_TIMEOUT

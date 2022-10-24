@@ -39,7 +39,8 @@ class SDPluginDocker(DockWidget):
         tabs.addTab(self.config_widget, "Config")
         tabs.setCurrentIndex(2)
 
-        self.status_bar = QLabel(STATE_INIT)
+        self.status_bar = QLabel()
+        self.update_status_bar(STATE_INIT)
 
         layout = QVBoxLayout()
         layout.addWidget(self.quick_widget)
@@ -73,9 +74,10 @@ class SDPluginDocker(DockWidget):
 
         self.update_timer.timeout.connect(self.update_remote_config)
         self.update_timer.start(REFRESH_INTERVAL)
-        script.status_changed.connect(
-            lambda s: self.status_bar.setText(f"<b>Status:</b> {s}")
-        )
+        script.status_changed.connect(self.update_status_bar)
+
+    def update_status_bar(self, s):
+        self.status_bar.setText(f"<b>Status:</b> {s}")
 
     def update_remote_config(self):
         script.update_config()
