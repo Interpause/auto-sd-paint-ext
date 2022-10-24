@@ -155,6 +155,7 @@ class Script(QObject):
     def apply_txt2img(self):
         # freeze selection region
         insert = self.img_inserter(self.x, self.y, self.width, self.height)
+        mask_trigger = self.transparency_mask_inserter()
 
         def cb(response):
             assert response is not None, "Backend Error, check terminal"
@@ -164,6 +165,7 @@ class Script(QObject):
                 insert(f"txt2img {i + 1}", output)
             self.doc.refreshProjection()
             self.status_changed.emit(STATE_TXT2IMG)
+            mask_trigger()
 
         self.client.post_txt2img(
             cb, self.width, self.height, self.selection is not None
@@ -171,11 +173,12 @@ class Script(QObject):
 
     def apply_img2img(self, mode):
         insert = self.img_inserter(self.x, self.y, self.width, self.height)
+        mask_trigger = self.transparency_mask_inserter()
+
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
         mask_path = os.path.join(
             self.cfg("sample_path", str), f"{int(time.time())}_mask.png"
         )
-        mask_path = self.cfg("new_img_mask_path", str)
         if mode == 1:
             if self.cfg("save_temp_images", bool):
                 save_img(self.mask_image, mask_path)
@@ -202,6 +205,7 @@ class Script(QObject):
                 self.status_changed.emit(STATE_IMG2IMG)
             else:
                 self.status_changed.emit(STATE_INPAINT)
+            mask_trigger()
 
         method = self.client.post_inpaint if mode == 1 else self.client.post_img2img
         method(cb, self.selection_image, self.mask_image, self.selection is not None)
@@ -223,18 +227,26 @@ class Script(QObject):
 
         self.client.post_upscale(cb, self.selection_image)
 
-    def create_mask_layer_internal(self):
-        if self.selection is not None:
-            self.app.action("add_new_transparency_mask").trigger()
-            print(f"created mask layer")
-            self.doc.setSelection(self.selection)
+    def transparency_mask_inserter(self):
+        """Mask out extra regions due to adjust_selection()."""
+        orig_selection = self.selection.duplicate()
 
-    def create_mask_layer_workaround(self):
-        if self.cfg("create_mask_layer", bool):
-            QTimer.singleShot(
-                ADD_MASK_TIMEOUT,
-                lambda: self.create_mask_layer_internal(),
-            )
+        def add_mask():
+            # add_new_transparency_mask implicitly uses document's current selection
+            # quickly set to the selection area used for generation, then back to
+            # the current selection area
+            cur_selection = self.selection
+            self.doc.setSelection(orig_selection)
+            self.app.action("add_new_transparency_mask").trigger()
+            self.doc.setSelection(cur_selection)
+
+        def trigger_mask_adding():
+            if self.cfg("create_mask_layer", bool):
+                # need timeout to ensure layer exists first
+                # but has to be short before user changes the selected layer
+                QTimer.singleShot(ADD_MASK_TIMEOUT, add_mask)
+
+        return trigger_mask_adding
 
     # Actions
     def action_txt2img(self):
@@ -244,7 +256,6 @@ class Script(QObject):
             return
         self.adjust_selection()
         self.apply_txt2img()
-        self.create_mask_layer_workaround()
 
     def action_img2img(self):
         self.status_changed.emit(STATE_WAIT)
@@ -253,14 +264,12 @@ class Script(QObject):
             return
         self.adjust_selection()
         self.apply_img2img(mode=0)
-        self.create_mask_layer_workaround()
 
     def action_sd_upscale(self):
         assert False, "disabled"
         self.status_changed.emit(STATE_WAIT)
         self.update_selection()
         self.apply_img2img(mode=2)
-        self.create_mask_layer_workaround()
 
     def action_inpaint(self):
         self.status_changed.emit(STATE_WAIT)

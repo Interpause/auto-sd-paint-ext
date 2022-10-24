@@ -1,4 +1,5 @@
 import json
+import socket
 from typing import Any
 from urllib.error import URLError
 from urllib.parse import urljoin
@@ -89,16 +90,23 @@ class Client(QObject):
     def handle_api_error(self, exc: Exception):
         """Handle exceptions that can occur while interacting with the backend."""
         try:
-            raise exc
+            # wtf python? socket raises an error that isnt an Exception??
+            if isinstance(exc, socket.timeout):
+                raise TimeoutError
+            else:
+                raise exc
         except URLError as e:
             self.status.emit(f"{STATE_URLERROR}: {e.reason}")
+        except TimeoutError as e:
+            self.status.emit(f"{STATE_URLERROR}: response timed out")
         except json.JSONDecodeError as e:
             self.status.emit(f"{STATE_URLERROR}: invalid JSON response")
         except ValueError as e:
             self.status.emit(f"{STATE_URLERROR}: Invalid backend URL")
         except Exception as e:
             # self.status.emit(f"{STATE_URLERROR}: Unexpected Error")
-            self.status.emit(str(e))
+            # self.status.emit(str(e))
+            assert False, e
 
     def post(self, route, body, cb, base_url=...):
         base_url = self.cfg("base_url", str) if base_url is ... else base_url
