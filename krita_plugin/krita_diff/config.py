@@ -3,7 +3,7 @@ from typing import Any
 
 from krita import QObject, QReadWriteLock, QSettings
 
-from .defaults import CFG_FOLDER, CFG_NAME, DEFAULTS
+from .defaults import CFG_FOLDER, CFG_NAME, DEFAULTS, ERR_MISSING_CONFIG
 
 
 class Config(QObject):
@@ -21,7 +21,8 @@ class Config(QObject):
         """
         # See: https://doc.qt.io/qt-6/qsettings.html#accessing-settings-from-multiple-threads-or-processes-simultaneously
         # but im too lazy to figure out creating separate QSettings per worker, so we will just lock
-        self.model = model
+        super(Config, self).__init__()
+        self.model = model  # is immutable
         self.lock = QReadWriteLock()
         self.config = QSettings(QSettings.IniFormat, QSettings.UserScope, folder, name)
 
@@ -43,13 +44,15 @@ class Config(QObject):
             Any: Config value.
         """
         self.lock.lockForRead()
-        # notably QSettings assume strings too unless specified
-        assert self.config.contains(key) and hasattr(
-            self.model, key
-        ), "Report this bug, developer missed out a config key somewhere."
-        val = self.config.value(key, type=type)
-        self.lock.unlock()
-        return val
+        try:
+            # notably QSettings assume strings too unless specified
+            assert self.config.contains(key) and hasattr(
+                self.model, key
+            ), ERR_MISSING_CONFIG
+            val = self.config.value(key, type=type)
+            return val
+        finally:
+            self.lock.unlock()
 
     def set(self, key: str, val: Any, overwrite: bool = True):
         """Set config value by key.
@@ -60,9 +63,12 @@ class Config(QObject):
             overwrite (bool, optional): Whether to overwrite an existing value. Defaults to False.
         """
         self.lock.lockForWrite()
-        if overwrite or not self.config.contains(key):
-            self.config.setValue(key, val)
-        self.lock.unlock()
+        try:
+            assert hasattr(self.model, key), ERR_MISSING_CONFIG
+            if overwrite or not self.config.contains(key):
+                self.config.setValue(key, val)
+        finally:
+            self.lock.unlock()
 
     def restore_defaults(self, overwrite: bool = True):
         """Reset settings to default.

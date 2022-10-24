@@ -102,6 +102,8 @@ class ConfigTabWidget(QWidget):
 
     def cfg_connect(self):
         self.base_url.textChanged.connect(partial(script.cfg.set, "base_url"))
+        # NOTE: this triggers on every keystroke; theres no focus lost signal...
+        self.base_url.textChanged.connect(script.update_config)
         self.base_url_reset.released.connect(
             lambda: self.base_url.setText(DEFAULTS.base_url)
         )
@@ -109,7 +111,9 @@ class ConfigTabWidget(QWidget):
         self.create_mask_layer.toggled.connect(
             partial(script.cfg.set, "create_mask_layer")
         )
-        self.save_temp_images.toggled.connect(partial(script.cfg.set, "save_temp_images"))
+        self.save_temp_images.toggled.connect(
+            partial(script.cfg.set, "save_temp_images")
+        )
         self.fix_aspect_ratio.toggled.connect(
             partial(script.cfg.set, "fix_aspect_ratio")
         )
@@ -127,9 +131,7 @@ class ConfigTabWidget(QWidget):
         self.do_exact_steps.toggled.connect(partial(script.cfg.set, "do_exact_steps"))
 
         def update_remote_config():
-            if script.update_config():
-                script.set_status(STATE_READY)
-
+            script.update_config()
             self.update_func()
 
         def restore_defaults():

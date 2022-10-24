@@ -1,31 +1,103 @@
 import json
-from typing import Callable
+from typing import Any
 from urllib.error import URLError
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
 
+from krita import QObject, QThread, pyqtSignal
+
 from .config import Config
-from .defaults import GET_CONFIG_TIMEOUT, POST_TIMEOUT, STATE_URLERROR
+from .defaults import GET_CONFIG_TIMEOUT, POST_TIMEOUT, STATE_READY, STATE_URLERROR
 from .utils import fix_prompt, img_to_b64
 
 
-class Client:
-    def __init__(self, cfg: Config, error_callback: Callable):
+# krita doesn't reexport QtNetwork
+class AsyncRequest(QObject):
+    timeout = None
+    finished = pyqtSignal()
+    result = pyqtSignal(object)
+    error = pyqtSignal(Exception)
+
+    def __init__(
+        self,
+        url: str,
+        data: Any = None,
+        timeout: int = ...,
+        method: str = ...,
+        headers: dict = {},
+    ):
+        """Create an AsyncRequest object.
+
+        By default, AsyncRequest has no timeout, will infer whether it is "POST"
+        or "GET" based on the presence of `data` and uses JSON to transmit. It
+        also assumes the response is JSON.
+
+        Args:
+            url (str): URL to request from.
+            data (Any, optional): Payload to send. Defaults to None.
+            timeout (int, optional): Timeout for request. Defaults to `...`.
+            method (str, optional): Which HTTP method to use. Defaults to `...`.
+        """
+        super(AsyncRequest, self).__init__()
+        self.url = url
+        self.data = None if data is None else json.dumps(data).encode("utf-8")
+        if timeout is not ...:
+            self.timeout = timeout
+        if method is ...:
+            self.method = "GET" if data is None else "POST"
+        else:
+            self.method = method
+        self.headers = headers
+        if self.data is not None:
+            self.headers["Content-Type"] = "application/json"
+            self.headers["Content-Length"] = str(len(self.data))
+
+    def run(self):
+        req = Request(self.url, headers=self.headers, method=self.method)
+        try:
+            with urlopen(req, self.data, self.timeout) as res:
+                self.result.emit(json.loads(res.read()))
+        except Exception as e:
+            self.error.emit(e)
+        finally:
+            self.finished.emit()
+
+    @classmethod
+    def request(cls, *args, **kwargs):
+        thread = QThread()
+        req = cls(*args, **kwargs)
+        # NOTE: need to keep reference to thread or it gets destroyed
+        req.thread = thread
+        req.moveToThread(thread)
+        thread.started.connect(req.run)
+        req.finished.connect(thread.quit)
+        req.finished.connect(req.deleteLater)
+        thread.finished.connect(thread.deleteLater)
+        return req, lambda: thread.start()
+
+
+class Client(QObject):
+    status = pyqtSignal(str)
+    """error message, Exception object"""
+
+    def __init__(self, cfg: Config):
         """It is highly dependent on config's structure to the point it writes directly to it. :/"""
+        super(Client, self).__init__()
         self.cfg = cfg
-        self.cb = error_callback
+        self.reqs = []
 
     def handle_api_error(self, exc: Exception):
         """Handle exceptions that can occur while interacting with the backend."""
         try:
-            # conveniently allows error to bubble back up if not handled by here
             raise exc
         except URLError as e:
-            self.cb(f"{STATE_URLERROR}: {e.reason}")
-        except json.JSONDecodeError:
-            self.cb(f"{STATE_URLERROR}: invalid JSON response")
-        except ValueError:
-            self.cb(f"{STATE_URLERROR}: Invalid backend URL")
+            self.status.emit(f"{STATE_URLERROR}: {e.reason}")
+        except json.JSONDecodeError as e:
+            self.status.emit(f"{STATE_URLERROR}: invalid JSON response")
+        except ValueError as e:
+            self.status.emit(f"{STATE_URLERROR}: Invalid backend URL")
+        except Exception as e:
+            self.status.emit(f"{STATE_URLERROR}: Unexpected Error")
 
     def post(self, route, body, base_url=...):
         base_url = self.cfg("base_url", str) if base_url is ... else base_url
@@ -67,42 +139,40 @@ class Client:
         return params
 
     def get_config(self) -> bool:
-        obj = None
-        try:
-            with urlopen(
-                urljoin(self.cfg("base_url", str), "config"),
-                None,
-                GET_CONFIG_TIMEOUT,
-            ) as res:
-                obj = json.loads(res.read())
-        except Exception as e:
-            self.handle_api_error(e)
-            return False
+        def cb(obj):
+            try:
+                assert "new_img" in obj
+                assert "new_img_mask" in obj
+                assert len(obj["upscalers"]) > 0
+                assert len(obj["samplers"]) > 0
+                assert len(obj["samplers_img2img"]) > 0
+                assert len(obj["face_restorers"]) > 0
+                assert len(obj["sd_models"]) > 0
+            except:
+                self.status.emit(
+                    f"{STATE_URLERROR}: incompatible response, are you running the right API?"
+                )
+                return
 
-        try:
-            assert "new_img" in obj
-            assert "new_img_mask" in obj
-            assert len(obj["upscalers"]) > 0
-            assert len(obj["samplers"]) > 0
-            assert len(obj["samplers_img2img"]) > 0
-            assert len(obj["face_restorers"]) > 0
-            assert len(obj["sd_models"]) > 0
-        except:
-            self.cb(
-                f"{STATE_URLERROR}: incompatible response, are you running the right API?"
-            )
-            return False
+            # replace only after verifying
+            self.cfg.set("new_img_path", obj["new_img"])
+            self.cfg.set("new_img_mask_path", obj["new_img_mask"])
+            self.cfg.set("upscaler_list", obj["upscalers"])
+            self.cfg.set("txt2img_sampler_list", obj["samplers"])
+            self.cfg.set("img2img_sampler_list", obj["samplers_img2img"])
+            self.cfg.set("inpaint_sampler_list", obj["samplers_img2img"])
+            self.cfg.set("face_restorer_model_list", obj["face_restorers"])
+            self.cfg.set("sd_model_list", obj["sd_models"])
+            self.status.emit(f"{STATE_READY}")
 
-        # replace only after verifying
-        self.cfg.set("new_img_path", obj["new_img"])
-        self.cfg.set("new_img_mask_path", obj["new_img_mask"])
-        self.cfg.set("upscaler_list", obj["upscalers"])
-        self.cfg.set("txt2img_sampler_list", obj["samplers"])
-        self.cfg.set("img2img_sampler_list", obj["samplers_img2img"])
-        self.cfg.set("inpaint_sampler_list", obj["samplers_img2img"])
-        self.cfg.set("face_restorer_model_list", obj["face_restorers"])
-        self.cfg.set("sd_model_list", obj["sd_models"])
-        return True
+        req, start = AsyncRequest.request(
+            urljoin(self.cfg("base_url", str), "config"), None, GET_CONFIG_TIMEOUT
+        )
+        req.result.connect(cb)
+        req.error.connect(self.handle_api_error)
+        # NOTE: memory leak? need to keep reference to req or it gets destroyed
+        self.reqs.append(req)
+        start()
 
     def post_txt2img(self, width, height, has_selection):
         params = dict(orig_width=width, orig_height=height)

@@ -1,11 +1,10 @@
-import os
-
-from krita import Document, Krita, Node, QImage, QObject, QTimer, Selection
+from krita import Document, Krita, Node, QImage, QObject, QTimer, Selection, pyqtSignal
 
 from .client import Client
 from .config import Config
 from .defaults import (
     ADD_MASK_TIMEOUT,
+    ERR_NO_DOCUMENT,
     STATE_IMG2IMG,
     STATE_INIT,
     STATE_INPAINT,
@@ -50,6 +49,7 @@ class Script(QObject):
     """Width of selection"""
     height: int
     """Height of selection"""
+    status_changed = pyqtSignal(str)
 
     # NOTE: using property getters should be the exception, not the norm
     @property
@@ -73,29 +73,18 @@ class Script(QObject):
         ).rgbSwapped()
 
     def __init__(self):
+        super(Script, self).__init__()
         # Persistent settings (should reload between Krita sessions)
         self.cfg = Config()
-        self.client = Client(self.cfg, lambda s: self.set_status(s))
-
-        # Status bar
-        self._status_cb = lambda s: None
-        self.status = STATE_INIT
+        self.client = Client(self.cfg)
+        self.client.status.connect(self.status_changed.emit)
 
     def restore_defaults(self, if_empty=False):
         """Restore to default config."""
         self.cfg.restore_defaults(not if_empty)
 
         if not if_empty:
-            self.set_status(STATE_RESET_DEFAULT)
-
-    def set_status_callback(self, cb):
-        """Used by GUI to provide callback for setting the status bar message."""
-        self._status_cb = cb
-
-    def set_status(self, state):
-        """Change the satus, setting the status bar message in the process."""
-        self.status = state
-        self._status_cb(state)
+            self.status_changed.emit(STATE_RESET_DEFAULT)
 
     def update_selection(self):
         """Update references to key Krita objects as well as selection information."""
@@ -104,7 +93,7 @@ class Script(QObject):
 
         # self.doc doesnt exist at app startup
         if not self.doc:
-            self.set_status("No document open yet!")
+            self.status_changed.emit(ERR_NO_DOCUMENT)
             return
 
         self.node = self.doc.activeNode()
@@ -235,7 +224,7 @@ class Script(QObject):
 
     # Actions
     def action_txt2img(self):
-        self.set_status(STATE_WAIT)
+        self.status_changed.emit(STATE_WAIT)
 
         def cb():
             self.update_config()
@@ -243,12 +232,12 @@ class Script(QObject):
             self.adjust_selection()
             self.apply_txt2img()
             self.create_mask_layer_workaround()
-            self.set_status(STATE_TXT2IMG)
+            self.status_changed.emit(STATE_TXT2IMG)
 
         QTimer.singleShot(1, cb)
 
     def action_img2img(self):
-        self.set_status(STATE_WAIT)
+        self.status_changed.emit(STATE_WAIT)
 
         def cb():
             self.update_config()
@@ -256,38 +245,38 @@ class Script(QObject):
             self.adjust_selection()
             self.apply_img2img(mode=0)
             self.create_mask_layer_workaround()
-            self.set_status(STATE_IMG2IMG)
+            self.status_changed.emit(STATE_IMG2IMG)
 
         QTimer.singleShot(1, cb)
 
     def action_sd_upscale(self):
         assert False, "disabled"
-        self.set_status(STATE_WAIT)
+        self.status_changed.emit(STATE_WAIT)
         self.update_config()
         self.update_selection()
         self.apply_img2img(mode=2)
         self.create_mask_layer_workaround()
 
     def action_inpaint(self):
-        self.set_status(STATE_WAIT)
+        self.status_changed.emit(STATE_WAIT)
 
         def cb():
             self.update_config()
             self.update_selection()
             self.adjust_selection()
             self.apply_img2img(mode=1)
-            self.set_status(STATE_INPAINT)
+            self.status_changed.emit(STATE_INPAINT)
 
         QTimer.singleShot(1, cb)
 
     def action_simple_upscale(self):
-        self.set_status(STATE_WAIT)
+        self.status_changed.emit(STATE_WAIT)
 
         def cb():
             self.update_config()
             self.update_selection()
             self.apply_simple_upscale()
-            self.set_status(STATE_UPSCALE)
+            self.status_changed.emit(STATE_UPSCALE)
 
         QTimer.singleShot(1, cb)
 

@@ -47,7 +47,6 @@ async def read_item():
     """
     # TODO:
     # - function and route name isn't descriptive, feels more like get_state()
-    # - response isn't well typed but is deeply tied into the krita_plugin side..
     opt = load_config().plugin
     prepare_backend(opt)
 
