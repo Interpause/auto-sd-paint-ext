@@ -160,7 +160,7 @@ class Script(QObject):
         outputs = response["outputs"]
         print(f"Getting images: {outputs}")
         for i, output in enumerate(outputs):
-            self.insert_img(f"txt2img {i + 1}", output, i + 1 == len(outputs))
+            self.insert_img(f"txt2img {i + 1}", output)
         self.doc.refreshProjection()
 
     def apply_img2img(self, mode):
@@ -196,9 +196,7 @@ class Script(QObject):
             "inpaint" if mode == 1 else "sd upscale" if mode == 2 else "img2img"
         )
         for i, output in enumerate(outputs):
-            self.insert_img(
-                f"{layer_name_prefix} {i + 1}", output, i + 1 == len(outputs)
-            )
+            self.insert_img(f"{layer_name_prefix} {i + 1}", output)
 
         self.doc.refreshProjection()
 
