@@ -30,7 +30,9 @@ Usage & Workflow Demo:
 
 ## UI Changelog
 
-- UI no longer hangs on network activity
+- UI no longer freezes when generating images or network activity like getting backend config
+  - Pressing "start xxx" multiple times will queue generation requests on the backend
+  - Will not mess with the current selection region or layer when inserting images once done
 - No need to manually hide inpainting layer anymore; It will be auto-hidden.
 - Color correction can be toggled separately for img2img/inpainting.
 - Status bar:
