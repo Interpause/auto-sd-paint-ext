@@ -97,21 +97,18 @@ class Client(QObject):
         except ValueError as e:
             self.status.emit(f"{STATE_URLERROR}: Invalid backend URL")
         except Exception as e:
-            self.status.emit(f"{STATE_URLERROR}: Unexpected Error")
+            # self.status.emit(f"{STATE_URLERROR}: Unexpected Error")
+            self.status.emit(str(e))
 
-    def post(self, route, body, base_url=...):
+    def post(self, route, body, cb, base_url=...):
         base_url = self.cfg("base_url", str) if base_url is ... else base_url
-        # FastAPI doesn't support urlencoded data transparently
-        body = json.dumps(body).encode("utf-8")
-        req = Request(urljoin(base_url, route))
-        req.add_header("Content-Type", "application/json")
-        req.add_header("Content-Length", str(len(body)))
-        try:
-            # TODO: how to cancel this? might as well refactor the API to be async...
-            with urlopen(req, body, POST_TIMEOUT) as res:
-                return json.loads(res.read())
-        except Exception as e:
-            self.handle_api_error(e)
+        # TODO: how to cancel this? destroy the thread?
+        req, start = AsyncRequest.request(urljoin(base_url, route), body, POST_TIMEOUT)
+        self.reqs.append(req)
+        req.finished.connect(lambda: self.reqs.remove(req))
+        req.result.connect(cb)
+        req.error.connect(self.handle_api_error)
+        start()
 
     def get_common_params(self, has_selection):
         """Parameters nearly all the post routes share."""
@@ -166,13 +163,13 @@ class Client(QObject):
         req, start = AsyncRequest.request(
             urljoin(self.cfg("base_url", str), "config"), None, GET_CONFIG_TIMEOUT
         )
+        self.reqs.append(req)
+        req.finished.connect(lambda: self.reqs.remove(req))
         req.result.connect(cb)
         req.error.connect(self.handle_api_error)
-        # NOTE: memory leak? need to keep reference to req or it gets destroyed
-        self.reqs.append(req)
         start()
 
-    def post_txt2img(self, width, height, has_selection):
+    def post_txt2img(self, cb, width, height, has_selection):
         params = dict(orig_width=width, orig_height=height)
         if not self.cfg("just_use_yaml", bool):
             seed = (
@@ -192,9 +189,9 @@ class Client(QObject):
                 denoising_strength=self.cfg("txt2img_denoising_strength", float),
             )
 
-        return self.post("/txt2img", params)
+        self.post("/txt2img", params, cb)
 
-    def post_img2img(self, src_img, mask_img, has_selection):
+    def post_img2img(self, cb, src_img, mask_img, has_selection):
         params = dict(
             mode=0, src_img=img_to_b64(src_img), mask_img=img_to_b64(mask_img)
         )
@@ -216,9 +213,9 @@ class Client(QObject):
                 seed=seed,
             )
 
-        return self.post("/img2img", params)
+        self.post("/img2img", params, cb)
 
-    def post_inpaint(self, src_img, mask_img, has_selection):
+    def post_inpaint(self, cb, src_img, mask_img, has_selection):
         params = dict(
             mode=1, src_img=img_to_b64(src_img), mask_img=img_to_b64(mask_img)
         )
@@ -249,9 +246,9 @@ class Client(QObject):
                 include_grid=False,  # it is never useful for inpaint mode
             )
 
-        return self.post("/img2img", params)
+        self.post("/img2img", params, cb)
 
-    def post_upscale(self, src_img):
+    def post_upscale(self, cb, src_img):
         params = (
             {
                 "src_img": img_to_b64(src_img),
@@ -261,4 +258,4 @@ class Client(QObject):
             if not self.cfg("just_use_yaml", bool)
             else {"src_img": img_to_b64(src_img)}
         )
-        return self.post("/upscale", params)
+        self.post("/upscale", params, cb)

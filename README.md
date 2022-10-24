@@ -30,6 +30,7 @@ Usage & Workflow Demo:
 
 ## UI Changelog
 
+- UI no longer hangs on network activity
 - No need to manually hide inpainting layer anymore; It will be auto-hidden.
 - Color correction can be toggled separately for img2img/inpainting.
 - Status bar:
