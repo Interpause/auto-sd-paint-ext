@@ -1,11 +1,13 @@
 import os
+import time
 
-from krita import Document, Krita, Node, QImage, QObject, QTimer, Selection
+from krita import Document, Krita, Node, QImage, QObject, QTimer, Selection, pyqtSignal
 
 from .client import Client
 from .config import Config
 from .defaults import (
     ADD_MASK_TIMEOUT,
+    ERR_NO_DOCUMENT,
     STATE_IMG2IMG,
     STATE_INIT,
     STATE_INPAINT,
@@ -50,6 +52,7 @@ class Script(QObject):
     """Width of selection"""
     height: int
     """Height of selection"""
+    status_changed = pyqtSignal(str)
 
     # NOTE: using property getters should be the exception, not the norm
     @property
@@ -73,29 +76,18 @@ class Script(QObject):
         ).rgbSwapped()
 
     def __init__(self):
+        super(Script, self).__init__()
         # Persistent settings (should reload between Krita sessions)
         self.cfg = Config()
-        self.client = Client(self.cfg, lambda s: self.set_status(s))
-
-        # Status bar
-        self._status_cb = lambda s: None
-        self.status = STATE_INIT
+        self.client = Client(self.cfg)
+        self.client.status.connect(self.status_changed.emit)
 
     def restore_defaults(self, if_empty=False):
         """Restore to default config."""
         self.cfg.restore_defaults(not if_empty)
 
         if not if_empty:
-            self.set_status(STATE_RESET_DEFAULT)
-
-    def set_status_callback(self, cb):
-        """Used by GUI to provide callback for setting the status bar message."""
-        self._status_cb = cb
-
-    def set_status(self, state):
-        """Change the satus, setting the status bar message in the process."""
-        self.status = state
-        self._status_cb(state)
+            self.status_changed.emit(STATE_RESET_DEFAULT)
 
     def update_selection(self):
         """Update references to key Krita objects as well as selection information."""
@@ -104,7 +96,7 @@ class Script(QObject):
 
         # self.doc doesnt exist at app startup
         if not self.doc:
-            self.set_status("No document open yet!")
+            self.status_changed.emit(ERR_NO_DOCUMENT)
             return
 
         self.node = self.doc.activeNode()
@@ -149,154 +141,149 @@ class Script(QObject):
         """Update certain config/state from the backend."""
         return self.client.get_config()
 
-    def insert_img(self, layer_name, enc, visible=True):
-        """Insert image as new layer."""
-        image = b64_to_img(enc)
-        ba = img_to_ba(image)
+    def img_inserter(self, x, y, width, height):
+        """Return frozen image inserter to insert images as new layer."""
+        # Selection may change before callback, so freeze selection region
+        def insert(layer_name, enc):
+            image = b64_to_img(enc)
+            ba = img_to_ba(image)
+            layer = create_layer(self.doc, layer_name)
+            layer.setPixelData(ba, x, y, width, height)
+            return layer
 
-        layer = create_layer(self.doc, layer_name)
-        layer.setVisible(visible)
-
-        layer.setPixelData(ba, self.x, self.y, self.width, self.height)
-        print(f"Inserted image: {enc}")
+        return insert
 
     def apply_txt2img(self):
-        response = self.client.post_txt2img(
-            self.width, self.height, self.selection is not None
+        # freeze selection region
+        insert = self.img_inserter(self.x, self.y, self.width, self.height)
+        mask_trigger = self.transparency_mask_inserter()
+
+        def cb(response):
+            assert response is not None, "Backend Error, check terminal"
+            outputs = response["outputs"]
+            layers = [
+                insert(f"txt2img {i + 1}", output) for i, output in enumerate(outputs)
+            ]
+            self.doc.refreshProjection()
+            self.status_changed.emit(STATE_TXT2IMG)
+            mask_trigger(layers)
+
+        self.client.post_txt2img(
+            cb, self.width, self.height, self.selection is not None
         )
-        assert response is not None, "Backend Error, check terminal"
-        outputs = response["outputs"]
-        print(f"Getting images: {outputs}")
-        for i, output in enumerate(outputs):
-            self.insert_img(f"txt2img {i + 1}", output, i + 1 == len(outputs))
-        self.clear_temp_images(outputs)
-        self.doc.refreshProjection()
 
     def apply_img2img(self, mode):
-        path = self.cfg("new_img_path", str)
-        mask_path = self.cfg("new_img_mask_path", str)
+        insert = self.img_inserter(self.x, self.y, self.width, self.height)
+        mask_trigger = self.transparency_mask_inserter()
+
+        path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
+        mask_path = os.path.join(
+            self.cfg("sample_path", str), f"{int(time.time())}_mask.png"
+        )
         if mode == 1:
-            save_img(self.mask_image, mask_path)
+            if self.cfg("save_temp_images", bool):
+                save_img(self.mask_image, mask_path)
             # auto-hide mask layer before getting selection image
             self.node.setVisible(False)
             self.doc.refreshProjection()
-        save_img(self.selection_image, path)
 
-        response = (
-            self.client.post_inpaint(
-                self.selection_image, self.mask_image, self.selection is not None
-            )
-            if mode == 1
-            else self.client.post_img2img(
-                self.selection_image, self.mask_image, self.selection is not None
-            )
-        )
-        assert response is not None, "Backend Error, check terminal"
+        if self.cfg("save_temp_images", bool):
+            save_img(self.selection_image, path)
 
-        outputs = response["outputs"]
-        print(f"Getting images: {outputs}")
-        layer_name_prefix = (
-            "inpaint" if mode == 1 else "sd upscale" if mode == 2 else "img2img"
-        )
-        for i, output in enumerate(outputs):
-            self.insert_img(
-                f"{layer_name_prefix} {i + 1}", output, i + 1 == len(outputs)
-            )
+        def cb(response):
+            assert response is not None, "Backend Error, check terminal"
 
-        if mode == 1:
-            self.clear_temp_images([path, mask_path, *outputs])
-        else:
-            self.clear_temp_images([path, *outputs])
-        self.doc.refreshProjection()
+            outputs = response["outputs"]
+            layer_name_prefix = (
+                "inpaint" if mode == 1 else "sd upscale" if mode == 2 else "img2img"
+            )
+            layers = [
+                insert(f"{layer_name_prefix} {i + 1}", output)
+                for i, output in enumerate(outputs)
+            ]
+            self.doc.refreshProjection()
+            if mode == 0:
+                self.status_changed.emit(STATE_IMG2IMG)
+                mask_trigger(layers)
+            else:  # dont need transparency mask for inpaint mode
+                self.status_changed.emit(STATE_INPAINT)
+
+        method = self.client.post_inpaint if mode == 1 else self.client.post_img2img
+        method(cb, self.selection_image, self.mask_image, self.selection is not None)
 
     def apply_simple_upscale(self):
-        path = self.cfg("new_img_path", str)
-        save_img(self.selection_image, path)
+        insert = self.img_inserter(self.x, self.y, self.width, self.height)
+        path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
+        if self.cfg("save_temp_images", bool):
+            save_img(self.selection_image, path)
 
-        response = self.client.post_upscale(self.selection_image)
-        assert response is not None, "Backend Error, check terminal"
-        output = response["output"]
-        print(f"Getting image: {output}")
+        def cb(response):
+            assert response is not None, "Backend Error, check terminal"
+            output = response["output"]
+            insert(f"upscale", output)
+            self.doc.refreshProjection()
+            self.status_changed.emit(STATE_UPSCALE)
 
-        self.insert_img(f"upscale", output)
-        self.clear_temp_images([path, output])
-        self.doc.refreshProjection()
+        self.client.post_upscale(cb, self.selection_image)
 
-    def create_mask_layer_internal(self):
-        if self.selection is not None:
-            self.app.action("add_new_transparency_mask").trigger()
-            print(f"created mask layer")
-            self.doc.setSelection(self.selection)
+    def transparency_mask_inserter(self):
+        """Mask out extra regions due to adjust_selection()."""
+        orig_selection = self.selection.duplicate() if self.selection else None
 
-    def create_mask_layer_workaround(self):
-        if self.cfg("create_mask_layer", bool):
-            QTimer.singleShot(
-                ADD_MASK_TIMEOUT,
-                lambda: self.create_mask_layer_internal(),
-            )
+        def add_mask(layers):
+            cur_selection = self.selection
+            cur_layer = self.doc.activeNode()
+            for layer in layers:
+                self.doc.setActiveNode(layer)
+                self.doc.setSelection(orig_selection)
+                self.app.action("add_new_transparency_mask").trigger()
+            self.doc.setSelection(cur_selection)  # reset to current selection
+            self.doc.setActiveNode(cur_layer)  # reset to current layer
 
-    def clear_temp_images(self, files):
-        if False and self.cfg("delete_temp_files", bool):
-            for file in files:
-                os.remove(file)
+        def trigger_mask_adding(layers):
+            if self.cfg("create_mask_layer", bool):
+                # need timeout to ensure layer exists first else crash
+                QTimer.singleShot(ADD_MASK_TIMEOUT, lambda: add_mask(layers))
+
+        return trigger_mask_adding
 
     # Actions
     def action_txt2img(self):
-        self.set_status(STATE_WAIT)
-
-        def cb():
-            self.update_config()
-            self.update_selection()
-            self.adjust_selection()
-            self.apply_txt2img()
-            self.create_mask_layer_workaround()
-            self.set_status(STATE_TXT2IMG)
-
-        QTimer.singleShot(1, cb)
+        self.status_changed.emit(STATE_WAIT)
+        self.update_selection()
+        if not self.doc:
+            return
+        self.adjust_selection()
+        self.apply_txt2img()
 
     def action_img2img(self):
-        self.set_status(STATE_WAIT)
-
-        def cb():
-            self.update_config()
-            self.update_selection()
-            self.adjust_selection()
-            self.apply_img2img(mode=0)
-            self.create_mask_layer_workaround()
-            self.set_status(STATE_IMG2IMG)
-
-        QTimer.singleShot(1, cb)
+        self.status_changed.emit(STATE_WAIT)
+        self.update_selection()
+        if not self.doc:
+            return
+        self.adjust_selection()
+        self.apply_img2img(mode=0)
 
     def action_sd_upscale(self):
         assert False, "disabled"
-        self.set_status(STATE_WAIT)
-        self.update_config()
+        self.status_changed.emit(STATE_WAIT)
         self.update_selection()
         self.apply_img2img(mode=2)
-        self.create_mask_layer_workaround()
 
     def action_inpaint(self):
-        self.set_status(STATE_WAIT)
-
-        def cb():
-            self.update_config()
-            self.update_selection()
-            self.adjust_selection()
-            self.apply_img2img(mode=1)
-            self.set_status(STATE_INPAINT)
-
-        QTimer.singleShot(1, cb)
+        self.status_changed.emit(STATE_WAIT)
+        self.update_selection()
+        if not self.doc:
+            return
+        self.adjust_selection()
+        self.apply_img2img(mode=1)
 
     def action_simple_upscale(self):
-        self.set_status(STATE_WAIT)
-
-        def cb():
-            self.update_config()
-            self.update_selection()
-            self.apply_simple_upscale()
-            self.set_status(STATE_UPSCALE)
-
-        QTimer.singleShot(1, cb)
+        self.status_changed.emit(STATE_WAIT)
+        self.update_selection()
+        if not self.doc:
+            return
+        self.apply_simple_upscale()
 
 
 script = Script()

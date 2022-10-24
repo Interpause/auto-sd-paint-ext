@@ -119,7 +119,11 @@ def create_layer(doc: Document, name: str):
 def save_img(img: QImage, path: str):
     """Expects QImage"""
     # png is lossless; setting compression to max (0) won't affect quality
-    img.save(path, "PNG", 0)
+    # NOTE: save_img WILL FAIL when using remote backend
+    try:
+        img.save(path, "PNG", 0)
+    except:
+        pass
 
 
 def img_to_ba(img: QImage):

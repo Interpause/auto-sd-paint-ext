@@ -55,14 +55,8 @@ class UpscaleRequest(DefaultUpscaleOptions):
 
 
 class ConfigResponse(PluginOptions):
-    # sddebz decided the server determines where images are saved (to keep it neat i guess)
-    # this doesn't affect where the server read images from
-    # i might decide to keep this mechanism for the user/me to debug images
-    # although we are transitioning to sending the image instead of the image path
-    new_img: str
-    """Where the Krita plugin should save the selected region."""
-    new_img_mask: str
-    """Where the Krita plugin should save the image mask."""
+    sample_path: str
+    """Where the Krita plugin should save the selected region and mask."""
     upscalers: List[str]
     """List of available upscalers."""
     samplers: List[str]

@@ -10,6 +10,8 @@ from pydantic import BaseModel
 class BaseOptions(BaseModel):
     sample_path: str = "outputs/krita-out"
     """Where to save generated images to."""
+    save_samples: bool = False
+    """Whether to save temporary images (useful for debugging)."""
 
 
 class GenerationOptions(BaseModel):

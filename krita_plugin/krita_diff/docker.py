@@ -1,12 +1,4 @@
-from krita import (
-    DockWidget,
-    QPushButton,
-    QScrollArea,
-    QTabWidget,
-    QTimer,
-    QVBoxLayout,
-    QWidget,
-)
+from krita import DockWidget, QScrollArea, QTabWidget, QTimer, QVBoxLayout, QWidget
 
 from .defaults import REFRESH_INTERVAL
 from .pages import (
@@ -17,7 +9,7 @@ from .pages import (
     Txt2ImgTabWidget,
     UpscaleTabWidget,
 )
-from .script import STATE_INIT, STATE_READY, script
+from .script import STATE_INIT, script
 from .widgets import QLabel
 
 
@@ -47,14 +39,12 @@ class SDPluginDocker(DockWidget):
         tabs.addTab(self.config_widget, "Config")
         tabs.setCurrentIndex(2)
 
-        # TODO: this is a hacky and lazy approach
-        status_bar = QLabel()
-        script.set_status_callback(lambda s: status_bar.setText(f"<b>Status:</b> {s}"))
-        script.set_status(STATE_INIT)
+        self.status_bar = QLabel()
+        self.update_status_bar(STATE_INIT)
 
         layout = QVBoxLayout()
         layout.addWidget(self.quick_widget)
-        layout.addWidget(status_bar)
+        layout.addWidget(self.status_bar)
         layout.addWidget(tabs)
         layout.addStretch()
 
@@ -84,11 +74,13 @@ class SDPluginDocker(DockWidget):
 
         self.update_timer.timeout.connect(self.update_remote_config)
         self.update_timer.start(REFRESH_INTERVAL)
+        script.status_changed.connect(self.update_status_bar)
+
+    def update_status_bar(self, s):
+        self.status_bar.setText(f"<b>Status:</b> {s}")
 
     def update_remote_config(self):
-        if script.update_config():
-            script.set_status(STATE_READY)
-
+        script.update_config()
         self.update_interfaces()
 
     def canvasChanged(self, canvas):

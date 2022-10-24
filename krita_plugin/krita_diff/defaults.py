@@ -6,8 +6,8 @@ ERROR_MSG = "Retrieval Failed"
 
 # Used for status bar
 STATE_READY = "Ready"
-STATE_INIT = "Initializing..."
-STATE_URLERROR = "Cannot reach backend"
+STATE_INIT = "Errors will be shown here"
+STATE_URLERROR = "Network error"
 STATE_RESET_DEFAULT = "All settings reset"
 STATE_WAIT = "Please wait..."
 STATE_TXT2IMG = "txt2img done!"
@@ -18,11 +18,15 @@ STATE_UPSCALE = "upscale done!"
 # Other currently hardcoded stuff
 GET_CONFIG_TIMEOUT = 2  # 2 second timeout as getting config should be near instant
 POST_TIMEOUT = None  # post might take forever depending on batch size/count
-REFRESH_INTERVAL = 10000  # 10 seconds between auto-config refresh
+REFRESH_INTERVAL = 1000  # 4 seconds between auto-config refresh
 CFG_FOLDER = "krita"  # which folder in ~/.config to store config
 CFG_NAME = "krita_diff_plugin"  # name of config file
 # selection mask can only be added after image is added, so timeout is needed
 ADD_MASK_TIMEOUT = 100
+
+# error messages
+ERR_MISSING_CONFIG = "Report this bug, developer missed out a config key somewhere."
+ERR_NO_DOCUMENT = "No document open yet!"
 
 
 @dataclass(frozen=True)
@@ -30,15 +34,13 @@ class Defaults:
     base_url: str = "http://127.0.0.1:8000"
     just_use_yaml: bool = False
     create_mask_layer: bool = True
-    delete_temp_files: bool = True
+    save_temp_images: bool = False
     fix_aspect_ratio: bool = True
     only_full_img_tiling: bool = True
     filter_nsfw: bool = False
     do_exact_steps: bool = True
 
-    # TODO: consider what to do with these
-    new_img_path: str = "debug_image.png"
-    new_img_mask_path: str = "debug_image_mask.png"
+    sample_path: str = "."
 
     sd_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
     sd_model: str = "model.ckpt"

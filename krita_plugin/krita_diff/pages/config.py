@@ -25,7 +25,7 @@ class ConfigTabWidget(QWidget):
             "Override with krita_config.yaml (unrecommended)"
         )
         self.create_mask_layer = QCheckBox("Create transparency mask from selection")
-        self.del_temp_files = QCheckBox("Auto delete debug image files")
+        self.save_temp_images = QCheckBox("Save images sent to/from backend for debug")
         self.fix_aspect_ratio = QCheckBox("Fix aspect ratio for selections")
         self.only_full_img_tiling = QCheckBox("Only allow tiling with no selection")
         self.include_grid = QCheckBox("Include grid for txt2img and img2img")
@@ -66,7 +66,7 @@ class ConfigTabWidget(QWidget):
         layout.addWidget(QLabel("<em>Plugin settings:</em>"))
         layout.addWidget(self.just_use_yaml)
         layout.addWidget(self.create_mask_layer)
-        layout.addWidget(self.del_temp_files)
+        layout.addWidget(self.save_temp_images)
         layout.addWidget(self.fix_aspect_ratio)
         layout.addWidget(self.only_full_img_tiling)
         layout.addWidget(self.include_grid)
@@ -91,7 +91,7 @@ class ConfigTabWidget(QWidget):
 
         self.just_use_yaml.setChecked(script.cfg("just_use_yaml", bool))
         self.create_mask_layer.setChecked(script.cfg("create_mask_layer", bool))
-        self.del_temp_files.setChecked(script.cfg("delete_temp_files", bool))
+        self.save_temp_images.setChecked(script.cfg("save_temp_images", bool))
         self.fix_aspect_ratio.setChecked(script.cfg("fix_aspect_ratio", bool))
         self.only_full_img_tiling.setChecked(script.cfg("only_full_img_tiling", bool))
         self.include_grid.setChecked(script.cfg("include_grid", bool))
@@ -102,6 +102,8 @@ class ConfigTabWidget(QWidget):
 
     def cfg_connect(self):
         self.base_url.textChanged.connect(partial(script.cfg.set, "base_url"))
+        # NOTE: this triggers on every keystroke; theres no focus lost signal...
+        self.base_url.textChanged.connect(script.update_config)
         self.base_url_reset.released.connect(
             lambda: self.base_url.setText(DEFAULTS.base_url)
         )
@@ -109,8 +111,8 @@ class ConfigTabWidget(QWidget):
         self.create_mask_layer.toggled.connect(
             partial(script.cfg.set, "create_mask_layer")
         )
-        self.del_temp_files.toggled.connect(
-            partial(script.cfg.set, "delete_temp_files")
+        self.save_temp_images.toggled.connect(
+            partial(script.cfg.set, "save_temp_images")
         )
         self.fix_aspect_ratio.toggled.connect(
             partial(script.cfg.set, "fix_aspect_ratio")
@@ -129,9 +131,7 @@ class ConfigTabWidget(QWidget):
         self.do_exact_steps.toggled.connect(partial(script.cfg.set, "do_exact_steps"))
 
         def update_remote_config():
-            if script.update_config():
-                script.set_status(STATE_READY)
-
+            script.update_config()
             self.update_func()
 
         def restore_defaults():

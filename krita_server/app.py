@@ -47,14 +47,13 @@ async def read_item():
     """
     # TODO:
     # - function and route name isn't descriptive, feels more like get_state()
-    # - response isn't well typed but is deeply tied into the krita_plugin side..
     opt = load_config().plugin
     prepare_backend(opt)
 
-    src_path = os.path.abspath(os.path.join(opt.sample_path, f"{int(time.time())}"))
+    sample_path = os.path.abspath(opt.sample_path)
     return {
-        "new_img": src_path + ".png",
-        "new_img_mask": src_path + "_mask.png",
+        **opt.dict(),
+        "sample_path": sample_path,
         "upscalers": [upscaler.name for upscaler in shared.sd_upscalers],
         "samplers": [sampler.name for sampler in modules.sd_samplers.samplers],
         "samplers_img2img": [
@@ -62,7 +61,6 @@ async def read_item():
         ],
         "face_restorers": [model.name() for model in shared.face_restorers],
         "sd_models": modules.sd_models.checkpoint_tiles(),  # yes internal API has spelling error
-        **opt.dict(),
     }
 
 
@@ -123,13 +121,16 @@ async def f_txt2img(req: Txt2ImgRequest):
     ]
 
     # save images for debugging/logging purposes
-    output_paths = [
-        save_img(image, opt.sample_path, filename=f"{int(time.time())}_{i}.png")
-        for i, image in enumerate(resized_images)
-    ]
+    if req.save_samples:
+        output_paths = [
+            save_img(image, opt.sample_path, filename=f"{int(time.time())}_{i}.png")
+            for i, image in enumerate(resized_images)
+        ]
+        log.info(f"saved: {output_paths}")
+
     outputs = [img_to_b64(image) for image in resized_images]
 
-    log.info(f"finished: {output_paths}")
+    log.info(f"finished txt2img!")
     return {"outputs": outputs, "info": info}
 
 
@@ -235,13 +236,15 @@ async def f_img2img(req: Img2ImgRequest):
         resized_images = [remove_not_masked(x) for x in resized_images]
 
     # save images for debugging/logging purposes
-    output_paths = [
-        save_img(image, opt.sample_path, filename=f"{int(time.time())}_{i}.png")
-        for i, image in enumerate(resized_images)
-    ]
-    outputs = [img_to_b64(image) for image in resized_images]
+    if req.save_samples:
+        output_paths = [
+            save_img(image, opt.sample_path, filename=f"{int(time.time())}_{i}.png")
+            for i, image in enumerate(resized_images)
+        ]
+        log.info(f"saved: {output_paths}")
 
-    log.info(f"finished: {output_paths}")
+    outputs = [img_to_b64(image) for image in resized_images]
+    log.info(f"finished img2img!")
     return {"outputs": outputs, "info": info}
 
 
@@ -279,8 +282,11 @@ async def f_upscale(req: UpscaleRequest):
         0, upscaled_image, orig_width, orig_height
     )
 
-    output_path = save_img(
-        resized_image, opt.sample_path, filename=f"{int(time.time())}.png"
-    )
-    log.info(f"finished: {output_path}")
+    if req.save_samples:
+        output_path = save_img(
+            resized_image, opt.sample_path, filename=f"{int(time.time())}.png"
+        )
+        log.info(f"saved: {output_path}")
+
+    log.info("finished upscale!")
     return {"output": img_to_b64(resized_image)}
