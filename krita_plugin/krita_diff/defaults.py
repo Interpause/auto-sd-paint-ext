@@ -40,8 +40,7 @@ class Defaults:
     filter_nsfw: bool = False
     do_exact_steps: bool = True
 
-    new_img_path: str = "debug_image.png"
-    new_img_mask_path: str = "debug_image_mask.png"
+    sample_path: str = "."
 
     sd_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
     sd_model: str = "model.ckpt"

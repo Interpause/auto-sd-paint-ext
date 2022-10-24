@@ -50,10 +50,9 @@ async def read_item():
     opt = load_config().plugin
     prepare_backend(opt)
 
-    src_path = os.path.abspath(os.path.join(opt.sample_path, f"{int(time.time())}"))
+    sample_path = os.path.abspath(opt.sample_path)
     return {
-        "new_img": src_path + ".png",
-        "new_img_mask": src_path + "_mask.png",
+        "sample_path": sample_path,
         "upscalers": [upscaler.name for upscaler in shared.sd_upscalers],
         "samplers": [sampler.name for sampler in modules.sd_samplers.samplers],
         "samplers_img2img": [

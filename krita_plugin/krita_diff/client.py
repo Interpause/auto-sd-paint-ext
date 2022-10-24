@@ -141,8 +141,7 @@ class Client(QObject):
     def get_config(self) -> bool:
         def cb(obj):
             try:
-                assert "new_img" in obj
-                assert "new_img_mask" in obj
+                assert "sample_path" in obj
                 assert len(obj["upscalers"]) > 0
                 assert len(obj["samplers"]) > 0
                 assert len(obj["samplers_img2img"]) > 0
@@ -155,8 +154,7 @@ class Client(QObject):
                 return
 
             # replace only after verifying
-            self.cfg.set("new_img_path", obj["new_img"])
-            self.cfg.set("new_img_mask_path", obj["new_img_mask"])
+            self.cfg.set("sample_path", obj["sample_path"])
             self.cfg.set("upscaler_list", obj["upscalers"])
             self.cfg.set("txt2img_sampler_list", obj["samplers"])
             self.cfg.set("img2img_sampler_list", obj["samplers_img2img"])

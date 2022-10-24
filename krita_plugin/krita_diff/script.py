@@ -1,3 +1,6 @@
+import os
+import time
+
 from krita import Document, Krita, Node, QImage, QObject, QTimer, Selection, pyqtSignal
 
 from .client import Client
@@ -161,7 +164,10 @@ class Script(QObject):
         self.doc.refreshProjection()
 
     def apply_img2img(self, mode):
-        path = self.cfg("new_img_path", str)
+        path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
+        mask_path = os.path.join(
+            self.cfg("sample_path", str), f"{int(time.time())}_mask.png"
+        )
         mask_path = self.cfg("new_img_mask_path", str)
         if mode == 1:
             if self.cfg("save_temp_images", bool):
@@ -197,7 +203,7 @@ class Script(QObject):
         self.doc.refreshProjection()
 
     def apply_simple_upscale(self):
-        path = self.cfg("new_img_path", str)
+        path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
         if self.cfg("save_temp_images", bool):
             save_img(self.selection_image, path)
 
