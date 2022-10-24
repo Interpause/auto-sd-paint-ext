@@ -30,7 +30,7 @@ class Defaults:
     base_url: str = "http://127.0.0.1:8000"
     just_use_yaml: bool = False
     create_mask_layer: bool = True
-    delete_temp_files: bool = True
+    save_temp_images: bool = False
     fix_aspect_ratio: bool = True
     only_full_img_tiling: bool = True
     filter_nsfw: bool = False

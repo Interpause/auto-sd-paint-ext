@@ -123,13 +123,16 @@ async def f_txt2img(req: Txt2ImgRequest):
     ]
 
     # save images for debugging/logging purposes
-    output_paths = [
-        save_img(image, opt.sample_path, filename=f"{int(time.time())}_{i}.png")
-        for i, image in enumerate(resized_images)
-    ]
+    if req.save_samples:
+        output_paths = [
+            save_img(image, opt.sample_path, filename=f"{int(time.time())}_{i}.png")
+            for i, image in enumerate(resized_images)
+        ]
+        log.info(f"saved: {output_paths}")
+
     outputs = [img_to_b64(image) for image in resized_images]
 
-    log.info(f"finished: {output_paths}")
+    log.info(f"finished txt2img!")
     return {"outputs": outputs, "info": info}
 
 
@@ -235,13 +238,15 @@ async def f_img2img(req: Img2ImgRequest):
         resized_images = [remove_not_masked(x) for x in resized_images]
 
     # save images for debugging/logging purposes
-    output_paths = [
-        save_img(image, opt.sample_path, filename=f"{int(time.time())}_{i}.png")
-        for i, image in enumerate(resized_images)
-    ]
-    outputs = [img_to_b64(image) for image in resized_images]
+    if req.save_samples:
+        output_paths = [
+            save_img(image, opt.sample_path, filename=f"{int(time.time())}_{i}.png")
+            for i, image in enumerate(resized_images)
+        ]
+        log.info(f"saved: {output_paths}")
 
-    log.info(f"finished: {output_paths}")
+    outputs = [img_to_b64(image) for image in resized_images]
+    log.info(f"finished img2img!")
     return {"outputs": outputs, "info": info}
 
 
@@ -279,8 +284,11 @@ async def f_upscale(req: UpscaleRequest):
         0, upscaled_image, orig_width, orig_height
     )
 
-    output_path = save_img(
-        resized_image, opt.sample_path, filename=f"{int(time.time())}.png"
-    )
-    log.info(f"finished: {output_path}")
+    if req.save_samples:
+        output_path = save_img(
+            resized_image, opt.sample_path, filename=f"{int(time.time())}.png"
+        )
+        log.info(f"saved: {output_path}")
+
+    log.info("finished upscale!")
     return {"output": img_to_b64(resized_image)}

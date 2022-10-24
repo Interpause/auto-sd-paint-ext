@@ -62,6 +62,7 @@ class Client:
             filter_nsfw=self.cfg("filter_nsfw", bool),
             do_exact_steps=self.cfg("do_exact_steps", bool),
             include_grid=self.cfg("include_grid", bool),
+            save_samples=self.cfg("save_temp_images", bool),
         )
         return params
 
