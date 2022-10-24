@@ -161,7 +161,6 @@ class Script(QObject):
         def cb(response):
             assert response is not None, "Backend Error, check terminal"
             outputs = response["outputs"]
-            print(f"Getting images: {outputs}")
             layers = [
                 insert(f"txt2img {i + 1}", output) for i, output in enumerate(outputs)
             ]
@@ -195,7 +194,6 @@ class Script(QObject):
             assert response is not None, "Backend Error, check terminal"
 
             outputs = response["outputs"]
-            print(f"Getting images: {outputs}")
             layer_name_prefix = (
                 "inpaint" if mode == 1 else "sd upscale" if mode == 2 else "img2img"
             )
@@ -222,8 +220,6 @@ class Script(QObject):
         def cb(response):
             assert response is not None, "Backend Error, check terminal"
             output = response["output"]
-            print(f"Getting image: {output}")
-
             insert(f"upscale", output)
             self.doc.refreshProjection()
             self.status_changed.emit(STATE_UPSCALE)

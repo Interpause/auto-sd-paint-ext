@@ -52,6 +52,7 @@ async def read_item():
 
     sample_path = os.path.abspath(opt.sample_path)
     return {
+        **opt.dict(),
         "sample_path": sample_path,
         "upscalers": [upscaler.name for upscaler in shared.sd_upscalers],
         "samplers": [sampler.name for sampler in modules.sd_samplers.samplers],
@@ -60,7 +61,6 @@ async def read_item():
         ],
         "face_restorers": [model.name() for model in shared.face_restorers],
         "sd_models": modules.sd_models.checkpoint_tiles(),  # yes internal API has spelling error
-        **opt.dict(),
     }
 
 
