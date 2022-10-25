@@ -172,7 +172,6 @@ class Script(QObject):
     def apply_img2img(self, mode):
         insert = self.img_inserter(self.x, self.y, self.width, self.height)
         mask_trigger = self.transparency_mask_inserter()
-        sel_image = self.get_selection_image()
         mask_image = self.get_mask_image()
 
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
@@ -186,6 +185,7 @@ class Script(QObject):
             self.node.setVisible(False)
             self.doc.refreshProjection()
 
+        sel_image = self.get_selection_image()
         if self.cfg("save_temp_images", bool):
             save_img(sel_image, path)
 
