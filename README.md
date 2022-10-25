@@ -26,19 +26,9 @@ This repository was originally a fork of [sddebz/stable-diffusion-krita-plugin](
 
 Usage & Workflow Demo:
 
+**Update**: The UI no longer freezes during image generation!
+
 [![Youtube Video](http://img.youtube.com/vi/nP8MuRwcDN8/0.jpg)](https://youtu.be/nP8MuRwcDN8 "Inpaint like a pro with Stable Diffusion! auto-sd-krita workflow guide")
-
-## UI Changelog
-
-- UI no longer freezes when generating images or network activity like getting backend config
-  - Pressing "start xxx" multiple times will queue generation requests on the backend
-  - Will not mess with the current selection region or layer when inserting images once done
-- No need to manually hide inpainting layer anymore; It will be auto-hidden.
-- Color correction can be toggled separately for img2img/inpainting.
-- Status bar:
-  - In middle of page to be more visible even when scrolling.
-  - Warning when using features with no document open.
-- Inpaint is now the default tab.
 
 ## FAQ
 
@@ -87,6 +77,29 @@ A: The plugin builds on top the internal API without modifying it, and good docu
 Q: Will it work with other Krita plugin backends?
 
 A: Unfortunately no, all plugins so far have different APIs. The official API is coming soon though...
+
+## UI Changelog
+
+### 2022-10-25
+
+- Will now save previous tab user was on.
+- Fixed seed being truncated to 32-bit int.
+- Prevent sending image generation request when cannot connect to backend.
+
+### 2022-10-24
+
+- UI no longer freezes when generating images or network activity like getting backend config
+  - Pressing "start xxx" multiple times will queue generation requests on the backend
+  - Will not mess with the current selection region or layer when inserting images once done
+
+### 2022-10-21
+
+- No need to manually hide inpainting layer anymore; It will be auto-hidden.
+- Color correction can be toggled separately for img2img/inpainting.
+- Status bar:
+  - In middle of page to be more visible even when scrolling.
+  - Warning when using features with no document open.
+- Inpaint is now the default tab.
 
 ## Credits
 
