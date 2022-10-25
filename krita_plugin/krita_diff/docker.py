@@ -37,6 +37,7 @@ class SDPluginDocker(DockWidget):
         tabs.addTab(self.inpaint_widget, "Inpaint")
         tabs.addTab(self.upscale_widget, "Upscale")
         tabs.addTab(self.config_widget, "Config")
+        # TODO: save which tab the user was last on instead
         tabs.setCurrentIndex(2)
 
         self.status_bar = QLabel()

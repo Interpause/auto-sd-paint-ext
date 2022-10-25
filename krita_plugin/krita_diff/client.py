@@ -8,7 +8,13 @@ from urllib.request import Request, urlopen
 from krita import QObject, QThread, pyqtSignal
 
 from .config import Config
-from .defaults import GET_CONFIG_TIMEOUT, POST_TIMEOUT, STATE_READY, STATE_URLERROR
+from .defaults import (
+    GET_CONFIG_TIMEOUT,
+    POST_TIMEOUT,
+    STATE_READY,
+    STATE_URLERROR,
+    THREADED,
+)
 from .utils import fix_prompt, img_to_b64
 
 # NOTE: backend queues up responses, so no explicit need to block multiple requests
@@ -68,16 +74,21 @@ class AsyncRequest(QObject):
 
     @classmethod
     def request(cls, *args, **kwargs):
-        thread = QThread()
         req = cls(*args, **kwargs)
-        # NOTE: need to keep reference to thread or it gets destroyed
-        req.thread = thread
-        req.moveToThread(thread)
-        thread.started.connect(req.run)
-        req.finished.connect(thread.quit)
-        req.finished.connect(req.deleteLater)
-        thread.finished.connect(thread.deleteLater)
-        return req, lambda: thread.start()
+        if THREADED:
+            thread = QThread()
+            # NOTE: need to keep reference to thread or it gets destroyed
+            req.thread = thread
+            req.moveToThread(thread)
+            thread.started.connect(req.run)
+            req.finished.connect(thread.quit)
+            # NOTE: is this a memory leak?
+            # For some reason, deleteLater occurs while thread is still running, resulting in crash
+            # req.finished.connect(req.deleteLater)
+            # thread.finished.connect(thread.deleteLater)
+            return req, lambda: thread.start()
+        else:
+            return req, lambda: req.run()
 
 
 class Client(QObject):

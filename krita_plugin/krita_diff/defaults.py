@@ -23,6 +23,7 @@ CFG_FOLDER = "krita"  # which folder in ~/.config to store config
 CFG_NAME = "krita_diff_plugin"  # name of config file
 # selection mask can only be added after image is added, so timeout is needed
 ADD_MASK_TIMEOUT = 200
+THREADED = True
 
 # error messages
 ERR_MISSING_CONFIG = "Report this bug, developer missed out a config key somewhere."

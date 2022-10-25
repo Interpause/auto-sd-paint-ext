@@ -12,6 +12,7 @@ class ImgTabBaseWidget(QWidget):
             script, f"{cfg_prefix}_prompt", f"{cfg_prefix}_negative_prompt"
         )
 
+        # TODO: why are large seeds (10 digits) getting wrapped around into negatives?
         self.seed_layout = QLineEditLayout(
             script, f"{cfg_prefix}_seed", label="Seed:", placeholder="Random"
         )

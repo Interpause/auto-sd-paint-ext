@@ -162,8 +162,8 @@ class Script(QObject):
                 insert(f"txt2img {i + 1}", output) for i, output in enumerate(outputs)
             ]
             self.doc.refreshProjection()
-            self.status_changed.emit(STATE_TXT2IMG)
             mask_trigger(layers)
+            self.status_changed.emit(STATE_TXT2IMG)
 
         self.client.post_txt2img(
             cb, self.width, self.height, self.selection is not None
@@ -202,8 +202,8 @@ class Script(QObject):
             ]
             self.doc.refreshProjection()
             if mode == 0:
-                self.status_changed.emit(STATE_IMG2IMG)
                 mask_trigger(layers)
+                self.status_changed.emit(STATE_IMG2IMG)
             else:  # dont need transparency mask for inpaint mode
                 self.status_changed.emit(STATE_INPAINT)
 
