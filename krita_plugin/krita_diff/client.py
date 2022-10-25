@@ -172,6 +172,9 @@ class Client(QObject):
 
         # only get config if there are no pending post requests jamming the backend
         # NOTE: this might prevent get_config() from ever working if zombie requests can happen
+        # TODO: ghost requests do occur when backend in unreachable in post request
+        # either disable post method if cannot connect with timeout, or figure out the live
+        # update stuff to use as keep alive system
         if len(self.reqs) > 0:
             return
 

@@ -54,27 +54,6 @@ class Script(QObject):
     """Height of selection"""
     status_changed = pyqtSignal(str)
 
-    # NOTE: using property getters should be the exception, not the norm
-    @property
-    def selection_image(self) -> QImage:
-        """QImage of selection"""
-        return QImage(
-            self.doc.pixelData(self.x, self.y, self.width, self.height),
-            self.width,
-            self.height,
-            QImage.Format_RGBA8888,
-        ).rgbSwapped()
-
-    @property
-    def mask_image(self) -> QImage:
-        """QImage of mask layer"""
-        return QImage(
-            self.node.pixelData(self.x, self.y, self.width, self.height),
-            self.width,
-            self.height,
-            QImage.Format_RGBA8888,
-        ).rgbSwapped()
-
     def __init__(self):
         super(Script, self).__init__()
         # Persistent settings (should reload between Krita sessions)
@@ -137,6 +116,24 @@ class Script(QObject):
             self.width = width
             self.height = height
 
+    def get_selection_image(self) -> QImage:
+        """QImage of selection"""
+        return QImage(
+            self.doc.pixelData(self.x, self.y, self.width, self.height),
+            self.width,
+            self.height,
+            QImage.Format_RGBA8888,
+        ).rgbSwapped()
+
+    def get_mask_image(self) -> QImage:
+        """QImage of mask layer"""
+        return QImage(
+            self.node.pixelData(self.x, self.y, self.width, self.height),
+            self.width,
+            self.height,
+            QImage.Format_RGBA8888,
+        ).rgbSwapped()
+
     def update_config(self):
         """Update certain config/state from the backend."""
         return self.client.get_config()
@@ -175,6 +172,8 @@ class Script(QObject):
     def apply_img2img(self, mode):
         insert = self.img_inserter(self.x, self.y, self.width, self.height)
         mask_trigger = self.transparency_mask_inserter()
+        sel_image = self.get_selection_image()
+        mask_image = self.get_mask_image()
 
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
         mask_path = os.path.join(
@@ -182,13 +181,13 @@ class Script(QObject):
         )
         if mode == 1:
             if self.cfg("save_temp_images", bool):
-                save_img(self.mask_image, mask_path)
+                save_img(mask_image, mask_path)
             # auto-hide mask layer before getting selection image
             self.node.setVisible(False)
             self.doc.refreshProjection()
 
         if self.cfg("save_temp_images", bool):
-            save_img(self.selection_image, path)
+            save_img(sel_image, path)
 
         def cb(response):
             assert response is not None, "Backend Error, check terminal"
@@ -209,13 +208,20 @@ class Script(QObject):
                 self.status_changed.emit(STATE_INPAINT)
 
         method = self.client.post_inpaint if mode == 1 else self.client.post_img2img
-        method(cb, self.selection_image, self.mask_image, self.selection is not None)
+        method(
+            cb,
+            sel_image,
+            mask_image,  # is unused by backend in img2img mode
+            self.selection is not None,
+        )
 
     def apply_simple_upscale(self):
         insert = self.img_inserter(self.x, self.y, self.width, self.height)
+        sel_image = self.get_selection_image()
+
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
         if self.cfg("save_temp_images", bool):
-            save_img(self.selection_image, path)
+            save_img(sel_image, path)
 
         def cb(response):
             assert response is not None, "Backend Error, check terminal"
@@ -224,13 +230,14 @@ class Script(QObject):
             self.doc.refreshProjection()
             self.status_changed.emit(STATE_UPSCALE)
 
-        self.client.post_upscale(cb, self.selection_image)
+        self.client.post_upscale(cb, sel_image)
 
     def transparency_mask_inserter(self):
         """Mask out extra regions due to adjust_selection()."""
         orig_selection = self.selection.duplicate() if self.selection else None
 
         def add_mask(layers):
+            self.doc.waitForDone()
             cur_selection = self.selection
             cur_layer = self.doc.activeNode()
             for layer in layers:
