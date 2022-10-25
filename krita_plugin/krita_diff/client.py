@@ -208,7 +208,7 @@ class Client(QObject):
         params = dict(orig_width=width, orig_height=height)
         if not self.cfg("just_use_yaml", bool):
             seed = (
-                self.cfg("txt2img_seed", int)
+                int(self.cfg("txt2img_seed", str))  # Qt casts int as 32-bit int
                 if not self.cfg("txt2img_seed", str).strip() == ""
                 else -1
             )
@@ -232,7 +232,7 @@ class Client(QObject):
         )
         if not self.cfg("just_use_yaml", bool):
             seed = (
-                self.cfg("img2img_seed", int)
+                int(self.cfg("img2img_seed", str))  # Qt casts int as 32-bit int
                 if not self.cfg("img2img_seed", str).strip() == ""
                 else -1
             )
@@ -256,7 +256,7 @@ class Client(QObject):
         )
         if not self.cfg("just_use_yaml", bool):
             seed = (
-                self.cfg("inpaint_seed", int)
+                int(self.cfg("inpaint_seed", str))  # Qt casts int as 32-bit int
                 if not self.cfg("inpaint_seed", str).strip() == ""
                 else -1
             )
