@@ -9,6 +9,7 @@ from krita import QObject, QThread, pyqtSignal
 
 from .config import Config
 from .defaults import (
+    ERR_NO_CONNECTION,
     GET_CONFIG_TIMEOUT,
     POST_TIMEOUT,
     STATE_READY,
@@ -100,9 +101,13 @@ class Client(QObject):
         super(Client, self).__init__()
         self.cfg = cfg
         self.reqs = []
+        # TODO: this is a hacky workaround for detecting if backend is reachable
+        # this is to prevent zombie post requests (since they have no timeout)
+        self.is_connected = False
 
     def handle_api_error(self, exc: Exception):
         """Handle exceptions that can occur while interacting with the backend."""
+        self.is_connected = False
         try:
             # wtf python? socket raises an error that isnt an Exception??
             if isinstance(exc, socket.timeout):
@@ -123,6 +128,9 @@ class Client(QObject):
             assert False, e
 
     def post(self, route, body, cb, base_url=...):
+        if not self.is_connected:
+            self.status.emit(ERR_NO_CONNECTION)
+            return
         base_url = self.cfg("base_url", str) if base_url is ... else base_url
         # TODO: how to cancel this? destroy the thread?
         req, start = AsyncRequest.request(urljoin(base_url, route), body, POST_TIMEOUT)
@@ -180,12 +188,10 @@ class Client(QObject):
             self.cfg.set("inpaint_sampler_list", obj["samplers_img2img"])
             self.cfg.set("face_restorer_model_list", obj["face_restorers"])
             self.cfg.set("sd_model_list", obj["sd_models"])
+            self.is_connected = True
 
         # only get config if there are no pending post requests jamming the backend
         # NOTE: this might prevent get_config() from ever working if zombie requests can happen
-        # TODO: ghost requests do occur when backend in unreachable in post request
-        # either disable post method if cannot connect with timeout, or figure out the live
-        # update stuff to use as keep alive system
         if len(self.reqs) > 0:
             return
 

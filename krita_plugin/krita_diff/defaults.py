@@ -28,6 +28,7 @@ THREADED = True
 # error messages
 ERR_MISSING_CONFIG = "Report this bug, developer missed out a config key somewhere."
 ERR_NO_DOCUMENT = "No document open yet!"
+ERR_NO_CONNECTION = "Cannot reach backend!"
 
 
 @dataclass(frozen=True)
