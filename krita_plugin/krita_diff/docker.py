@@ -41,6 +41,7 @@ class SDPluginDocker(DockWidget):
         tabs.addTab(self.config_widget, "Config")
 
         self.status_bar = QLabel()
+        self.update_status_bar(STATE_INIT)
 
         layout = QVBoxLayout()
         layout.addWidget(self.quick_widget)
@@ -64,7 +65,6 @@ class SDPluginDocker(DockWidget):
         self.upscale_widget.cfg_init()
         self.config_widget.cfg_init()
 
-        self.update_status_bar(STATE_INIT)
         self.tabs.setCurrentIndex(script.cfg("tab_index", int))
 
     def connect_interfaces(self):
