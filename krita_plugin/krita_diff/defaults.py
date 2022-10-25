@@ -41,8 +41,8 @@ class Defaults:
     only_full_img_tiling: bool = True
     filter_nsfw: bool = False
     do_exact_steps: bool = True
-
     sample_path: str = "."
+    tab_index: int = 2
 
     sd_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
     sd_model: str = "model.ckpt"

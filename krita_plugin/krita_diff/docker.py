@@ -1,3 +1,5 @@
+from functools import partial
+
 from krita import DockWidget, QScrollArea, QTabWidget, QTimer, QVBoxLayout, QWidget
 
 from .defaults import REFRESH_INTERVAL
@@ -31,17 +33,14 @@ class SDPluginDocker(DockWidget):
         self.upscale_widget = UpscaleTabWidget()
         self.config_widget = ConfigTabWidget(self.update_interfaces)
 
-        tabs = QTabWidget()
+        self.tabs = tabs = QTabWidget()
         tabs.addTab(self.txt2img_widget, "Txt2Img")
         tabs.addTab(self.img2img_widget, "Img2Img")
         tabs.addTab(self.inpaint_widget, "Inpaint")
         tabs.addTab(self.upscale_widget, "Upscale")
         tabs.addTab(self.config_widget, "Config")
-        # TODO: save which tab the user was last on instead
-        tabs.setCurrentIndex(2)
 
         self.status_bar = QLabel()
-        self.update_status_bar(STATE_INIT)
 
         layout = QVBoxLayout()
         layout.addWidget(self.quick_widget)
@@ -65,6 +64,9 @@ class SDPluginDocker(DockWidget):
         self.upscale_widget.cfg_init()
         self.config_widget.cfg_init()
 
+        self.update_status_bar(STATE_INIT)
+        self.tabs.setCurrentIndex(script.cfg("tab_index", int))
+
     def connect_interfaces(self):
         self.quick_widget.cfg_connect()
         self.txt2img_widget.cfg_connect()
@@ -76,6 +78,7 @@ class SDPluginDocker(DockWidget):
         self.update_timer.timeout.connect(self.update_remote_config)
         self.update_timer.start(REFRESH_INTERVAL)
         script.status_changed.connect(self.update_status_bar)
+        self.tabs.currentChanged.connect(partial(script.cfg.set, "tab_index"))
 
     def update_status_bar(self, s):
         self.status_bar.setText(f"<b>Status:</b> {s}")
