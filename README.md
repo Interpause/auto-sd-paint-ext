@@ -26,6 +26,8 @@ This repository was originally a fork of [sddebz/stable-diffusion-krita-plugin](
 
 Usage & Workflow Demo:
 
+**Update**: The UI no longer freezes during image generation!
+
 [![Youtube Video](http://img.youtube.com/vi/nP8MuRwcDN8/0.jpg)](https://youtu.be/nP8MuRwcDN8 "Inpaint like a pro with Stable Diffusion! auto-sd-krita workflow guide")
 
 ## FAQ
