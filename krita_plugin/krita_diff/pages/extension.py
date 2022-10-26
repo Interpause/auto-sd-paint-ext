@@ -6,7 +6,6 @@ from krita import QVBoxLayout, QWidget
 from ..script import Script
 
 # TODO:
-# - modify all widgets (that can) to use Config directly instead of Script
 # - ExtLayout that given options: List[dict] creates the respective widgets
 #   and links them to the ext_cfg
 # - The combobox for selecting the script should be moved to ExtWidget
@@ -14,6 +13,9 @@ from ..script import Script
 # - ExtWidget initializes only once i.e. when the scripts are loaded
 # - NOTE: backend will send empty scripts followed by the real one, have to detect
 #   for that
+# - Consider making QuickConfig a dropdown to save vertical space
+# - Come up with more ways to save vertical space for inpaint
+# - Save horizontal space too
 
 
 class ExtWidget(QWidget):

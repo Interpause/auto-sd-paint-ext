@@ -14,7 +14,7 @@ class InpaintTabWidget(ImgTabBaseWidget):
 
         self.invert_mask = QCheckBox("Invert mask")
         self.mask_blur_layout = QSpinBoxLayout(
-            script, "inpaint_mask_blur", "Mask blur (px):", min=0, max=9999, step=1
+            script.cfg, "inpaint_mask_blur", "Mask blur (px):", min=0, max=9999, step=1
         )
 
         inline1 = QHBoxLayout()
@@ -22,12 +22,12 @@ class InpaintTabWidget(ImgTabBaseWidget):
         inline1.addLayout(self.mask_blur_layout)
 
         self.fill_layout = QComboBoxLayout(
-            script, "inpaint_fill_list", "inpaint_fill", label="Inpaint fill:"
+            script.cfg, "inpaint_fill_list", "inpaint_fill", label="Inpaint fill:"
         )
 
         self.full_res = QCheckBox("Inpaint full res")
         self.full_res_padding_layout = QSpinBoxLayout(
-            script,
+            script.cfg,
             "inpaint_full_res_padding",
             "Padding (px):",
             min=0,

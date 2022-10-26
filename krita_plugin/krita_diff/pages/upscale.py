@@ -12,7 +12,7 @@ class UpscaleTabWidget(QWidget):
         super(UpscaleTabWidget, self).__init__(*args, **kwargs)
 
         self.upscaler_layout = QComboBoxLayout(
-            script, "upscaler_list", "upscale_upscaler_name", label="Upscaler:"
+            script.cfg, "upscaler_list", "upscale_upscaler_name", label="Upscaler:"
         )
 
         self.downscale_first = QCheckBox("Downscale image x0.5 before upscaling")

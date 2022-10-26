@@ -2,14 +2,14 @@ from functools import partial
 
 from krita import QComboBox, QHBoxLayout
 
-from ..script import Script
+from ..config import Config
 from .misc import QLabel
 
 
 class QComboBoxLayout(QHBoxLayout):
     def __init__(
         self,
-        script: Script,
+        cfg: Config,
         options_cfg: str,
         selected_cfg: str,
         label: str = None,
@@ -30,7 +30,7 @@ class QComboBoxLayout(QHBoxLayout):
         self.num_chars = num_chars
 
         # Used to connect to config stored in script
-        self.script = script
+        self.cfg = cfg
         self.options_cfg = options_cfg
         self.selected_cfg = selected_cfg
 
@@ -42,9 +42,9 @@ class QComboBoxLayout(QHBoxLayout):
 
     def cfg_init(self):
         # prevent value from getting wiped
-        val = self.script.cfg(self.selected_cfg, str)
+        val = self.cfg(self.selected_cfg, str)
         self.qcombo.clear()
-        self.qcombo.addItems(self.script.cfg(self.options_cfg, "QStringList"))
+        self.qcombo.addItems(self.cfg(self.options_cfg, "QStringList"))
         self.qcombo.setCurrentText(val)
         if self.num_chars is not None:
             self.qcombo.setFixedWidth(
@@ -52,6 +52,4 @@ class QComboBoxLayout(QHBoxLayout):
             )
 
     def cfg_connect(self):
-        self.qcombo.currentTextChanged.connect(
-            partial(self.script.cfg.set, self.selected_cfg)
-        )
+        self.qcombo.currentTextChanged.connect(partial(self.cfg.set, self.selected_cfg))

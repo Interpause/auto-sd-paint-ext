@@ -9,28 +9,32 @@ class ImgTabBaseWidget(QWidget):
         super(ImgTabBaseWidget, self).__init__(*args, **kwargs)
 
         self.prompt_layout = QPromptLayout(
-            script, f"{cfg_prefix}_prompt", f"{cfg_prefix}_negative_prompt"
+            script.cfg, f"{cfg_prefix}_prompt", f"{cfg_prefix}_negative_prompt"
         )
 
         self.seed_layout = QLineEditLayout(
-            script, f"{cfg_prefix}_seed", label="Seed:", placeholder="Random"
+            script.cfg, f"{cfg_prefix}_seed", label="Seed:", placeholder="Random"
         )
 
         self.sampler_layout = QComboBoxLayout(
-            script,
+            script.cfg,
             f"{cfg_prefix}_sampler_list",
             f"{cfg_prefix}_sampler",
             label="Sampler:",
         )
 
         self.steps_layout = QSpinBoxLayout(
-            script, f"{cfg_prefix}_steps", label="Steps:", min=1, max=9999, step=1
+            script.cfg, f"{cfg_prefix}_steps", label="Steps:", min=1, max=9999, step=1
         )
         self.cfg_scale_layout = QSpinBoxLayout(
-            script, f"{cfg_prefix}_cfg_scale", label="CFG scale:", min=1.0, max=9999.0
+            script.cfg,
+            f"{cfg_prefix}_cfg_scale",
+            label="CFG scale:",
+            min=1.0,
+            max=9999.0,
         )
         self.script_layout = QComboBoxLayout(
-            script,
+            script.cfg,
             f"{cfg_prefix}_script_list",
             f"{cfg_prefix}_script",
             label="(TODO) Scripts:",
@@ -51,7 +55,7 @@ class ImgTabBaseWidget(QWidget):
 
         # not added so inheritants can place it wherever they want
         self.denoising_strength_layout = QSpinBoxLayout(
-            script,
+            script.cfg,
             f"{cfg_prefix}_denoising_strength",
             label="Denoising strength:",
             step=0.01,

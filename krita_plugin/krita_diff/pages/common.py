@@ -14,15 +14,15 @@ class SDCommonWidget(QWidget):
 
         # Model list
         self.sd_model_layout = QComboBoxLayout(
-            script, "sd_model_list", "sd_model", label="SD model:", num_chars=20
+            script.cfg, "sd_model_list", "sd_model", label="SD model:", num_chars=20
         )
 
         # batch size & count
         self.batch_count_layout = QSpinBoxLayout(
-            script, "sd_batch_count", label="Batch count:", min=1, max=9999, step=1
+            script.cfg, "sd_batch_count", label="Batch count:", min=1, max=9999, step=1
         )
         self.batch_size_layout = QSpinBoxLayout(
-            script, "sd_batch_size", label="Batch size:", min=1, max=9999, step=1
+            script.cfg, "sd_batch_size", label="Batch size:", min=1, max=9999, step=1
         )
         batch_layout = QHBoxLayout()
         batch_layout.addLayout(self.batch_count_layout)
@@ -30,10 +30,10 @@ class SDCommonWidget(QWidget):
 
         # base/max size adjustment
         self.base_size_layout = QSpinBoxLayout(
-            script, "sd_base_size", label="Base size:", min=64, max=8192, step=64
+            script.cfg, "sd_base_size", label="Base size:", min=64, max=8192, step=64
         )
         self.max_size_layout = QSpinBoxLayout(
-            script, "sd_max_size", label="Max size:", min=64, max=8192, step=64
+            script.cfg, "sd_max_size", label="Max size:", min=64, max=8192, step=64
         )
         size_layout = QHBoxLayout()
         size_layout.addLayout(self.base_size_layout)
@@ -41,18 +41,18 @@ class SDCommonWidget(QWidget):
 
         # global upscaler
         self.upscaler_layout = QComboBoxLayout(
-            script, "upscaler_list", "upscaler_name", label="Upscaler:"
+            script.cfg, "upscaler_list", "upscaler_name", label="Upscaler:"
         )
 
         # Restore faces
         self.face_restorer_layout = QComboBoxLayout(
-            script,
+            script.cfg,
             "face_restorer_model_list",
             "face_restorer_model",
             label="Face restorer:",
         )
         self.codeformer_weight_layout = QSpinBoxLayout(
-            script,
+            script.cfg,
             "codeformer_weight",
             label="CodeFormer weight (max 0, min 1):",
             step=0.01,

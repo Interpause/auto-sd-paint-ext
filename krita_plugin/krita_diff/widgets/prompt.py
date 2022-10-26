@@ -1,6 +1,6 @@
 from krita import QPlainTextEdit, QSizePolicy, QVBoxLayout
 
-from ..script import Script
+from ..config import Config
 from .misc import QLabel
 
 
@@ -21,7 +21,7 @@ class QPromptLayout(QVBoxLayout):
     neg_prompt_label: str = "Negative prompt:"
 
     def __init__(
-        self, script: Script, prompt_cfg: str, neg_prompt_cfg: str, *args, **kwargs
+        self, cfg: Config, prompt_cfg: str, neg_prompt_cfg: str, *args, **kwargs
     ):
         """Layout for prompt and negative prompt.
 
@@ -33,7 +33,7 @@ class QPromptLayout(QVBoxLayout):
         super(QPromptLayout, self).__init__(*args, **kwargs)
 
         # Used to connect to config stored in script
-        self.script = script
+        self.cfg = cfg
         self.prompt_cfg = prompt_cfg
         self.neg_prompt_cfg = neg_prompt_cfg
 
@@ -49,8 +49,8 @@ class QPromptLayout(QVBoxLayout):
 
     def cfg_init(self):
         # NOTE: update timer -> cfg_init, setText seems to reset cursor position so we prevent it
-        prompt = self.script.cfg(self.prompt_cfg, str)
-        neg_prompt = self.script.cfg(self.neg_prompt_cfg, str)
+        prompt = self.cfg(self.prompt_cfg, str)
+        neg_prompt = self.cfg(self.neg_prompt_cfg, str)
         if self.qedit_prompt.toPlainText() != prompt:
             self.qedit_prompt.setPlainText(prompt)
         if self.qedit_neg_prompt.toPlainText() != neg_prompt:
@@ -58,12 +58,10 @@ class QPromptLayout(QVBoxLayout):
 
     def cfg_connect(self):
         self.qedit_prompt.textChanged.connect(
-            lambda: self.script.cfg.set(
-                self.prompt_cfg, self.qedit_prompt.toPlainText()
-            )
+            lambda: self.cfg.set(self.prompt_cfg, self.qedit_prompt.toPlainText())
         )
         self.qedit_neg_prompt.textChanged.connect(
-            lambda: self.script.cfg.set(
+            lambda: self.cfg.set(
                 self.neg_prompt_cfg, self.qedit_neg_prompt.toPlainText()
             )
         )

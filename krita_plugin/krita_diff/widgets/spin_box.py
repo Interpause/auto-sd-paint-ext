@@ -3,14 +3,14 @@ from typing import Union
 
 from krita import QDoubleSpinBox, QHBoxLayout, QSpinBox
 
-from ..script import Script
+from ..config import Config
 from .misc import QLabel
 
 
 class QSpinBoxLayout(QHBoxLayout):
     def __init__(
         self,
-        script: Script,
+        cfg: Config,
         field_cfg: str,
         label: str = None,
         min: Union[int, float] = 0.0,
@@ -33,7 +33,7 @@ class QSpinBoxLayout(QHBoxLayout):
         """
         super(QSpinBoxLayout, self).__init__(*args, **kwargs)
 
-        self.script = script
+        self.cfg = cfg
         self.field_cfg = field_cfg
 
         self.qlabel = QLabel(field_cfg if label is None else label)
@@ -53,7 +53,7 @@ class QSpinBoxLayout(QHBoxLayout):
         self.addWidget(self.qspin)
 
     def cfg_init(self):
-        self.qspin.setValue(self.script.cfg(self.field_cfg, self.cast))
+        self.qspin.setValue(self.cfg(self.field_cfg, self.cast))
 
     def cfg_connect(self):
-        self.qspin.valueChanged.connect(partial(self.script.cfg.set, self.field_cfg))
+        self.qspin.valueChanged.connect(partial(self.cfg.set, self.field_cfg))
