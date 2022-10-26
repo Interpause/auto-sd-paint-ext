@@ -17,6 +17,8 @@ class BaseOptions(BaseModel):
 class GenerationOptions(BaseModel):
     sd_model: str = "model.ckpt"
     """Model to use for generation."""
+    script: str = "None"
+    """Which script to use."""
 
     prompt: Any = "dog"
     """Requested prompt."""

@@ -17,8 +17,10 @@ from .structs import (
     UpscaleResponse,
 )
 from .utils import (
+    SCRIPT_TYPE,
     b64_to_img,
     get_sampler_index,
+    get_script,
     get_upscaler_index,
     img_to_b64,
     load_config,
@@ -33,6 +35,16 @@ from .utils import (
 app = FastAPI()
 
 log = logging.getLogger(__name__)
+
+# NOTE: how to run a script
+# - get scripts_txt2img/scripts_img2img from modules.scripts
+# - construct array args, where 0th element is selected script
+# - refer to script.args_from & script.args_to to figure out which elements in
+#   array args to populate
+#
+# The way scripts are handled is they are loaded one by one, append to a list of
+# scripts, which each script taking up "slots" in the input args array.
+# So the more scripts, the longer array args would be for the last script.
 
 
 @app.get("/config", response_model=ConfigResponse)
@@ -59,6 +71,8 @@ async def read_item():
         "samplers_img2img": [
             sampler.name for sampler in modules.sd_samplers.samplers_for_img2img
         ],
+        "scripts_txt2img": ["None"] + modules.scripts.scripts_txt2img.titles,
+        "scripts_img2img": ["None"] + modules.scripts.scripts_img2img.titles,
         "face_restorers": [model.name() for model in shared.face_restorers],
         "sd_models": modules.sd_models.checkpoint_tiles(),  # yes internal API has spelling error
     }
@@ -79,6 +93,11 @@ async def f_txt2img(req: Txt2ImgRequest):
     opt = load_config().txt2img
     req = merge_default_config(req, opt)
     prepare_backend(req)
+
+    script_ind, script = get_script(req.script, SCRIPT_TYPE.TXT2IMG)
+    log.warn(
+        f"Script selected: {script.filename}, Args Range: [{script.args_from}:{script.args_to}]"
+    )
 
     width, height = sddebz_highres_fix(
         req.base_size, req.max_size, req.orig_width, req.orig_height
@@ -149,6 +168,11 @@ async def f_img2img(req: Img2ImgRequest):
     opt = load_config().img2img
     req = merge_default_config(req, opt)
     prepare_backend(req)
+
+    script_ind, script = get_script(req.script, SCRIPT_TYPE.IMG2IMG)
+    log.warn(
+        f"Script selected: {script.filename}, Args Range: [{script.args_from}:{script.args_to}]"
+    )
 
     image = b64_to_img(req.src_img)
     mask = prepare_mask(b64_to_img(req.mask_img)) if req.mode == 1 else None

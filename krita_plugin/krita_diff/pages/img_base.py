@@ -31,8 +31,8 @@ class ImgTabBaseWidget(QWidget):
         )
         self.script_layout = QComboBoxLayout(
             script,
-            f"{cfg_prefix}_script",
             f"{cfg_prefix}_script_list",
+            f"{cfg_prefix}_script",
             label="(TODO) Scripts:",
         )
 
@@ -58,7 +58,7 @@ class ImgTabBaseWidget(QWidget):
         )
 
     def cfg_init(self):
-        # self.script_layout.cfg_init()
+        self.script_layout.cfg_init()
         self.prompt_layout.cfg_init()
         self.seed_layout.cfg_init()
         self.sampler_layout.cfg_init()
@@ -67,7 +67,7 @@ class ImgTabBaseWidget(QWidget):
         self.denoising_strength_layout.cfg_init()
 
     def cfg_connect(self):
-        # self.script_layout.cfg_connect()
+        self.script_layout.cfg_connect()
         self.prompt_layout.cfg_connect()
         self.seed_layout.cfg_connect()
         self.sampler_layout.cfg_connect()

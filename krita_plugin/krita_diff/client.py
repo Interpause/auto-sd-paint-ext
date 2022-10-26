@@ -174,6 +174,8 @@ class Client(QObject):
                 assert len(obj["samplers_img2img"]) > 0
                 assert len(obj["face_restorers"]) > 0
                 assert len(obj["sd_models"]) > 0
+                assert len(obj["scripts_txt2img"]) > 0
+                assert len(obj["scripts_img2img"]) > 0
             except:
                 self.status.emit(
                     f"{STATE_URLERROR}: incompatible response, are you running the right API?"
@@ -186,6 +188,9 @@ class Client(QObject):
             self.cfg.set("txt2img_sampler_list", obj["samplers"])
             self.cfg.set("img2img_sampler_list", obj["samplers_img2img"])
             self.cfg.set("inpaint_sampler_list", obj["samplers_img2img"])
+            self.cfg.set("txt2img_script_list", obj["scripts_txt2img"])
+            self.cfg.set("img2img_script_list", obj["scripts_img2img"])
+            self.cfg.set("inpaint_script_list", obj["scripts_img2img"])
             self.cfg.set("face_restorer_model_list", obj["face_restorers"])
             self.cfg.set("sd_model_list", obj["sd_models"])
             self.is_connected = True
@@ -222,6 +227,7 @@ class Client(QObject):
                 seed=seed,
                 highres_fix=self.cfg("txt2img_highres", bool),
                 denoising_strength=self.cfg("txt2img_denoising_strength", float),
+                script=self.cfg("txt2img_script", str),
             )
 
         self.post("/txt2img", params, cb)
@@ -245,6 +251,7 @@ class Client(QObject):
                 cfg_scale=self.cfg("img2img_cfg_scale", float),
                 denoising_strength=self.cfg("img2img_denoising_strength", float),
                 color_correct=self.cfg("img2img_color_correct", bool),
+                script=self.cfg("img2img_script", str),
                 seed=seed,
             )
 
