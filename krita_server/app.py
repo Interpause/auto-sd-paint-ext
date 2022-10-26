@@ -94,12 +94,15 @@ async def f_txt2img(req: Txt2ImgRequest):
     req = merge_default_config(req, opt)
     prepare_backend(req)
 
-    script_ind, script, args = get_script_info(req.script, False)
+    script_ind, script = get_script_info(req.script, False)
     if script_ind > 0:
-        log.warn(
+        log.info(
             f"Script selected: {script.filename}, Args Range: [{script.args_from}:{script.args_to}]"
         )
-        log.warn(f"Script UI:\n{args}")
+        args = [script_ind] + [0] * (script.args_from - 1) + req.script_args
+        log.info(f"Script args:\n{args}")
+    else:
+        args = [0]  # 0th element selects which script to use. 0 is None.
 
     width, height = sddebz_highres_fix(
         req.base_size, req.max_size, req.orig_width, req.orig_height
@@ -129,8 +132,7 @@ async def f_txt2img(req: Txt2ImgRequest):
         req.denoising_strength,  # denoising_strength: only applicable if high res fix in use
         req.firstphase_width,  # firstphase_width
         req.firstphase_height,  # firstphase_height (yes its inconsistently width/height first)
-        # *args below
-        0,  # selects which script to use. 0 to not run any.
+        *args,
     )
 
     if not req.include_grid and len(output_images) > 1:
@@ -171,12 +173,15 @@ async def f_img2img(req: Img2ImgRequest):
     req = merge_default_config(req, opt)
     prepare_backend(req)
 
-    script_ind, script, args = get_script_info(req.script, True)
+    script_ind, script = get_script_info(req.script, True)
     if script_ind > 0:
-        log.warn(
+        log.info(
             f"Script selected: {script.filename}, Args Range: [{script.args_from}:{script.args_to}]"
         )
-        log.warn(f"Script UI:\n{args}")
+        args = [script_ind] + [0] * (script.args_from - 1) + req.script_args
+        log.info(f"Script args:\n{args}")
+    else:
+        args = [0]  # 0th element selects which script to use. 0 is None.
 
     image = b64_to_img(req.src_img)
     mask = prepare_mask(b64_to_img(req.mask_img)) if req.mode == 1 else None
@@ -240,8 +245,7 @@ async def f_img2img(req: Img2ImgRequest):
         # Disabled as SD upscale is now a script, not builtin
         # get_upscaler_index(req.upscaler_name),
         # req.upscale_overlap,
-        # *args below
-        0,  # selects which script to use. 0 to not run any.
+        *args,
     )
 
     if not req.include_grid and len(output_images) > 1:

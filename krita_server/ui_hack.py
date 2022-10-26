@@ -13,7 +13,12 @@ def inspect_ui(script: modules.scripts.Script, is_img2img: bool):
 
     metadata = []
     for elem in elems:
-        data = {"type": "None", "label": elem.label, "val": elem.value}
+        data = {
+            "type": "None",
+            "label": elem.label,
+            "val": elem.value,
+            "is_index": False,
+        }
         if isinstance(elem, gr.HTML):
             data.update(val="")
         elif isinstance(elem, gr.Markdown):
@@ -28,11 +33,13 @@ def inspect_ui(script: modules.scripts.Script, is_img2img: bool):
         elif isinstance(elem, gr.Radio):
             data.update(
                 type="combo",
+                is_index=elem.type == "index",
                 opts=elem.choices,
             )
         elif isinstance(elem, gr.Dropdown):
             data.update(
                 type="combo",
+                is_index=elem.type == "index",
                 opts=elem.choices,
             )
         elif isinstance(elem, gr.Textbox):
@@ -46,6 +53,7 @@ def inspect_ui(script: modules.scripts.Script, is_img2img: bool):
         elif isinstance(elem, gr.CheckboxGroup):
             data.update(
                 type="multiselect",
+                is_index=elem.type == "index",
                 opts=elem.choices,
             )
         elif isinstance(elem, gr.File):

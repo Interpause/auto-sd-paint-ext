@@ -1,7 +1,10 @@
+import json
 import re
 from math import ceil
 
 from krita import Document, QBuffer, QByteArray, QImage, QIODevice
+
+from .config import Config
 
 
 def fix_prompt(prompt: str):
@@ -19,6 +22,26 @@ def get_ext_key(ext_type: str, ext_name: str, index: int = None):
             "meta" if index is None else str(index),
         ]
     )
+
+
+def get_ext_args(ext_cfg: Config, ext_type: str, ext_name: str):
+    """Get args for script in positional list form."""
+    meta = json.loads(ext_cfg(get_ext_key(ext_type, ext_name)))
+    args = []
+    for i, o in enumerate(meta):
+        typ = type(o["val"])
+        if issubclass(typ, list):
+            typ = "QStringList"
+        val = ext_cfg(get_ext_key(ext_type, ext_name, i), typ)
+
+        if o["is_index"]:
+            if typ == "QStringList":
+                val = [o["opts"].index(v) for v in val]
+            else:
+                val = o["opts"].index(val)
+
+        args.append(val)
+    return args
 
 
 def find_fixed_aspect_ratio(

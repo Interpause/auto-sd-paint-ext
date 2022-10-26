@@ -16,7 +16,7 @@ from .defaults import (
     STATE_URLERROR,
     THREADED,
 )
-from .utils import fix_prompt, get_ext_key, img_to_b64
+from .utils import fix_prompt, get_ext_args, get_ext_key, img_to_b64
 
 # NOTE: backend queues up responses, so no explicit need to block multiple requests
 # except to prevent user from spamming themselves
@@ -234,6 +234,8 @@ class Client(QObject):
                 if not self.cfg("txt2img_seed", str).strip() == ""
                 else -1
             )
+            ext_name = self.cfg("txt2img_script", str)
+            ext_args = get_ext_args(self.ext_cfg, "scripts_txt2img", ext_name)
             params.update(self.get_common_params(has_selection))
             params.update(
                 prompt=fix_prompt(self.cfg("txt2img_prompt", str)),
@@ -244,7 +246,8 @@ class Client(QObject):
                 seed=seed,
                 highres_fix=self.cfg("txt2img_highres", bool),
                 denoising_strength=self.cfg("txt2img_denoising_strength", float),
-                script=self.cfg("txt2img_script", str),
+                script=ext_name,
+                script_args=ext_args,
             )
 
         self.post("/txt2img", params, cb)
@@ -259,6 +262,8 @@ class Client(QObject):
                 if not self.cfg("img2img_seed", str).strip() == ""
                 else -1
             )
+            ext_name = self.cfg("img2img_script", str)
+            ext_args = get_ext_args(self.ext_cfg, "scripts_img2img", ext_name)
             params.update(self.get_common_params(has_selection))
             params.update(
                 prompt=fix_prompt(self.cfg("img2img_prompt", str)),
@@ -268,7 +273,8 @@ class Client(QObject):
                 cfg_scale=self.cfg("img2img_cfg_scale", float),
                 denoising_strength=self.cfg("img2img_denoising_strength", float),
                 color_correct=self.cfg("img2img_color_correct", bool),
-                script=self.cfg("img2img_script", str),
+                script=ext_name,
+                script_args=ext_args,
                 seed=seed,
             )
 
@@ -287,6 +293,8 @@ class Client(QObject):
             fill = self.cfg("inpaint_fill_list", "QStringList").index(
                 self.cfg("inpaint_fill", str)
             )
+            ext_name = self.cfg("inpaint_script", str)
+            ext_args = get_ext_args(self.ext_cfg, "scripts_inpaint", ext_name)
             params.update(self.get_common_params(has_selection))
             params.update(
                 prompt=fix_prompt(self.cfg("inpaint_prompt", str)),
@@ -296,6 +304,8 @@ class Client(QObject):
                 cfg_scale=self.cfg("inpaint_cfg_scale", float),
                 denoising_strength=self.cfg("inpaint_denoising_strength", float),
                 color_correct=self.cfg("inpaint_color_correct", bool),
+                script=ext_name,
+                script_args=ext_args,
                 seed=seed,
                 invert_mask=self.cfg("inpaint_invert_mask", bool),
                 mask_blur=self.cfg("inpaint_mask_blur", int),
