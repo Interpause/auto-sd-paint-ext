@@ -1,4 +1,4 @@
-from .checkbox import QCheckBox
+from .checkbox import QCheckBox, QMultiCheckBoxLayout
 from .combo_box import QComboBoxLayout
 from .line_edit import QLineEditLayout
 from .misc import QLabel
