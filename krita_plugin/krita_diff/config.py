@@ -14,6 +14,8 @@ class Config(QObject):
         correctly such that it should be theoretically possible to have multiple
         instances (maybe multiple dockers controlling multiple remotes?)
 
+        If model is None, Config will not check if keys exist.
+
         Args:
             folder (str, optional): Which folder to store settings in. Defaults to CFG_FOLDER.
             name (str, optional): Name of settings file. Defaults to CFG_NAME.
@@ -46,9 +48,10 @@ class Config(QObject):
         self.lock.lockForRead()
         try:
             # notably QSettings assume strings too unless specified
-            assert self.config.contains(key) and hasattr(
-                self.model, key
-            ), ERR_MISSING_CONFIG
+            if self.model is not None:
+                assert self.config.contains(key) and hasattr(
+                    self.model, key
+                ), ERR_MISSING_CONFIG
             val = self.config.value(key, type=type)
             return val
         finally:
@@ -64,7 +67,8 @@ class Config(QObject):
         """
         self.lock.lockForWrite()
         try:
-            assert hasattr(self.model, key), ERR_MISSING_CONFIG
+            if self.model is not None:
+                assert hasattr(self.model, key), ERR_MISSING_CONFIG
             if overwrite or not self.config.contains(key):
                 self.config.setValue(key, val)
         finally:
@@ -76,6 +80,8 @@ class Config(QObject):
         Args:
             overwrite (bool, optional): Whether to overwrite existing settings, else add only new ones. Defaults to True.
         """
+        if self.model is None:
+            return
         defaults = asdict(self.model)
         for k, v in defaults.items():
             self.set(k, v, overwrite)
