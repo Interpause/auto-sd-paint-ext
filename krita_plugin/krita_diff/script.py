@@ -64,6 +64,7 @@ class Script(QObject):
     def restore_defaults(self, if_empty=False):
         """Restore to default config."""
         self.cfg.restore_defaults(not if_empty)
+        self.ext_cfg.config.remove("")
 
         if not if_empty:
             self.status_changed.emit(STATE_RESET_DEFAULT)

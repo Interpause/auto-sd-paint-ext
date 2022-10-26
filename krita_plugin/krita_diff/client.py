@@ -16,7 +16,7 @@ from .defaults import (
     STATE_URLERROR,
     THREADED,
 )
-from .utils import fix_name, fix_prompt, img_to_b64
+from .utils import fix_prompt, get_ext_key, img_to_b64
 
 # NOTE: backend queues up responses, so no explicit need to block multiple requests
 # except to prevent user from spamming themselves
@@ -196,13 +196,12 @@ class Client(QObject):
             self.cfg.set("sd_model_list", obj["sd_models"])
 
             # extension script cfg
-            for script_type in ("scripts_txt2img", "scripts_img2img"):
-                metadata: Dict[str, List[dict]] = obj[script_type]
-                self.ext_cfg.set(script_type, json.dumps(metadata))
-                for script_name, script_meta in metadata.items():
-                    key = "_".join([script_type, fix_name(script_name)])
-                    val = [o["val"] for o in script_meta]
-                    self.ext_cfg.set(key, json.dumps(val))
+            for ext_type in ("scripts_txt2img", "scripts_img2img"):
+                metadata: Dict[str, List[dict]] = obj[ext_type]
+                for ext_name, ext_meta in metadata.items():
+                    for i, opt in enumerate(ext_meta):
+                        key = get_ext_key(ext_type, ext_name, i)
+                        self.ext_cfg.set(key, json.dumps(opt))
 
             self.is_connected = True
             self.status.emit(STATE_READY)
