@@ -2,10 +2,11 @@ from krita import QHBoxLayout, QVBoxLayout, QWidget
 
 from ..script import script
 from ..widgets import QComboBoxLayout, QLineEditLayout, QPromptLayout, QSpinBoxLayout
+from .extension import ExtSectionLayout
 
 
 class ImgTabBaseWidget(QWidget):
-    def __init__(self, cfg_prefix: str = "", *args, **kwargs):
+    def __init__(self, cfg_prefix: str, *args, **kwargs):
         super(ImgTabBaseWidget, self).__init__(*args, **kwargs)
 
         self.prompt_layout = QPromptLayout(
@@ -33,19 +34,15 @@ class ImgTabBaseWidget(QWidget):
             min=1.0,
             max=9999.0,
         )
-        self.script_layout = QComboBoxLayout(
-            script.cfg,
-            f"{cfg_prefix}_script_list",
-            f"{cfg_prefix}_script",
-            label="(TODO) Scripts:",
-        )
+
+        self.ext_layout = ExtSectionLayout(cfg_prefix)
 
         inline_layout = QHBoxLayout()
         inline_layout.addLayout(self.steps_layout)
         inline_layout.addLayout(self.cfg_scale_layout)
 
         self.layout = layout = QVBoxLayout()
-        layout.addLayout(self.script_layout)
+        layout.addLayout(self.ext_layout)
         layout.addLayout(self.prompt_layout)
         layout.addLayout(self.seed_layout)
         layout.addLayout(self.sampler_layout)
@@ -62,7 +59,7 @@ class ImgTabBaseWidget(QWidget):
         )
 
     def cfg_init(self):
-        self.script_layout.cfg_init()
+        self.ext_layout.cfg_init()
         self.prompt_layout.cfg_init()
         self.seed_layout.cfg_init()
         self.sampler_layout.cfg_init()
@@ -71,7 +68,7 @@ class ImgTabBaseWidget(QWidget):
         self.denoising_strength_layout.cfg_init()
 
     def cfg_connect(self):
-        self.script_layout.cfg_connect()
+        self.ext_layout.cfg_connect()
         self.prompt_layout.cfg_connect()
         self.seed_layout.cfg_connect()
         self.sampler_layout.cfg_connect()

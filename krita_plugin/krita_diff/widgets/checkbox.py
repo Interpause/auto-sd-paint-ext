@@ -67,7 +67,7 @@ class QMultiCheckBoxLayout(QVBoxLayout):
             self.row.addWidget(checkbox)
 
         self.addWidget(self.qlabel)
-        self.addWidget(self.row)
+        self.addLayout(self.row)
 
     def cfg_init(self):
         val = set(self.cfg(self.selected_cfg, "QStringList"))

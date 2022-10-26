@@ -1,46 +1,129 @@
 import json
-from typing import Any, Dict, List
+from functools import partial
+from typing import List
 
 from krita import QVBoxLayout, QWidget
 
-from ..script import Script
+from ..config import Config
+from ..script import script
+from ..utils import get_ext_key
+from ..widgets import (
+    QCheckBox,
+    QComboBoxLayout,
+    QLineEditLayout,
+    QMultiCheckBoxLayout,
+    QSpinBoxLayout,
+)
 
 # TODO:
-# - ExtLayout that given options: List[dict] creates the respective widgets
-#   and links them to the ext_cfg
-# - The combobox for selecting the script should be moved to ExtWidget
-# - ExtWidget now manages ExtLayout for each script and their visibility
-# - ExtWidget initializes only once i.e. when the scripts are loaded
 # - NOTE: backend will send empty scripts followed by the real one, have to detect
 #   for that
 # - Consider making QuickConfig a dropdown to save vertical space
 # - Come up with more ways to save vertical space for inpaint
 # - Save horizontal space too
 
+# TODO: dynamically adjust script options available without needing to restart plugin
+
 
 class ExtWidget(QWidget):
-    def __init__(self, script: Script, key: str, *args, **kwargs):
+    def __init__(self, ext_cfg: Config, ext_type: str, ext_name: str, *args, **kwargs):
         super(ExtWidget, self).__init__(*args, **kwargs)
-        self.script = script
-        self.cfg_key = key
+
+        get_key = partial(get_ext_key, ext_type, ext_name)
+        meta: List[dict] = json.loads(ext_cfg(get_key()))
+
+        layout = QVBoxLayout()
+        self.widgets = []
+        for i, o in enumerate(meta):
+            w = None
+            k = get_key(i)
+            if o["type"] == "range":
+                w = QSpinBoxLayout(
+                    ext_cfg,
+                    k,
+                    label=o["label"],
+                    min=o["min"],
+                    max=o["max"],
+                    step=o["step"],
+                )
+            elif o["type"] == "combo":
+                w = QComboBoxLayout(ext_cfg, o["opts"], k, label=o["label"])
+            elif o["type"] == "text":
+                w = QLineEditLayout(ext_cfg, k, o["label"])
+            elif o["type"] == "checkbox":
+                w = QCheckBox(ext_cfg, k, o["label"])
+            elif o["type"] == "multiselect":
+                w = QMultiCheckBoxLayout(ext_cfg, o["opts"], k, o["label"])
+            else:
+                continue
+            self.widgets.append(w)
+            if isinstance(w, QWidget):
+                layout.addWidget(w)
+            else:
+                layout.addLayout(w)
+        self.setLayout(layout)
+
+    def cfg_init(self):
+        for w in self.widgets:
+            w.cfg_init()
+
+    def cfg_connect(self):
+        for w in self.widgets:
+            w.cfg_connect()
+
+
+class ExtSectionLayout(QVBoxLayout):
+    def __init__(self, cfg_prefix: str, *args, **kwargs):
+        super(ExtSectionLayout, self).__init__(*args, **kwargs)
+
         self.is_init = False
 
-        meta = self.get_meta()
-        if len(meta) > 1:
-            self.init_ui()
+        self.dropdown = QComboBoxLayout(
+            script.cfg,
+            f"{cfg_prefix}_script_list",
+            f"{cfg_prefix}_script",
+            label="(Experimental) Scripts:",
+        )
+        self.addLayout(self.dropdown)
 
-    def get_meta(self) -> Dict[str, List[dict]]:
-        try:
-            return json.loads(self.script.ext_cfg(self.cfg_key))
-        except:
-            return {}
+        self.ext_type = f"scripts_{cfg_prefix}"
+        self.ext_names = partial(script.cfg, f"{cfg_prefix}_script_list", "QStringList")
+        self.ext_widgets = {}
+        self.init_ui_once_if_ready()
 
-    def init_ui(self):
+    def init_ui_once_if_ready(self):
         if self.is_init:
             return
-        self.is_init = True
+        if len(self.ext_names()) != script.ext_cfg(f"{self.ext_type}_len", int):
+            return
 
-        for opt in self.get_meta():
-            type = opt["type"]
-            if type == "None":
-                continue
+        self.is_init = True
+        for ext_name in self.ext_names():
+            ext_widget = ExtWidget(script.ext_cfg, self.ext_type, ext_name)
+            ext_widget.setVisible(False)
+            self.addWidget(ext_widget)
+            self.ext_widgets[ext_name] = ext_widget
+        self._cfg_connect()
+
+    def cfg_init(self):
+        self.dropdown.cfg_init()
+        self.init_ui_once_if_ready()
+        for widget in self.ext_widgets.values():
+            widget.cfg_init()
+
+    def cfg_connect(self):
+        self.dropdown.cfg_connect()
+        self.init_ui_once_if_ready()
+        self.dropdown.qcombo.currentTextChanged.connect(self._update)
+
+    def _update(self, selected):
+        for w in self.ext_widgets.values():
+            w.setVisible(False)
+        widget = self.ext_widgets.get(selected, None)
+        if widget:
+            widget.setVisible(True)
+
+    def _cfg_connect(self):
+        for widget in self.ext_widgets.values():
+            widget.cfg_connect()
+        self._update(self.dropdown.qcombo.currentText())

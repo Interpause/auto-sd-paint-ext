@@ -196,15 +196,18 @@ class Client(QObject):
             self.cfg.set("sd_model_list", obj["sd_models"])
 
             # extension script cfg
-            for ext_type in ("scripts_txt2img", "scripts_img2img"):
+            obj["scripts_inpaint"] = obj["scripts_img2img"]
+            for ext_type in ("scripts_txt2img", "scripts_img2img", "scripts_inpaint"):
                 metadata: Dict[str, List[dict]] = obj[ext_type]
+                self.ext_cfg.set(f"{ext_type}_len", len(metadata))
                 for ext_name, ext_meta in metadata.items():
-                    self.ext_cfg.set(
-                        get_ext_key(ext_type, ext_name), json.dumps(ext_meta)
-                    )
-                    for i, opt in enumerate(ext_meta):
-                        key = get_ext_key(ext_type, ext_name, i)
-                        self.ext_cfg.set(key, opt["val"])
+                    old_val = self.ext_cfg(get_ext_key(ext_type, ext_name))
+                    new_val = json.dumps(ext_meta)
+                    if new_val != old_val:
+                        self.ext_cfg.set(get_ext_key(ext_type, ext_name), new_val)
+                        for i, opt in enumerate(ext_meta):
+                            key = get_ext_key(ext_type, ext_name, i)
+                            self.ext_cfg.set(key, opt["val"])
 
             self.is_connected = True
             self.status.emit(STATE_READY)
