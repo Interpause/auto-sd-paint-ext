@@ -15,18 +15,17 @@ from ..widgets import (
     QSpinBoxLayout,
 )
 
-# TODO:
-# - NOTE: backend will send empty scripts followed by the real one, have to detect
-#   for that
-# - Consider making QuickConfig a dropdown to save vertical space
-# - Come up with more ways to save vertical space for inpaint
-# - Save horizontal space too
 
 # TODO: dynamically adjust script options available without needing to restart plugin
-
-
 class ExtWidget(QWidget):
     def __init__(self, ext_cfg: Config, ext_type: str, ext_name: str, *args, **kwargs):
+        """Dynamically create form for script based on metadata.
+
+        Args:
+            ext_cfg (Config): Config object to get metadata from.
+            ext_type (str): Whether metadata is in "scripts_txt2img", "scripts_img2img" or "scripts_inpaint"
+            ext_name (str): Name of script.
+        """
         super(ExtWidget, self).__init__(*args, **kwargs)
 
         get_key = partial(get_ext_key, ext_type, ext_name)
@@ -76,6 +75,8 @@ class ExtSectionLayout(QVBoxLayout):
     def __init__(self, cfg_prefix: str, *args, **kwargs):
         super(ExtSectionLayout, self).__init__(*args, **kwargs)
 
+        # NOTE: backend will send empty scripts followed by the real one, have to
+        # detect for that
         self.is_init = False
 
         self.dropdown = QComboBoxLayout(
@@ -92,6 +93,7 @@ class ExtSectionLayout(QVBoxLayout):
         self.init_ui_once_if_ready()
 
     def init_ui_once_if_ready(self):
+        """Init UI only once, and only when its ready (aka metadata is present)."""
         if self.is_init:
             return
         if len(self.ext_names()) != script.ext_cfg(f"{self.ext_type}_len", int):

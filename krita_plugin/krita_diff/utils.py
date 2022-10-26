@@ -33,13 +33,6 @@ def get_ext_args(ext_cfg: Config, ext_type: str, ext_name: str):
         if issubclass(typ, list):
             typ = "QStringList"
         val = ext_cfg(get_ext_key(ext_type, ext_name, i), typ)
-
-        if o["is_index"]:
-            if typ == "QStringList":
-                val = [o["opts"].index(v) for v in val]
-            else:
-                val = o["opts"].index(val)
-
         args.append(val)
     return args
 

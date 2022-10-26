@@ -30,8 +30,6 @@ class QCheckBox(_QCheckBox):
 
 
 # TODO: adjust number of checkboxes based on options without needing restart
-
-
 class QMultiCheckBoxLayout(QVBoxLayout):
     def __init__(
         self,

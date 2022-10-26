@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from PIL import Image, ImageOps
 from webui import modules, shared
 
+from .script_hack import get_script_info, get_scripts_metadata, process_script_args
 from .structs import (
     ConfigResponse,
     ImageResponse,
@@ -16,11 +17,9 @@ from .structs import (
     UpscaleRequest,
     UpscaleResponse,
 )
-from .ui_hack import get_scripts_metadata
 from .utils import (
     b64_to_img,
     get_sampler_index,
-    get_script_info,
     get_upscaler_index,
     img_to_b64,
     load_config,
@@ -48,7 +47,7 @@ log = logging.getLogger(__name__)
 
 
 @app.get("/config", response_model=ConfigResponse)
-async def read_item():
+async def get_state():
     """Get information about backend API.
 
     Returns config from `krita_config.yaml`, other metadata,
@@ -57,8 +56,6 @@ async def read_item():
     Returns:
         Dict: information.
     """
-    # TODO:
-    # - function and route name isn't descriptive, feels more like get_state()
     opt = load_config().plugin
     prepare_backend(opt)
 
@@ -94,15 +91,8 @@ async def f_txt2img(req: Txt2ImgRequest):
     req = merge_default_config(req, opt)
     prepare_backend(req)
 
-    script_ind, script = get_script_info(req.script, False)
-    if script_ind > 0:
-        log.info(
-            f"Script selected: {script.filename}, Args Range: [{script.args_from}:{script.args_to}]"
-        )
-        args = [script_ind] + [0] * (script.args_from - 1) + req.script_args
-        log.info(f"Script args:\n{args}")
-    else:
-        args = [0]  # 0th element selects which script to use. 0 is None.
+    script_ind, script, meta = get_script_info(req.script, False)
+    args = process_script_args(script_ind, script, meta, req.script_args)
 
     width, height = sddebz_highres_fix(
         req.base_size, req.max_size, req.orig_width, req.orig_height
@@ -177,37 +167,25 @@ async def f_img2img(req: Img2ImgRequest):
     req = merge_default_config(req, opt)
     prepare_backend(req)
 
-    script_ind, script = get_script_info(req.script, True)
-    if script_ind > 0:
-        log.info(
-            f"Script selected: {script.filename}, Args Range: [{script.args_from}:{script.args_to}]"
-        )
-        args = [script_ind] + [0] * (script.args_from - 1) + req.script_args
-        log.info(f"Script args:\n{args}")
-    else:
-        args = [0]  # 0th element selects which script to use. 0 is None.
+    script_ind, script, meta = get_script_info(req.script, True)
+    args = process_script_args(script_ind, script, meta, req.script_args)
 
     image = b64_to_img(req.src_img)
     mask = prepare_mask(b64_to_img(req.mask_img)) if req.mode == 1 else None
 
     orig_width, orig_height = image.size
 
-    # Disabled as SD upscale is now a script, not builtin
-    if False and req.mode == 2:
-        width, height = req.base_size, req.base_size
-        if upscaler_index > 0:
-            image = image.convert("RGB")
+    if script and script.title() == "SD upscale":
+        # in SD upscale mode, width & height determines tile size
+        width = height = req.base_size
+        # SD scales by 2x image size; we alr scaled up in Krita so downscale here
+        image = image.resize((image.width // 2, image.height // 2))
+        if mask:
+            mask = mask.resize((image.width // 2, image.height // 2))
     else:
         width, height = sddebz_highres_fix(
             req.base_size, req.max_size, orig_width, orig_height
         )
-
-    # SD scales by 2x image size
-    # NOTE: in krita we already scaled up, so have to downscale here
-    if script and script.title() == "SD upscale":
-        image = image.resize((image.width // 2, image.height // 2))
-        if mask:
-            mask = mask.resize((image.width // 2, image.height // 2))
 
     # NOTE:
     # - image & mask repeated due to Gradio API have separate tabs for each mode...
@@ -253,9 +231,6 @@ async def f_img2img(req: Img2ImgRequest):
         req.invert_mask,  # inpainting_mask_invert
         "",  # img2img_batch_input_dir (unspported)
         "",  # img2img_batch_output_dir (unspported)
-        # Disabled as SD upscale is now a script, not builtin
-        # get_upscaler_index(req.upscaler_name),
-        # req.upscale_overlap,
         *args,
     )
 

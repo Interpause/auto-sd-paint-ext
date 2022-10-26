@@ -14,6 +14,11 @@ from .pages import (
 from .script import script
 from .widgets import QLabel
 
+# TODO:
+# - Consider making QuickConfig a dropdown to save vertical space
+# - Come up with more ways to save vertical space for inpaint
+# - Save horizontal space too
+
 
 class SDPluginDocker(DockWidget):
     def __init__(self, *args, **kwargs):

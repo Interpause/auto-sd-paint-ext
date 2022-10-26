@@ -4,10 +4,8 @@ import inspect
 import logging
 import os
 from base64 import b64decode, b64encode
-from enum import Enum
 from io import BytesIO
 from math import ceil
-from typing import Tuple
 
 import yaml
 from PIL import Image
@@ -287,36 +285,6 @@ def get_upscaler_index(upscaler_name: str):
         if upscaler.name == upscaler_name:
             return index
     raise KeyError(f"upscaler not found: {upscaler_name}")
-
-
-def get_script_info(
-    script_name: str, is_img2img: bool
-) -> Tuple[int, modules.scripts.Script]:
-    """Get index of script and script instance by name.
-
-    Args:
-        script_name (str): Exact name of script.
-        is_img2img (bool): Whether the script is for img2img or txt2img.
-
-    Raises:
-        KeyError: Script cannot be found.
-
-    Returns:
-        Tuple[int, Script]: Index of script and script itself.
-    """
-    if is_img2img:
-        runner = modules.scripts.scripts_img2img
-    else:
-        runner = modules.scripts.scripts_txt2img
-    # in API, index 0 means no script, scripts are indexed from 1 onwards
-    names = ["None"] + runner.titles
-    if script_name == "None":
-        return 0, None
-    for i, n in enumerate(names):
-        if n == script_name:
-            script = runner.selectable_scripts[i - 1]
-            return i, script
-    raise KeyError(f"script not found for type {type}: {script_name}")
 
 
 def prepare_mask(mask: Image.Image):
