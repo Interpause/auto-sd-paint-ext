@@ -199,9 +199,12 @@ class Client(QObject):
             for ext_type in ("scripts_txt2img", "scripts_img2img"):
                 metadata: Dict[str, List[dict]] = obj[ext_type]
                 for ext_name, ext_meta in metadata.items():
+                    self.ext_cfg.set(
+                        get_ext_key(ext_type, ext_name), json.dumps(ext_meta)
+                    )
                     for i, opt in enumerate(ext_meta):
                         key = get_ext_key(ext_type, ext_name, i)
-                        self.ext_cfg.set(key, json.dumps(opt))
+                        self.ext_cfg.set(key, opt["val"])
 
             self.is_connected = True
             self.status.emit(STATE_READY)

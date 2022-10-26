@@ -10,9 +10,15 @@ def fix_prompt(prompt: str):
     return joined if joined != "" else None
 
 
-def get_ext_key(ext_type: str, ext_name: str, index: int):
+def get_ext_key(ext_type: str, ext_name: str, index: int = None):
     """Get name of config key where the ext values would be stored."""
-    return "_".join([ext_type, re.sub(r"\W+", "", ext_name.lower()), str(index)])
+    return "_".join(
+        [
+            ext_type,
+            re.sub(r"\W+", "", ext_name.lower()),
+            "meta" if index is None else str(index),
+        ]
+    )
 
 
 def find_fixed_aspect_ratio(

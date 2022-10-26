@@ -15,9 +15,9 @@ def inspect_ui(script: modules.scripts.Script, is_img2img: bool):
     for elem in elems:
         data = {"type": "None", "label": elem.label, "val": elem.value}
         if isinstance(elem, gr.HTML):
-            pass
+            data.update(val="")
         elif isinstance(elem, gr.Markdown):
-            pass
+            data.update(val="")
         elif isinstance(elem, gr.Slider):
             data.update(
                 type="range",
@@ -49,9 +49,9 @@ def inspect_ui(script: modules.scripts.Script, is_img2img: bool):
                 opts=elem.choices,
             )
         elif isinstance(elem, gr.File):
-            pass  # unsupported
+            data.update(val="")  # unsupported
         else:
-            pass  # unsupported
+            data.update(val="")  # unsupported
         metadata.append(data)
 
     return metadata
