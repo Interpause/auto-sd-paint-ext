@@ -16,7 +16,7 @@ STATE_INPAINT = "inpaint done!"
 STATE_UPSCALE = "upscale done!"
 
 # Other currently hardcoded stuff
-GET_CONFIG_TIMEOUT = 4  # there is prevention for get request accumulation
+GET_CONFIG_TIMEOUT = 10  # there is prevention for get request accumulation
 POST_TIMEOUT = None  # post might take "forever" depending on batch size/count
 REFRESH_INTERVAL = 3000  # 3 seconds between auto-config refresh
 CFG_FOLDER = "krita"  # which folder in ~/.config to store config

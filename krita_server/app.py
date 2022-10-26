@@ -16,11 +16,11 @@ from .structs import (
     UpscaleRequest,
     UpscaleResponse,
 )
+from .ui_hack import get_scripts_metadata
 from .utils import (
-    SCRIPT_TYPE,
     b64_to_img,
     get_sampler_index,
-    get_script,
+    get_script_info,
     get_upscaler_index,
     img_to_b64,
     load_config,
@@ -71,8 +71,8 @@ async def read_item():
         "samplers_img2img": [
             sampler.name for sampler in modules.sd_samplers.samplers_for_img2img
         ],
-        "scripts_txt2img": ["None"] + modules.scripts.scripts_txt2img.titles,
-        "scripts_img2img": ["None"] + modules.scripts.scripts_img2img.titles,
+        "scripts_txt2img": get_scripts_metadata(False),
+        "scripts_img2img": get_scripts_metadata(True),
         "face_restorers": [model.name() for model in shared.face_restorers],
         "sd_models": modules.sd_models.checkpoint_tiles(),  # yes internal API has spelling error
     }
@@ -94,10 +94,12 @@ async def f_txt2img(req: Txt2ImgRequest):
     req = merge_default_config(req, opt)
     prepare_backend(req)
 
-    script_ind, script = get_script(req.script, SCRIPT_TYPE.TXT2IMG)
-    log.warn(
-        f"Script selected: {script.filename}, Args Range: [{script.args_from}:{script.args_to}]"
-    )
+    script_ind, script, args = get_script_info(req.script, False)
+    if script_ind > 0:
+        log.warn(
+            f"Script selected: {script.filename}, Args Range: [{script.args_from}:{script.args_to}]"
+        )
+        log.warn(f"Script UI:\n{args}")
 
     width, height = sddebz_highres_fix(
         req.base_size, req.max_size, req.orig_width, req.orig_height
@@ -169,10 +171,12 @@ async def f_img2img(req: Img2ImgRequest):
     req = merge_default_config(req, opt)
     prepare_backend(req)
 
-    script_ind, script = get_script(req.script, SCRIPT_TYPE.IMG2IMG)
-    log.warn(
-        f"Script selected: {script.filename}, Args Range: [{script.args_from}:{script.args_to}]"
-    )
+    script_ind, script, args = get_script_info(req.script, True)
+    if script_ind > 0:
+        log.warn(
+            f"Script selected: {script.filename}, Args Range: [{script.args_from}:{script.args_to}]"
+        )
+        log.warn(f"Script UI:\n{args}")
 
     image = b64_to_img(req.src_img)
     mask = prepare_mask(b64_to_img(req.mask_img)) if req.mode == 1 else None

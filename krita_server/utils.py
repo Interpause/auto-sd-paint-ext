@@ -289,37 +289,33 @@ def get_upscaler_index(upscaler_name: str):
     raise KeyError(f"upscaler not found: {upscaler_name}")
 
 
-class SCRIPT_TYPE(Enum):
-    TXT2IMG = 1
-    IMG2IMG = 2
-
-
-def get_script(
-    script_name: str, type: SCRIPT_TYPE
+def get_script_info(
+    script_name: str, is_img2img: bool
 ) -> Tuple[int, modules.scripts.Script]:
     """Get index of script and script instance by name.
 
     Args:
         script_name (str): Exact name of script.
-        type (SCRIPT_TYPE): Whether the script is for img2img or txt2img.
+        is_img2img (bool): Whether the script is for img2img or txt2img.
 
     Raises:
         KeyError: Script cannot be found.
 
     Returns:
-        Tuple[int, Script): Index of script and script itself.
+        Tuple[int, Script]: Index of script and script itself.
     """
-    if type == SCRIPT_TYPE.TXT2IMG:
-        runner = modules.scripts.scripts_txt2img
-    elif type == SCRIPT_TYPE.IMG2IMG:
+    if is_img2img:
         runner = modules.scripts.scripts_img2img
     else:
-        assert False
+        runner = modules.scripts.scripts_txt2img
     # in API, index 0 means no script, scripts are indexed from 1 onwards
     names = ["None"] + runner.titles
+    if script_name == "None":
+        return 0, None
     for i, n in enumerate(names):
         if n == script_name:
-            return i, runner.selectable_scripts[i - 1]
+            script = runner.selectable_scripts[i - 1]
+            return i, script
     raise KeyError(f"script not found for type {type}: {script_name}")
 
 

@@ -188,9 +188,9 @@ class Client(QObject):
             self.cfg.set("txt2img_sampler_list", obj["samplers"])
             self.cfg.set("img2img_sampler_list", obj["samplers_img2img"])
             self.cfg.set("inpaint_sampler_list", obj["samplers_img2img"])
-            self.cfg.set("txt2img_script_list", obj["scripts_txt2img"])
-            self.cfg.set("img2img_script_list", obj["scripts_img2img"])
-            self.cfg.set("inpaint_script_list", obj["scripts_img2img"])
+            self.cfg.set("txt2img_script_list", list(obj["scripts_txt2img"].keys()))
+            self.cfg.set("img2img_script_list", list(obj["scripts_img2img"].keys()))
+            self.cfg.set("inpaint_script_list", list(obj["scripts_img2img"].keys()))
             self.cfg.set("face_restorer_model_list", obj["face_restorers"])
             self.cfg.set("sd_model_list", obj["sd_models"])
             self.is_connected = True
