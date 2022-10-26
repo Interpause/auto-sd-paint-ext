@@ -1,9 +1,7 @@
-from functools import partial
-
-from krita import QCheckBox, QHBoxLayout, QPushButton
+from krita import QHBoxLayout, QPushButton
 
 from ..script import script
-from ..widgets import QComboBoxLayout, QLabel, QSpinBoxLayout
+from ..widgets import QCheckBox, QComboBoxLayout, QLabel, QSpinBoxLayout
 from .img_base import ImgTabBaseWidget
 
 
@@ -12,7 +10,7 @@ class InpaintTabWidget(ImgTabBaseWidget):
         super(InpaintTabWidget, self).__init__(cfg_prefix="inpaint", *args, **kwargs)
         self.layout.addLayout(self.denoising_strength_layout)
 
-        self.invert_mask = QCheckBox("Invert mask")
+        self.invert_mask = QCheckBox(script.cfg, "inpaint_invert_mask", "Invert mask")
         self.mask_blur_layout = QSpinBoxLayout(
             script.cfg, "inpaint_mask_blur", "Mask blur (px):", min=0, max=9999, step=1
         )
@@ -25,7 +23,7 @@ class InpaintTabWidget(ImgTabBaseWidget):
             script.cfg, "inpaint_fill_list", "inpaint_fill", label="Inpaint fill:"
         )
 
-        self.full_res = QCheckBox("Inpaint full res")
+        self.full_res = QCheckBox(script.cfg, "inpaint_full_res", "Inpaint full res")
         self.full_res_padding_layout = QSpinBoxLayout(
             script.cfg,
             "inpaint_full_res_padding",
@@ -60,8 +58,8 @@ class InpaintTabWidget(ImgTabBaseWidget):
         self.mask_blur_layout.cfg_init()
         self.fill_layout.cfg_init()
         self.full_res_padding_layout.cfg_init()
-        self.invert_mask.setChecked(script.cfg("inpaint_invert_mask", bool))
-        self.full_res.setChecked(script.cfg("inpaint_full_res", bool))
+        self.invert_mask.cfg_init()
+        self.full_res.cfg_init()
 
     def cfg_connect(self):
         super(InpaintTabWidget, self).cfg_connect()
@@ -69,15 +67,14 @@ class InpaintTabWidget(ImgTabBaseWidget):
         self.fill_layout.cfg_connect()
         self.full_res_padding_layout.cfg_connect()
 
-        self.invert_mask.toggled.connect(partial(script.cfg.set, "inpaint_invert_mask"))
+        self.invert_mask.cfg_connect()
 
         def toggle_fullres(enabled):
-            script.cfg.set("inpaint_full_res", enabled)
-
             # hide/show fullres padding
             self.full_res_padding_layout.qlabel.setVisible(enabled)
             self.full_res_padding_layout.qspin.setVisible(enabled)
 
+        self.full_res.cfg_connect()
         self.full_res.toggled.connect(toggle_fullres)
         toggle_fullres(self.full_res.isChecked())
 

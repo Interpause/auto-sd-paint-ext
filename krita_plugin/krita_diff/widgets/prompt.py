@@ -26,7 +26,7 @@ class QPromptLayout(QVBoxLayout):
         """Layout for prompt and negative prompt.
 
         Args:
-            script (Script): Script to connect to.
+            cfg (Config): Config to connect to.
             prompt_cfg (str): Config key to read/write prompt to.
             neg_prompt_cfg (str): Config key to read/write negative prompt to.
         """

@@ -24,7 +24,7 @@ class QSpinBoxLayout(QHBoxLayout):
         Will infer which to use based on type of min, max and step.
 
         Args:
-            script (Script): Script to connect to.
+            cfg (Config): Config to connect to.
             field_cfg (str): Config key to read/write value to.
             label (str, optional): Label, uses `field_cfg` if None. Defaults to None.
             min (Union[int, float], optional): Min value. Defaults to 0.0.

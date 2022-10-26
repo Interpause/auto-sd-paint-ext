@@ -1,7 +1,7 @@
-from krita import QCheckBox, QHBoxLayout, QPushButton
+from krita import QHBoxLayout, QPushButton
 
 from ..script import script
-from ..widgets import QLabel
+from ..widgets import QCheckBox, QLabel
 from .img_base import ImgTabBaseWidget
 
 
@@ -9,7 +9,7 @@ class Txt2ImgTabWidget(ImgTabBaseWidget):
     def __init__(self, *args, **kwargs):
         super(Txt2ImgTabWidget, self).__init__(cfg_prefix="txt2img", *args, **kwargs)
 
-        self.highres = QCheckBox("Highres fix")
+        self.highres = QCheckBox(script.cfg, "txt2img_highres", "Highres fix")
 
         inline_layout = QHBoxLayout()
         inline_layout.addWidget(self.highres)
@@ -28,18 +28,17 @@ class Txt2ImgTabWidget(ImgTabBaseWidget):
 
     def cfg_init(self):
         super(Txt2ImgTabWidget, self).cfg_init()
-        self.highres.setChecked(script.cfg("txt2img_highres", bool))
+        self.highres.cfg_init()
 
     def cfg_connect(self):
         super(Txt2ImgTabWidget, self).cfg_connect()
 
         def toggle_highres(enabled):
-            script.cfg.set("txt2img_highres", enabled)
-
             # hide/show denoising strength
             self.denoising_strength_layout.qlabel.setVisible(enabled)
             self.denoising_strength_layout.qspin.setVisible(enabled)
 
+        self.highres.cfg_connect()
         self.highres.toggled.connect(toggle_highres)
         toggle_highres(self.highres.isChecked())
 

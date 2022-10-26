@@ -1,9 +1,7 @@
-from functools import partial
-
-from krita import QCheckBox, QHBoxLayout, QVBoxLayout, QWidget
+from krita import QHBoxLayout, QVBoxLayout, QWidget
 
 from ..script import script
-from ..widgets import QComboBoxLayout, QLabel, QSpinBoxLayout
+from ..widgets import QCheckBox, QComboBoxLayout, QLabel, QSpinBoxLayout
 
 
 class SDCommonWidget(QWidget):
@@ -59,7 +57,7 @@ class SDCommonWidget(QWidget):
         )
 
         # Tiling mode
-        self.tiling = QCheckBox("Tiling mode")
+        self.tiling = QCheckBox(script.cfg, "sd_tiling", "Tiling mode")
 
         layout = QVBoxLayout()
         layout.addWidget(title)
@@ -82,7 +80,7 @@ class SDCommonWidget(QWidget):
         self.upscaler_layout.cfg_init()
         self.face_restorer_layout.cfg_init()
         self.codeformer_weight_layout.cfg_init()
-        self.tiling.setChecked(script.cfg("sd_tiling", bool))
+        self.tiling.cfg_init()
 
     def cfg_connect(self):
         self.sd_model_layout.cfg_connect()
@@ -92,8 +90,8 @@ class SDCommonWidget(QWidget):
         self.max_size_layout.cfg_connect()
         self.upscaler_layout.cfg_connect()
         self.face_restorer_layout.cfg_connect()
-        self.codeformer_weight_layout.cfg_init()
-        self.tiling.toggled.connect(partial(script.cfg.set, "sd_tiling"))
+        self.codeformer_weight_layout.cfg_connect()
+        self.tiling.cfg_connect()
 
         # Hide codeformer_weight when model isnt codeformer
         def toggle_codeformer_weights(visible):

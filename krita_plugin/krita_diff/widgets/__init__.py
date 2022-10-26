@@ -1,3 +1,4 @@
+from .checkbox import QCheckBox
 from .combo_box import QComboBoxLayout
 from .line_edit import QLineEditLayout
 from .misc import QLabel

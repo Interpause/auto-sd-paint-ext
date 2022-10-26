@@ -19,7 +19,7 @@ class QLineEditLayout(QHBoxLayout):
         """Layout for labelled QLineEdit.
 
         Args:
-            script (Script): Script to connect to.
+            cfg (Config): Config to connect to.
             field_cfg (str): Config key to read/write value to.
             label (str, optional): Label, uses `field_cfg` if None. Defaults to None.
             placeholder (str, optional): Placeholder. Defaults to "".
