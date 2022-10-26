@@ -1,6 +1,6 @@
 import json
 import socket
-from typing import Any
+from typing import Any, Dict, List
 from urllib.error import URLError
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
@@ -16,7 +16,7 @@ from .defaults import (
     STATE_URLERROR,
     THREADED,
 )
-from .utils import fix_prompt, img_to_b64
+from .utils import fix_name, fix_prompt, img_to_b64
 
 # NOTE: backend queues up responses, so no explicit need to block multiple requests
 # except to prevent user from spamming themselves
@@ -96,10 +96,11 @@ class Client(QObject):
     status = pyqtSignal(str)
     """error message, Exception object"""
 
-    def __init__(self, cfg: Config):
+    def __init__(self, cfg: Config, ext_cfg: Config):
         """It is highly dependent on config's structure to the point it writes directly to it. :/"""
         super(Client, self).__init__()
         self.cfg = cfg
+        self.ext_cfg = ext_cfg
         self.reqs = []
         # TODO: this is a hacky workaround for detecting if backend is reachable
         # this is to prevent zombie post requests (since they have no timeout)
@@ -193,6 +194,16 @@ class Client(QObject):
             self.cfg.set("inpaint_script_list", list(obj["scripts_img2img"].keys()))
             self.cfg.set("face_restorer_model_list", obj["face_restorers"])
             self.cfg.set("sd_model_list", obj["sd_models"])
+
+            # extension script cfg
+            for script_type in ("scripts_txt2img", "scripts_img2img"):
+                metadata: Dict[str, List[dict]] = obj[script_type]
+                self.ext_cfg.set(script_type, json.dumps(metadata))
+                for script_name, script_meta in metadata.items():
+                    key = "_".join([script_type, fix_name(script_name)])
+                    val = [o["val"] for o in script_meta]
+                    self.ext_cfg.set(key, json.dumps(val))
+
             self.is_connected = True
 
         # only get config if there are no pending post requests jamming the backend

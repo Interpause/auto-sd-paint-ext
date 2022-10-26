@@ -1,3 +1,4 @@
+import re
 from math import ceil
 
 from krita import Document, QBuffer, QByteArray, QImage, QIODevice
@@ -7,6 +8,10 @@ def fix_prompt(prompt: str):
     """Multiline tokens -> comma-separated tokens. Replace empty prompts with None."""
     joined = ", ".join(filter(bool, [x.strip() for x in prompt.splitlines()]))
     return joined if joined != "" else None
+
+
+def fix_name(name: str):
+    return re.sub(r"\W+", "", name)
 
 
 def find_fixed_aspect_ratio(

@@ -8,6 +8,7 @@ from .config import Config
 from .defaults import (
     ADD_MASK_TIMEOUT,
     ERR_NO_DOCUMENT,
+    EXT_CFG_NAME,
     STATE_IMG2IMG,
     STATE_INIT,
     STATE_INPAINT,
@@ -58,7 +59,9 @@ class Script(QObject):
         super(Script, self).__init__()
         # Persistent settings (should reload between Krita sessions)
         self.cfg = Config()
-        self.client = Client(self.cfg)
+        # used for webUI scripts aka extensions not to be confused with their extensions
+        self.ext_cfg = Config(name=EXT_CFG_NAME, defaults=None)
+        self.client = Client(self.cfg, self.ext_cfg)
         self.client.status.connect(self.status_changed.emit)
 
     def restore_defaults(self, if_empty=False):

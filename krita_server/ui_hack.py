@@ -13,69 +13,46 @@ def inspect_ui(script: modules.scripts.Script, is_img2img: bool):
 
     metadata = []
     for elem in elems:
+        data = {"type": "None", "label": elem.label, "val": elem.value}
         if isinstance(elem, gr.HTML):
-            metadata.append({})
+            pass
         elif isinstance(elem, gr.Markdown):
-            metadata.append({})
+            pass
         elif isinstance(elem, gr.Slider):
-            metadata.append(
-                dict(
-                    type="range",
-                    label=elem.label,
-                    min=elem.minimum,
-                    max=elem.maximum,
-                    step=elem.step,
-                    val=elem.value,
-                )
+            data.update(
+                type="range",
+                min=elem.minimum,
+                max=elem.maximum,
+                step=elem.step,
             )
         elif isinstance(elem, gr.Radio):
-            metadata.append(
-                dict(
-                    type="combo",
-                    label=elem.label,
-                    opts=elem.choices,
-                    val=elem.value,
-                )
+            data.update(
+                type="combo",
+                opts=elem.choices,
             )
         elif isinstance(elem, gr.Dropdown):
-            metadata.append(
-                dict(
-                    type="combo",
-                    label=elem.label,
-                    opts=elem.choices,
-                    val=elem.value,
-                )
+            data.update(
+                type="combo",
+                opts=elem.choices,
             )
         elif isinstance(elem, gr.Textbox):
-            metadata.append(
-                dict(
-                    type="text",
-                    label=elem.label,
-                    val="",
-                )
+            data.update(
+                type="text",
             )
         elif isinstance(elem, gr.Checkbox):
-            metadata.append(
-                dict(
-                    type="checkbox",
-                    label=elem.label,
-                    val=elem.value,
-                )
+            data.update(
+                type="checkbox",
             )
         elif isinstance(elem, gr.CheckboxGroup):
-            metadata.append(
-                dict(
-                    type="multiselect",
-                    label=elem.label,
-                    val=elem.value,
-                )
+            data.update(
+                type="multiselect",
+                opts=elem.choices,
             )
         elif isinstance(elem, gr.File):
-            # unsupported
-            metadata.append({})
+            pass  # unsupported
         else:
-            # unsupported
-            metadata.append({})
+            pass  # unsupported
+        metadata.append(data)
 
     return metadata
 

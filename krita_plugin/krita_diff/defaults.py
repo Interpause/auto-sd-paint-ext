@@ -21,6 +21,7 @@ POST_TIMEOUT = None  # post might take "forever" depending on batch size/count
 REFRESH_INTERVAL = 3000  # 3 seconds between auto-config refresh
 CFG_FOLDER = "krita"  # which folder in ~/.config to store config
 CFG_NAME = "krita_diff_plugin"  # name of config file
+EXT_CFG_NAME = "krita_diff_plugin_scripts"  # name of config file
 # selection mask can only be added after image is added, so timeout is needed
 ADD_MASK_TIMEOUT = 200
 THREADED = True
