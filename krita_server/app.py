@@ -135,8 +135,12 @@ async def f_txt2img(req: Txt2ImgRequest):
         *args,
     )
 
-    if not req.include_grid and len(output_images) > 1:
+    if not req.include_grid and len(output_images) > 1 and script_ind == 0:
         output_images = output_images[1:]
+
+    log.info(
+        f"Img Size: {output_images[0].width}x{output_images[0].height}, Resize Target: {req.orig_width}x{req.orig_height}"
+    )
 
     resized_images = [
         modules.images.resize_image(0, image, req.orig_width, req.orig_height)
@@ -198,6 +202,13 @@ async def f_img2img(req: Img2ImgRequest):
             req.base_size, req.max_size, orig_width, orig_height
         )
 
+    # SD scales by 2x image size
+    # NOTE: in krita we already scaled up, so have to downscale here
+    if script and script.title() == "SD upscale":
+        image = image.resize((image.width // 2, image.height // 2))
+        if mask:
+            mask = mask.resize((image.width // 2, image.height // 2))
+
     # NOTE:
     # - image & mask repeated due to Gradio API have separate tabs for each mode...
     # - mask is used only in inpaint mode
@@ -248,8 +259,12 @@ async def f_img2img(req: Img2ImgRequest):
         *args,
     )
 
-    if not req.include_grid and len(output_images) > 1:
+    if not req.include_grid and len(output_images) > 1 and script_ind == 0:
         output_images = output_images[1:]
+
+    log.info(
+        f"Img Size: {output_images[0].width}x{output_images[0].height}, Resize Target: {orig_width}x{orig_height}"
+    )
 
     resized_images = [
         modules.images.resize_image(0, image, orig_width, orig_height)
