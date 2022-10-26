@@ -205,6 +205,7 @@ class Client(QObject):
                     self.ext_cfg.set(key, json.dumps(val))
 
             self.is_connected = True
+            self.status.emit(STATE_READY)
 
         # only get config if there are no pending post requests jamming the backend
         # NOTE: this might prevent get_config() from ever working if zombie requests can happen

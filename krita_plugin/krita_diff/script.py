@@ -10,13 +10,10 @@ from .defaults import (
     ERR_NO_DOCUMENT,
     EXT_CFG_NAME,
     STATE_IMG2IMG,
-    STATE_INIT,
     STATE_INPAINT,
-    STATE_READY,
     STATE_RESET_DEFAULT,
     STATE_TXT2IMG,
     STATE_UPSCALE,
-    STATE_URLERROR,
     STATE_WAIT,
 )
 from .utils import (
@@ -60,7 +57,7 @@ class Script(QObject):
         # Persistent settings (should reload between Krita sessions)
         self.cfg = Config()
         # used for webUI scripts aka extensions not to be confused with their extensions
-        self.ext_cfg = Config(name=EXT_CFG_NAME, defaults=None)
+        self.ext_cfg = Config(name=EXT_CFG_NAME, model=None)
         self.client = Client(self.cfg, self.ext_cfg)
         self.client.status.connect(self.status_changed.emit)
 
