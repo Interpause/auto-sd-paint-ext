@@ -34,6 +34,7 @@ class QComboBoxLayout(QHBoxLayout):
         self.cfg = cfg
         self.options_cfg = options_cfg
         self.selected_cfg = selected_cfg
+        self._items = set()
 
         self.qlabel = QLabel(self.selected_cfg if label is None else label)
         self.qcombo = QComboBox()
@@ -44,11 +45,18 @@ class QComboBoxLayout(QHBoxLayout):
     def cfg_init(self):
         # prevent value from getting wiped
         val = self.cfg(self.selected_cfg, str)
-        self.qcombo.clear()
-        if isinstance(self.options_cfg, str):
-            self.qcombo.addItems(self.cfg(self.options_cfg, "QStringList"))
-        else:
-            self.qcombo.addItems(self.options_cfg)
+        opts = set(
+            self.cfg(self.options_cfg, "QStringList")
+            if isinstance(self.options_cfg, str)
+            else self.options_cfg
+        )
+        # prevent dropdown from closing when cfg_init is called by update
+        if opts != self._items:
+            self._items = opts
+            self.qcombo.clear()
+            self.qcombo.addItems(list(opts))
+
+        # doesn't throw error if val is not in options; good for us
         self.qcombo.setCurrentText(val)
         if self.num_chars is not None:
             self.qcombo.setFixedWidth(

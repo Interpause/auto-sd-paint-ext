@@ -1,4 +1,5 @@
 from functools import partial
+from math import isclose
 from typing import Union
 
 from krita import QDoubleSpinBox, QHBoxLayout, QSpinBox
@@ -53,7 +54,11 @@ class QSpinBoxLayout(QHBoxLayout):
         self.addWidget(self.qspin)
 
     def cfg_init(self):
-        self.qspin.setValue(self.cfg(self.field_cfg, self.cast))
+        val = self.cfg(self.field_cfg, self.cast)
+        cur = self.qspin.value()
+        # prevent cursor from jumping when cfg_init is called by update
+        if not isclose(val, cur):
+            self.qspin.setValue(self.cfg(self.field_cfg, self.cast))
 
     def cfg_connect(self):
         self.qspin.valueChanged.connect(partial(self.cfg.set, self.field_cfg))
