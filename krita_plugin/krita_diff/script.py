@@ -158,6 +158,11 @@ class Script(QObject):
         def cb(response):
             assert response is not None, "Backend Error, check terminal"
             outputs = response["outputs"]
+            print("txt2img base64 layers to insert:")
+            print([len(i) for i in outputs])
+            for i, o in enumerate(outputs):
+                print(f"Image {i}")
+                print(o)
             layers = [
                 insert(f"txt2img {i + 1}", output) for i, output in enumerate(outputs)
             ]

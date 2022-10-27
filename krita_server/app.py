@@ -115,6 +115,10 @@ async def f_txt2img(req: Txt2ImgRequest):
     if not req.include_grid and len(output_images) > 1:
         output_images = output_images[1:]
 
+    log.info(
+        f"Img Size: {output_images[0].width}x{output_images[0].height}, Target: {req.orig_width}x{req.orig_height}"
+    )
+
     resized_images = [
         modules.images.resize_image(0, image, req.orig_width, req.orig_height)
         for image in output_images
@@ -129,6 +133,10 @@ async def f_txt2img(req: Txt2ImgRequest):
         log.info(f"saved: {output_paths}")
 
     outputs = [img_to_b64(image) for image in resized_images]
+
+    log.info(
+        f"Outputs Total: {len(outputs)}, Total Size: {sum(len(i) for i in outputs)}"
+    )
 
     log.info(f"finished txt2img!")
     return {"outputs": outputs, "info": info}
