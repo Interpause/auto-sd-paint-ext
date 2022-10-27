@@ -116,7 +116,7 @@ async def f_txt2img(req: Txt2ImgRequest):
         output_images = output_images[1:]
 
     log.info(
-        f"Img Size: {output_images[0].width}x{output_images[0].height}, Target: {req.orig_width}x{req.orig_height}"
+        f"img size: {output_images[0].width}x{output_images[0].height}, target: {req.orig_width}x{req.orig_height}"
     )
 
     resized_images = [
@@ -134,10 +134,7 @@ async def f_txt2img(req: Txt2ImgRequest):
 
     outputs = [img_to_b64(image) for image in resized_images]
 
-    log.info(
-        f"Outputs Total: {len(outputs)}, Total Size: {sum(len(i) for i in outputs)}"
-    )
-
+    log.info(f"output sizes: {[len(i) for i in outputs]}")
     log.info(f"finished txt2img!")
     return {"outputs": outputs, "info": info}
 
@@ -227,6 +224,10 @@ async def f_img2img(req: Img2ImgRequest):
     if not req.include_grid and len(output_images) > 1:
         output_images = output_images[1:]
 
+    log.info(
+        f"img Size: {output_images[0].width}x{output_images[0].height}, target: {orig_width}x{orig_height}"
+    )
+
     resized_images = [
         modules.images.resize_image(0, image, orig_width, orig_height)
         for image in output_images
@@ -252,6 +253,8 @@ async def f_img2img(req: Img2ImgRequest):
         log.info(f"saved: {output_paths}")
 
     outputs = [img_to_b64(image) for image in resized_images]
+
+    log.info(f"output sizes: {[len(i) for i in outputs]}")
     log.info(f"finished img2img!")
     return {"outputs": outputs, "info": info}
 
@@ -266,7 +269,7 @@ async def f_upscale(req: UpscaleRequest):
     Returns:
         Dict: Output.
     """
-    log.info(f"upscale: {req.dict(exclude={'src_img'})}")
+    log.info(f"upscale:\n{req.dict(exclude={'src_img'})}")
 
     opt = load_config().upscale
     req = merge_default_config(req, opt)
@@ -290,11 +293,17 @@ async def f_upscale(req: UpscaleRequest):
         0, upscaled_image, orig_width, orig_height
     )
 
+    log.info(
+        f"img size: {image.width}x{image.height}, target: {orig_width}x{orig_height}"
+    )
+
     if req.save_samples:
         output_path = save_img(
             resized_image, opt.sample_path, filename=f"{int(time.time())}.png"
         )
         log.info(f"saved: {output_path}")
 
+    output = img_to_b64(resized_image)
+    log.info(f"output size: {len(output)}")
     log.info("finished upscale!")
-    return {"output": img_to_b64(resized_image)}
+    return {"output": output}
