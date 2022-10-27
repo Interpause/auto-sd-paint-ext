@@ -142,9 +142,16 @@ class Script(QObject):
         """Return frozen image inserter to insert images as new layer."""
         # Selection may change before callback, so freeze selection region
         def insert(layer_name, enc):
+            print(f"Inserting layer {layer_name}")
+            print(f"Data size: {len(enc)}")
             image = b64_to_img(enc)
+            print(
+                f"Image created: {image}, {image.width()}x{image.height()}, depth: {image.depth()}, format: {image.format()}"
+            )
             ba = img_to_ba(image)
             layer = create_layer(self.doc, layer_name)
+            print(f"Layer created: {layer}")
+            print(f"Inserting at x: {x}, y: {y}, w: {width}, h: {height}")
             layer.setPixelData(ba, x, y, width, height)
             return layer
 
@@ -158,11 +165,8 @@ class Script(QObject):
         def cb(response):
             assert response is not None, "Backend Error, check terminal"
             outputs = response["outputs"]
-            print("txt2img base64 layers to insert:")
+            print("Sizes of layers to insert:")
             print([len(i) for i in outputs])
-            for i, o in enumerate(outputs):
-                print(f"Image {i}")
-                print(o)
             layers = [
                 insert(f"txt2img {i + 1}", output) for i, output in enumerate(outputs)
             ]
