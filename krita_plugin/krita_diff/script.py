@@ -143,9 +143,15 @@ class Script(QObject):
         """Return frozen image inserter to insert images as new layer."""
         # Selection may change before callback, so freeze selection region
         def insert(layer_name, enc):
+            print(f"inserting layer {layer_name}")
+            print(f"data size: {len(enc)}")
             image = b64_to_img(enc)
+            print(
+                f"image created: {image}, {image.width()}x{image.height()}, depth: {image.depth()}, format: {image.format()}"
+            )
             ba = img_to_ba(image)
             layer = create_layer(self.doc, layer_name)
+            print(f"inserting at x: {x}, y: {y}, w: {width}, h: {height}")
             layer.setPixelData(ba, x, y, width, height)
             return layer
 
