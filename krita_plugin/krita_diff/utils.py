@@ -1,12 +1,40 @@
+import json
+import re
 from math import ceil
 
 from krita import Document, QBuffer, QByteArray, QImage, QIODevice
+
+from .config import Config
 
 
 def fix_prompt(prompt: str):
     """Multiline tokens -> comma-separated tokens. Replace empty prompts with None."""
     joined = ", ".join(filter(bool, [x.strip() for x in prompt.splitlines()]))
     return joined if joined != "" else None
+
+
+def get_ext_key(ext_type: str, ext_name: str, index: int = None):
+    """Get name of config key where the ext values would be stored."""
+    return "_".join(
+        [
+            ext_type,
+            re.sub(r"\W+", "", ext_name.lower()),
+            "meta" if index is None else str(index),
+        ]
+    )
+
+
+def get_ext_args(ext_cfg: Config, ext_type: str, ext_name: str):
+    """Get args for script in positional list form."""
+    meta = json.loads(ext_cfg(get_ext_key(ext_type, ext_name)))
+    args = []
+    for i, o in enumerate(meta):
+        typ = type(o["val"])
+        if issubclass(typ, list):
+            typ = "QStringList"
+        val = ext_cfg(get_ext_key(ext_type, ext_name, i), typ)
+        args.append(val)
+    return args
 
 
 def find_fixed_aspect_ratio(

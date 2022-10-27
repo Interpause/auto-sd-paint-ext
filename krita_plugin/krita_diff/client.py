@@ -1,6 +1,6 @@
 import json
 import socket
-from typing import Any
+from typing import Any, Dict, List
 from urllib.error import URLError
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
@@ -16,7 +16,7 @@ from .defaults import (
     STATE_URLERROR,
     THREADED,
 )
-from .utils import fix_prompt, img_to_b64
+from .utils import fix_prompt, get_ext_args, get_ext_key, img_to_b64
 
 # NOTE: backend queues up responses, so no explicit need to block multiple requests
 # except to prevent user from spamming themselves
@@ -96,10 +96,11 @@ class Client(QObject):
     status = pyqtSignal(str)
     """error message, Exception object"""
 
-    def __init__(self, cfg: Config):
+    def __init__(self, cfg: Config, ext_cfg: Config):
         """It is highly dependent on config's structure to the point it writes directly to it. :/"""
         super(Client, self).__init__()
         self.cfg = cfg
+        self.ext_cfg = ext_cfg
         self.reqs = []
         # TODO: this is a hacky workaround for detecting if backend is reachable
         # this is to prevent zombie post requests (since they have no timeout)
@@ -174,6 +175,8 @@ class Client(QObject):
                 assert len(obj["samplers_img2img"]) > 0
                 assert len(obj["face_restorers"]) > 0
                 assert len(obj["sd_models"]) > 0
+                assert len(obj["scripts_txt2img"]) > 0
+                assert len(obj["scripts_img2img"]) > 0
             except:
                 self.status.emit(
                     f"{STATE_URLERROR}: incompatible response, are you running the right API?"
@@ -186,9 +189,28 @@ class Client(QObject):
             self.cfg.set("txt2img_sampler_list", obj["samplers"])
             self.cfg.set("img2img_sampler_list", obj["samplers_img2img"])
             self.cfg.set("inpaint_sampler_list", obj["samplers_img2img"])
+            self.cfg.set("txt2img_script_list", list(obj["scripts_txt2img"].keys()))
+            self.cfg.set("img2img_script_list", list(obj["scripts_img2img"].keys()))
+            self.cfg.set("inpaint_script_list", list(obj["scripts_img2img"].keys()))
             self.cfg.set("face_restorer_model_list", obj["face_restorers"])
             self.cfg.set("sd_model_list", obj["sd_models"])
+
+            # extension script cfg
+            obj["scripts_inpaint"] = obj["scripts_img2img"]
+            for ext_type in ("scripts_txt2img", "scripts_img2img", "scripts_inpaint"):
+                metadata: Dict[str, List[dict]] = obj[ext_type]
+                self.ext_cfg.set(f"{ext_type}_len", len(metadata))
+                for ext_name, ext_meta in metadata.items():
+                    old_val = self.ext_cfg(get_ext_key(ext_type, ext_name))
+                    new_val = json.dumps(ext_meta)
+                    if new_val != old_val:
+                        self.ext_cfg.set(get_ext_key(ext_type, ext_name), new_val)
+                        for i, opt in enumerate(ext_meta):
+                            key = get_ext_key(ext_type, ext_name, i)
+                            self.ext_cfg.set(key, opt["val"])
+
             self.is_connected = True
+            self.status.emit(STATE_READY)
 
         # only get config if there are no pending post requests jamming the backend
         # NOTE: this might prevent get_config() from ever working if zombie requests can happen
@@ -212,6 +234,8 @@ class Client(QObject):
                 if not self.cfg("txt2img_seed", str).strip() == ""
                 else -1
             )
+            ext_name = self.cfg("txt2img_script", str)
+            ext_args = get_ext_args(self.ext_cfg, "scripts_txt2img", ext_name)
             params.update(self.get_common_params(has_selection))
             params.update(
                 prompt=fix_prompt(self.cfg("txt2img_prompt", str)),
@@ -222,6 +246,8 @@ class Client(QObject):
                 seed=seed,
                 highres_fix=self.cfg("txt2img_highres", bool),
                 denoising_strength=self.cfg("txt2img_denoising_strength", float),
+                script=ext_name,
+                script_args=ext_args,
             )
 
         self.post("/txt2img", params, cb)
@@ -236,6 +262,8 @@ class Client(QObject):
                 if not self.cfg("img2img_seed", str).strip() == ""
                 else -1
             )
+            ext_name = self.cfg("img2img_script", str)
+            ext_args = get_ext_args(self.ext_cfg, "scripts_img2img", ext_name)
             params.update(self.get_common_params(has_selection))
             params.update(
                 prompt=fix_prompt(self.cfg("img2img_prompt", str)),
@@ -245,6 +273,8 @@ class Client(QObject):
                 cfg_scale=self.cfg("img2img_cfg_scale", float),
                 denoising_strength=self.cfg("img2img_denoising_strength", float),
                 color_correct=self.cfg("img2img_color_correct", bool),
+                script=ext_name,
+                script_args=ext_args,
                 seed=seed,
             )
 
@@ -263,6 +293,8 @@ class Client(QObject):
             fill = self.cfg("inpaint_fill_list", "QStringList").index(
                 self.cfg("inpaint_fill", str)
             )
+            ext_name = self.cfg("inpaint_script", str)
+            ext_args = get_ext_args(self.ext_cfg, "scripts_inpaint", ext_name)
             params.update(self.get_common_params(has_selection))
             params.update(
                 prompt=fix_prompt(self.cfg("inpaint_prompt", str)),
@@ -272,6 +304,8 @@ class Client(QObject):
                 cfg_scale=self.cfg("inpaint_cfg_scale", float),
                 denoising_strength=self.cfg("inpaint_denoising_strength", float),
                 color_correct=self.cfg("inpaint_color_correct", bool),
+                script=ext_name,
+                script_args=ext_args,
                 seed=seed,
                 invert_mask=self.cfg("inpaint_invert_mask", bool),
                 mask_blur=self.cfg("inpaint_mask_blur", int),

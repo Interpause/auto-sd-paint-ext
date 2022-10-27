@@ -2,7 +2,7 @@ from functools import partial
 
 from krita import DockWidget, QScrollArea, QTabWidget, QTimer, QVBoxLayout, QWidget
 
-from .defaults import REFRESH_INTERVAL
+from .defaults import REFRESH_INTERVAL, STATE_INIT, STATE_READY, STATE_URLERROR
 from .pages import (
     ConfigTabWidget,
     Img2ImgTabWidget,
@@ -11,8 +11,13 @@ from .pages import (
     Txt2ImgTabWidget,
     UpscaleTabWidget,
 )
-from .script import STATE_INIT, script
+from .script import script
 from .widgets import QLabel
+
+# TODO:
+# - Consider making QuickConfig a dropdown to save vertical space
+# - Come up with more ways to save vertical space for inpaint
+# - Save horizontal space too
 
 
 class SDPluginDocker(DockWidget):
@@ -81,6 +86,8 @@ class SDPluginDocker(DockWidget):
         self.tabs.currentChanged.connect(partial(script.cfg.set, "tab_index"))
 
     def update_status_bar(self, s):
+        if s == STATE_READY and STATE_URLERROR not in self.status_bar.text():
+            return
         self.status_bar.setText(f"<b>Status:</b> {s}")
 
     def update_remote_config(self):

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # NOTE: I changed some field names from krita_config.yaml to match the API endpoints
 
@@ -17,6 +17,10 @@ class BaseOptions(BaseModel):
 class GenerationOptions(BaseModel):
     sd_model: str = "model.ckpt"
     """Model to use for generation."""
+    script: str = "None"
+    """Which script to use."""
+    script_args: list = Field(default_factory=list)
+    """List of args for script."""
 
     prompt: Any = "dog"
     """Requested prompt."""

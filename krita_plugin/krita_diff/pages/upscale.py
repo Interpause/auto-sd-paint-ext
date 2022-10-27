@@ -1,9 +1,7 @@
-from functools import partial
-
-from krita import QCheckBox, QPushButton, QVBoxLayout, QWidget
+from krita import QPushButton, QVBoxLayout, QWidget
 
 from ..script import script
-from ..widgets import QComboBoxLayout, QLabel
+from ..widgets import QCheckBox, QComboBoxLayout, QLabel
 
 
 # TODO: Become SD Upscale tab.
@@ -12,10 +10,14 @@ class UpscaleTabWidget(QWidget):
         super(UpscaleTabWidget, self).__init__(*args, **kwargs)
 
         self.upscaler_layout = QComboBoxLayout(
-            script, "upscaler_list", "upscale_upscaler_name", label="Upscaler:"
+            script.cfg, "upscaler_list", "upscale_upscaler_name", label="Upscaler:"
         )
 
-        self.downscale_first = QCheckBox("Downscale image x0.5 before upscaling")
+        self.downscale_first = QCheckBox(
+            script.cfg,
+            "upscale_downscale_first",
+            "Downscale image x0.5 before upscaling",
+        )
 
         note = QLabel(
             """
@@ -40,11 +42,9 @@ NOTE:<br/>
 
     def cfg_init(self):
         self.upscaler_layout.cfg_init()
-        self.downscale_first.setChecked(script.cfg("upscale_downscale_first", bool))
+        self.downscale_first.cfg_init()
 
     def cfg_connect(self):
         self.upscaler_layout.cfg_connect()
-        self.downscale_first.toggled.connect(
-            partial(script.cfg.set, "upscale_downscale_first")
-        )
+        self.downscale_first.cfg_connect()
         self.btn.released.connect(lambda: script.action_simple_upscale())

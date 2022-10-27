@@ -1,10 +1,10 @@
 from functools import partial
 
-from krita import QCheckBox, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from krita import QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
-from ..defaults import DEFAULTS, STATE_READY
+from ..defaults import DEFAULTS
 from ..script import script
-from ..widgets import QLabel
+from ..widgets import QCheckBox, QLabel
 
 
 class ConfigTabWidget(QWidget):
@@ -22,24 +22,42 @@ class ConfigTabWidget(QWidget):
 
         # Plugin settings
         self.just_use_yaml = QCheckBox(
-            "Override with krita_config.yaml (unrecommended)"
+            script.cfg,
+            "just_use_yaml",
+            "Override with krita_config.yaml (unrecommended)",
         )
-        self.create_mask_layer = QCheckBox("Create transparency mask from selection")
-        self.save_temp_images = QCheckBox("Save images sent to/from backend for debug")
-        self.fix_aspect_ratio = QCheckBox("Fix aspect ratio for selections")
-        self.only_full_img_tiling = QCheckBox("Only allow tiling with no selection")
-        self.include_grid = QCheckBox("Include grid for txt2img and img2img")
+        self.create_mask_layer = QCheckBox(
+            script.cfg, "create_mask_layer", "Create transparency mask from selection"
+        )
+        self.save_temp_images = QCheckBox(
+            script.cfg, "save_temp_images", "Save images sent to/from backend for debug"
+        )
+        self.fix_aspect_ratio = QCheckBox(
+            script.cfg, "fix_aspect_ratio", "Fix aspect ratio for selections"
+        )
+        self.only_full_img_tiling = QCheckBox(
+            script.cfg, "only_full_img_tiling", "Only allow tiling with no selection"
+        )
+        self.include_grid = QCheckBox(
+            script.cfg, "include_grid", "Include grid for txt2img and img2img"
+        )
 
         # webUI/backend settings
-        self.filter_nsfw = QCheckBox("Filter NSFW content")
+        self.filter_nsfw = QCheckBox(script.cfg, "filter_nsfw", "Filter NSFW content")
         self.img2img_color_correct = QCheckBox(
-            "Color correct img2img for better blending"
+            script.cfg,
+            "img2img_color_correct",
+            "Color correct img2img for better blending",
         )
         self.inpaint_color_correct = QCheckBox(
-            "Color correct inpaint for better blending"
+            script.cfg,
+            "inpaint_color_correct",
+            "Color correct inpaint for better blending",
         )
         self.do_exact_steps = QCheckBox(
-            "Don't decrease steps based on denoising strength"
+            script.cfg,
+            "do_exact_steps",
+            "Don't decrease steps based on denoising strength",
         )
 
         self.refresh_btn = QPushButton("Auto-Refresh Options Now")
@@ -89,16 +107,16 @@ class ConfigTabWidget(QWidget):
         if self.base_url.text() != base_url:
             self.base_url.setText(base_url)
 
-        self.just_use_yaml.setChecked(script.cfg("just_use_yaml", bool))
-        self.create_mask_layer.setChecked(script.cfg("create_mask_layer", bool))
-        self.save_temp_images.setChecked(script.cfg("save_temp_images", bool))
-        self.fix_aspect_ratio.setChecked(script.cfg("fix_aspect_ratio", bool))
-        self.only_full_img_tiling.setChecked(script.cfg("only_full_img_tiling", bool))
-        self.include_grid.setChecked(script.cfg("include_grid", bool))
-        self.filter_nsfw.setChecked(script.cfg("filter_nsfw", bool))
-        self.img2img_color_correct.setChecked(script.cfg("img2img_color_correct", bool))
-        self.inpaint_color_correct.setChecked(script.cfg("inpaint_color_correct", bool))
-        self.do_exact_steps.setChecked(script.cfg("do_exact_steps", bool))
+        self.just_use_yaml.cfg_init()
+        self.create_mask_layer.cfg_init()
+        self.save_temp_images.cfg_init()
+        self.fix_aspect_ratio.cfg_init()
+        self.only_full_img_tiling.cfg_init()
+        self.include_grid.cfg_init()
+        self.filter_nsfw.cfg_init()
+        self.img2img_color_correct.cfg_init()
+        self.inpaint_color_correct.cfg_init()
+        self.do_exact_steps.cfg_init()
 
     def cfg_connect(self):
         self.base_url.textChanged.connect(partial(script.cfg.set, "base_url"))
@@ -107,28 +125,16 @@ class ConfigTabWidget(QWidget):
         self.base_url_reset.released.connect(
             lambda: self.base_url.setText(DEFAULTS.base_url)
         )
-        self.just_use_yaml.toggled.connect(partial(script.cfg.set, "just_use_yaml"))
-        self.create_mask_layer.toggled.connect(
-            partial(script.cfg.set, "create_mask_layer")
-        )
-        self.save_temp_images.toggled.connect(
-            partial(script.cfg.set, "save_temp_images")
-        )
-        self.fix_aspect_ratio.toggled.connect(
-            partial(script.cfg.set, "fix_aspect_ratio")
-        )
-        self.only_full_img_tiling.toggled.connect(
-            partial(script.cfg.set, "only_full_img_tiling")
-        )
-        self.include_grid.toggled.connect(partial(script.cfg.set, "include_grid"))
-        self.filter_nsfw.toggled.connect(partial(script.cfg.set, "filter_nsfw"))
-        self.img2img_color_correct.toggled.connect(
-            partial(script.cfg.set, "img2img_color_correct")
-        )
-        self.inpaint_color_correct.toggled.connect(
-            partial(script.cfg.set, "inpaint_color_correct")
-        )
-        self.do_exact_steps.toggled.connect(partial(script.cfg.set, "do_exact_steps"))
+        self.just_use_yaml.cfg_connect()
+        self.create_mask_layer.cfg_connect()
+        self.save_temp_images.cfg_connect()
+        self.fix_aspect_ratio.cfg_connect()
+        self.only_full_img_tiling.cfg_connect()
+        self.include_grid.cfg_connect()
+        self.filter_nsfw.cfg_connect()
+        self.img2img_color_correct.cfg_connect()
+        self.inpaint_color_correct.cfg_connect()
+        self.do_exact_steps.cfg_connect()
 
         def update_remote_config():
             script.update_config()

@@ -1,9 +1,7 @@
-from functools import partial
-
-from krita import QCheckBox, QHBoxLayout, QVBoxLayout, QWidget
+from krita import QHBoxLayout, QVBoxLayout, QWidget
 
 from ..script import script
-from ..widgets import QComboBoxLayout, QLabel, QSpinBoxLayout
+from ..widgets import QCheckBox, QComboBoxLayout, QLabel, QSpinBoxLayout
 
 
 class SDCommonWidget(QWidget):
@@ -14,15 +12,15 @@ class SDCommonWidget(QWidget):
 
         # Model list
         self.sd_model_layout = QComboBoxLayout(
-            script, "sd_model_list", "sd_model", label="SD model:", num_chars=20
+            script.cfg, "sd_model_list", "sd_model", label="SD model:", num_chars=20
         )
 
         # batch size & count
         self.batch_count_layout = QSpinBoxLayout(
-            script, "sd_batch_count", label="Batch count:", min=1, max=9999, step=1
+            script.cfg, "sd_batch_count", label="Batch count:", min=1, max=9999, step=1
         )
         self.batch_size_layout = QSpinBoxLayout(
-            script, "sd_batch_size", label="Batch size:", min=1, max=9999, step=1
+            script.cfg, "sd_batch_size", label="Batch size:", min=1, max=9999, step=1
         )
         batch_layout = QHBoxLayout()
         batch_layout.addLayout(self.batch_count_layout)
@@ -30,10 +28,10 @@ class SDCommonWidget(QWidget):
 
         # base/max size adjustment
         self.base_size_layout = QSpinBoxLayout(
-            script, "sd_base_size", label="Base size:", min=64, max=8192, step=64
+            script.cfg, "sd_base_size", label="Base size:", min=64, max=8192, step=64
         )
         self.max_size_layout = QSpinBoxLayout(
-            script, "sd_max_size", label="Max size:", min=64, max=8192, step=64
+            script.cfg, "sd_max_size", label="Max size:", min=64, max=8192, step=64
         )
         size_layout = QHBoxLayout()
         size_layout.addLayout(self.base_size_layout)
@@ -41,25 +39,25 @@ class SDCommonWidget(QWidget):
 
         # global upscaler
         self.upscaler_layout = QComboBoxLayout(
-            script, "upscaler_list", "upscaler_name", label="Upscaler:"
+            script.cfg, "upscaler_list", "upscaler_name", label="Upscaler:"
         )
 
         # Restore faces
         self.face_restorer_layout = QComboBoxLayout(
-            script,
+            script.cfg,
             "face_restorer_model_list",
             "face_restorer_model",
             label="Face restorer:",
         )
         self.codeformer_weight_layout = QSpinBoxLayout(
-            script,
+            script.cfg,
             "codeformer_weight",
             label="CodeFormer weight (max 0, min 1):",
             step=0.01,
         )
 
         # Tiling mode
-        self.tiling = QCheckBox("Tiling mode")
+        self.tiling = QCheckBox(script.cfg, "sd_tiling", "Tiling mode")
 
         layout = QVBoxLayout()
         layout.addWidget(title)
@@ -82,7 +80,7 @@ class SDCommonWidget(QWidget):
         self.upscaler_layout.cfg_init()
         self.face_restorer_layout.cfg_init()
         self.codeformer_weight_layout.cfg_init()
-        self.tiling.setChecked(script.cfg("sd_tiling", bool))
+        self.tiling.cfg_init()
 
     def cfg_connect(self):
         self.sd_model_layout.cfg_connect()
@@ -92,8 +90,8 @@ class SDCommonWidget(QWidget):
         self.max_size_layout.cfg_connect()
         self.upscaler_layout.cfg_connect()
         self.face_restorer_layout.cfg_connect()
-        self.codeformer_weight_layout.cfg_init()
-        self.tiling.toggled.connect(partial(script.cfg.set, "sd_tiling"))
+        self.codeformer_weight_layout.cfg_connect()
+        self.tiling.cfg_connect()
 
         # Hide codeformer_weight when model isnt codeformer
         def toggle_codeformer_weights(visible):

@@ -1,16 +1,17 @@
 from functools import partial
+from math import isclose
 from typing import Union
 
 from krita import QDoubleSpinBox, QHBoxLayout, QSpinBox
 
-from ..script import Script
+from ..config import Config
 from .misc import QLabel
 
 
 class QSpinBoxLayout(QHBoxLayout):
     def __init__(
         self,
-        script: Script,
+        cfg: Config,
         field_cfg: str,
         label: str = None,
         min: Union[int, float] = 0.0,
@@ -24,7 +25,7 @@ class QSpinBoxLayout(QHBoxLayout):
         Will infer which to use based on type of min, max and step.
 
         Args:
-            script (Script): Script to connect to.
+            cfg (Config): Config to connect to.
             field_cfg (str): Config key to read/write value to.
             label (str, optional): Label, uses `field_cfg` if None. Defaults to None.
             min (Union[int, float], optional): Min value. Defaults to 0.0.
@@ -33,7 +34,7 @@ class QSpinBoxLayout(QHBoxLayout):
         """
         super(QSpinBoxLayout, self).__init__(*args, **kwargs)
 
-        self.script = script
+        self.cfg = cfg
         self.field_cfg = field_cfg
 
         self.qlabel = QLabel(field_cfg if label is None else label)
@@ -53,7 +54,11 @@ class QSpinBoxLayout(QHBoxLayout):
         self.addWidget(self.qspin)
 
     def cfg_init(self):
-        self.qspin.setValue(self.script.cfg(self.field_cfg, self.cast))
+        val = self.cfg(self.field_cfg, self.cast)
+        cur = self.qspin.value()
+        # prevent cursor from jumping when cfg_init is called by update
+        if not isclose(val, cur):
+            self.qspin.setValue(self.cfg(self.field_cfg, self.cast))
 
     def cfg_connect(self):
-        self.qspin.valueChanged.connect(partial(self.script.cfg.set, self.field_cfg))
+        self.qspin.valueChanged.connect(partial(self.cfg.set, self.field_cfg))

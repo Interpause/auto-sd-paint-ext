@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from PIL import Image, ImageOps
 from webui import modules, shared
 
+from .script_hack import get_script_info, get_scripts_metadata, process_script_args
 from .structs import (
     ConfigResponse,
     ImageResponse,
@@ -34,9 +35,19 @@ app = FastAPI()
 
 log = logging.getLogger(__name__)
 
+# NOTE: how to run a script
+# - get scripts_txt2img/scripts_img2img from modules.scripts
+# - construct array args, where 0th element is selected script
+# - refer to script.args_from & script.args_to to figure out which elements in
+#   array args to populate
+#
+# The way scripts are handled is they are loaded one by one, append to a list of
+# scripts, which each script taking up "slots" in the input args array.
+# So the more scripts, the longer array args would be for the last script.
+
 
 @app.get("/config", response_model=ConfigResponse)
-async def read_item():
+async def get_state():
     """Get information about backend API.
 
     Returns config from `krita_config.yaml`, other metadata,
@@ -45,8 +56,6 @@ async def read_item():
     Returns:
         Dict: information.
     """
-    # TODO:
-    # - function and route name isn't descriptive, feels more like get_state()
     opt = load_config().plugin
     prepare_backend(opt)
 
@@ -59,6 +68,8 @@ async def read_item():
         "samplers_img2img": [
             sampler.name for sampler in modules.sd_samplers.samplers_for_img2img
         ],
+        "scripts_txt2img": get_scripts_metadata(False),
+        "scripts_img2img": get_scripts_metadata(True),
         "face_restorers": [model.name() for model in shared.face_restorers],
         "sd_models": modules.sd_models.checkpoint_tiles(),  # yes internal API has spelling error
     }
@@ -79,6 +90,9 @@ async def f_txt2img(req: Txt2ImgRequest):
     opt = load_config().txt2img
     req = merge_default_config(req, opt)
     prepare_backend(req)
+
+    script_ind, script, meta = get_script_info(req.script, False)
+    args = process_script_args(script_ind, script, meta, req.script_args)
 
     width, height = sddebz_highres_fix(
         req.base_size, req.max_size, req.orig_width, req.orig_height
@@ -108,11 +122,10 @@ async def f_txt2img(req: Txt2ImgRequest):
         req.denoising_strength,  # denoising_strength: only applicable if high res fix in use
         req.firstphase_width,  # firstphase_width
         req.firstphase_height,  # firstphase_height (yes its inconsistently width/height first)
-        # *args below
-        0,  # selects which script to use. 0 to not run any.
+        *args,
     )
 
-    if not req.include_grid and len(output_images) > 1:
+    if not req.include_grid and len(output_images) > 1 and script_ind == 0:
         output_images = output_images[1:]
 
     log.info(
@@ -155,16 +168,21 @@ async def f_img2img(req: Img2ImgRequest):
     req = merge_default_config(req, opt)
     prepare_backend(req)
 
+    script_ind, script, meta = get_script_info(req.script, True)
+    args = process_script_args(script_ind, script, meta, req.script_args)
+
     image = b64_to_img(req.src_img)
     mask = prepare_mask(b64_to_img(req.mask_img)) if req.mode == 1 else None
 
     orig_width, orig_height = image.size
 
-    # Disabled as SD upscale is now a script, not builtin
-    if False and req.mode == 2:
-        width, height = req.base_size, req.base_size
-        if upscaler_index > 0:
-            image = image.convert("RGB")
+    if script and script.title() == "SD upscale":
+        # in SD upscale mode, width & height determines tile size
+        width = height = req.base_size
+        # SD scales by 2x image size; we alr scaled up in Krita so downscale here
+        image = image.resize((image.width // 2, image.height // 2))
+        if mask:
+            mask = mask.resize((image.width // 2, image.height // 2))
     else:
         width, height = sddebz_highres_fix(
             req.base_size, req.max_size, orig_width, orig_height
@@ -214,14 +232,10 @@ async def f_img2img(req: Img2ImgRequest):
         req.invert_mask,  # inpainting_mask_invert
         "",  # img2img_batch_input_dir (unspported)
         "",  # img2img_batch_output_dir (unspported)
-        # Disabled as SD upscale is now a script, not builtin
-        # get_upscaler_index(req.upscaler_name),
-        # req.upscale_overlap,
-        # *args below
-        0,  # selects which script to use. 0 to not run any.
+        *args,
     )
 
-    if not req.include_grid and len(output_images) > 1:
+    if not req.include_grid and len(output_images) > 1 and script_ind == 0:
         output_images = output_images[1:]
 
     log.info(

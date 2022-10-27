@@ -16,11 +16,12 @@ STATE_INPAINT = "inpaint done!"
 STATE_UPSCALE = "upscale done!"
 
 # Other currently hardcoded stuff
-GET_CONFIG_TIMEOUT = 2  # 2 second timeout as getting config should be near instant
-POST_TIMEOUT = None  # post might take forever depending on batch size/count
-REFRESH_INTERVAL = 1000  # 4 seconds between auto-config refresh
+GET_CONFIG_TIMEOUT = 10  # there is prevention for get request accumulation
+POST_TIMEOUT = None  # post might take "forever" depending on batch size/count
+REFRESH_INTERVAL = 3000  # 3 seconds between auto-config refresh
 CFG_FOLDER = "krita"  # which folder in ~/.config to store config
 CFG_NAME = "krita_diff_plugin"  # name of config file
+EXT_CFG_NAME = "krita_diff_plugin_scripts"  # name of config file
 # selection mask can only be added after image is added, so timeout is needed
 ADD_MASK_TIMEOUT = 200
 THREADED = True
@@ -67,6 +68,8 @@ class Defaults:
     txt2img_denoising_strength: float = 0.7
     txt2img_seed: str = ""
     txt2img_highres: bool = False
+    txt2img_script: str = "None"
+    txt2img_script_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
     # TODO: Seed variation
 
     img2img_prompt: str = ""
@@ -78,6 +81,8 @@ class Defaults:
     img2img_denoising_strength: float = 0.8
     img2img_seed: str = ""
     img2img_color_correct: bool = False
+    img2img_script: str = "None"
+    img2img_script_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
 
     inpaint_prompt: str = ""
     inpaint_negative_prompt: str = ""
@@ -97,6 +102,8 @@ class Defaults:
     inpaint_full_res: bool = False
     inpaint_full_res_padding: int = 32
     inpaint_color_correct: bool = True
+    inpaint_script: str = "None"
+    inpaint_script_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
 
     upscale_upscaler_name: str = "None"
     upscale_downscale_first: bool = False
