@@ -205,9 +205,7 @@ async def f_img2img(req: Img2ImgRequest):
         {"image": image, "mask": mask},  # init_img_with_mask
         image,  # init_img_inpaint
         mask,  # init_mask_inpaint
-        0
-        if req.alpha_mask
-        else -1,  # mask_mode: internally checks if equal 0. enables Alpha Mask but idk what it does.
+        0,  # mask_mode: internally checks if equal 0. enables Alpha Mask but idk what it does.
         req.steps,  # steps
         get_sampler_index(req.sampler_name),  # sampler_index
         req.mask_blur,  # mask_blur
