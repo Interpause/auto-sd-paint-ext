@@ -7,7 +7,7 @@ import logging
 from typing import List, Tuple
 
 import gradio as gr
-from webui import modules
+import modules
 
 log = logging.getLogger(__name__)
 

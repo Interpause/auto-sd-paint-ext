@@ -101,7 +101,7 @@ class Defaults:
     inpaint_fill: str = "preserve"
     inpaint_full_res: bool = False
     inpaint_full_res_padding: int = 32
-    inpaint_color_correct: bool = True
+    inpaint_color_correct: bool = False
     inpaint_script: str = "None"
     inpaint_script_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
 

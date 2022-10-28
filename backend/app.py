@@ -4,9 +4,10 @@ import logging
 import os
 import time
 
+import modules
 from fastapi import FastAPI
+from modules import shared
 from PIL import Image, ImageOps
-from webui import modules, shared
 
 from .script_hack import get_script_info, get_scripts_metadata, process_script_args
 from .structs import (

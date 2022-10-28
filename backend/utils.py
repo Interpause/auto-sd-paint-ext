@@ -7,23 +7,24 @@ from base64 import b64decode, b64encode
 from io import BytesIO
 from math import ceil
 
+import modules
 import yaml
+from modules import shared
 from PIL import Image
 from pydantic import BaseModel
-from webui import modules, shared
 
 from .config import MainConfig
 
 log = logging.getLogger(__name__)
 
-CONFIG_PATH = "krita_config.yaml"
+CONFIG_PATH = "auto-sd-paint-ext-backend.yaml"
 
 
 def load_config():
     """Load default config (including those not exposed in the API yet) from
-    `krita_config.yaml` in the current working directory.
+    `CONFIG_PATH` in the current working directory.
 
-    Will create `krita_config.yaml` if it has yet to exist using `MainConfig` from
+    Will create `CONFIG_PATH` if it has yet to exist using `MainConfig` from
     `config.py`.
 
     Returns:
