@@ -61,13 +61,13 @@ class SDCommonWidget(QWidget):
 
         layout = QVBoxLayout()
         layout.addWidget(title)
-        layout.addLayout(self.sd_model_layout)
-        layout.addLayout(batch_layout)
-        layout.addLayout(size_layout)
         layout.addLayout(self.upscaler_layout)
         layout.addLayout(self.face_restorer_layout)
         layout.addLayout(self.codeformer_weight_layout)
         layout.addWidget(self.tiling)
+        layout.addLayout(self.sd_model_layout)
+        layout.addLayout(batch_layout)
+        layout.addLayout(size_layout)
 
         self.setLayout(layout)
 
