@@ -34,7 +34,6 @@ Usage & Workflow Demo:
 - The URL is different now, so reset "Backend URL" to default under the Config tab.
 - It is now an AUTOMATIC1111 extension.
   - Do <https://github.com/Interpause/auto-sd-krita/wiki/Quick-Switch-Using-Existing-AUTOMATIC1111-Install> in reverse for a quick fix.
-- The plugin/extension will no longer auto-update, refer to <https://github.com/Interpause/auto-sd-paint-ext/wiki/Update-Guide>.
 - `krita_config.yaml` was renamed to `auto-sd-paint-ext-backend.yaml`.
 
 ## FAQ
