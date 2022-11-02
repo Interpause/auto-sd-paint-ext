@@ -1,10 +1,13 @@
 import logging
+from pathlib import Path
 
 import backend
 import gradio as gr
 from backend.config import LOGGER_NAME, ROUTE_PREFIX, SCRIPT_ID, SCRIPT_NAME
 from fastapi import FastAPI
 from modules import script_callbacks, scripts, shared
+
+PLUGIN_LOCATION = Path(scripts.basedir()) / "frontends" / "krita"
 
 
 class BackendScript(scripts.Script):
@@ -15,8 +18,7 @@ class BackendScript(scripts.Script):
         return scripts.AlwaysVisible
 
     def ui(self, is_img2img):
-        text = gr.Text(label="No UI for now!")
-        return [text]
+        return []
 
     def process(self, _):
         pass
@@ -43,12 +45,76 @@ def on_ui_settings():
     pass
 
 
+def krita_help(folder):
+    return f"""
+        Search for "Command Prompt" in the Start Menu, right-click and click "Run as Administrator...", paste the follow commands and hit Enter:
+        ```bat
+        cd {"<path_to_pykrita>" if not bool(folder) else folder}
+        mklink /j krita_diff {(PLUGIN_LOCATION / "krita_diff").resolve()}
+        mklink krita_diff.desktop {(PLUGIN_LOCATION / "krita_diff.desktop").resolve()}
+        ```
+
+        Linux command:
+        ```sh
+        cd {"<path_to_pykrita>" if not bool(folder) else folder}
+        ln -s {(PLUGIN_LOCATION / "krita_diff").resolve()} krita_diff
+        ln -s {(PLUGIN_LOCATION / "krita_diff.desktop").resolve()} krita_diff.desktop
+        ```
+        """
+
+
 def on_ui_tabs():
     # hook to create our own UI tab
     with gr.Blocks(analytics_enabled=False) as interface:
-        text = gr.Text(label="No UI for now!")
+        gr.Markdown(
+            """
+        ### Generate Krita Plugin Symlink Command
 
-    return [(interface, SCRIPT_NAME, SCRIPT_ID)]
+        1. Launch Krita.
+        2. On the menubar, go to `Settings > Manage Resources...`.
+        3. In the window that appears, click `Open Resource Folder`.
+        4. In the file explorer that appears, look for a folder called `pykrita` or create it.
+        5. Enter the `pykrita` folder and copy the folder location from the address bar.
+        6. Paste the folder location below.
+        """
+        )
+        folder = gr.Textbox(
+            placeholder="C:\\\\...\\pykrita", label="Pykrita Folder Location", lines=1
+        )
+        out = gr.Markdown(krita_help(""))
+        folder.change(krita_help, folder, out)
+        gr.Markdown(
+            """
+        **NOTE**: Symlinks will break if you move or rename the repository or any 
+        of its parent folders or otherwise change the path such that the symlink 
+        becomes invalid. In which case, repeat the above steps with the new `pykrita` 
+        folder location and (auto-detected) repository location.
+
+        **NOTE**: Ensure `webui-user.bat`/`webui-user.sh` contains `--api` in `COMMANDLINE_ARGS`!
+        """
+        )
+        gr.Markdown(
+            """
+            ### Enabling the Krita Plugin
+
+            1. Restart Krita.
+            2. On the menubar, go to `Settings > Configure Krita...`
+            3. On the left sidebar, go to `Python Plugin Manager`.
+            4. Look for `Stable Diffusion Plugin` and tick the checkbox.
+            5. Restart Krita again for changes to take effect.
+
+            The `SD Plugin` docked window should appear on the left of the Krita window. If it does not, look on the menubar under `Settings > Dockers` for `SD Plugin`.
+
+            ### Next Steps
+
+            - [Troubleshooting](https://github.com/Interpause/auto-sd-paint-ext/wiki/Troubleshooting)
+            - [Update Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Update-Guide)
+            - [Usage Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Usage-Guide)
+            """
+        )
+        gr.Markdown("TODO: Control/status panel")
+
+    return [(interface, "auto-sd-paint-ext Guide/Panel", SCRIPT_ID)]
 
 
 # NOTE: see modules/script_callbacks.py for all callbacks
