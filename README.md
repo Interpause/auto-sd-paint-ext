@@ -17,6 +17,7 @@ Why use this?
 - Full Installation & Workflow Tutorial Video! (Coming Soon...)
 - [Installation Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Install-Guide)
 - [Usage Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Usage-Guide)
+- [Update Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Update-Guide)
 - [Features](https://github.com/Interpause/auto-sd-paint-ext/wiki/Features)
 - [TODO](https://github.com/Interpause/auto-sd-paint-ext/wiki/TODO)
 - [Contribution Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Contribution-Guide)
@@ -26,6 +27,14 @@ Usage & Workflow Demo:
 **Update**: The UI no longer freezes during image generation!
 
 [![Youtube Video](http://img.youtube.com/vi/nP8MuRwcDN8/0.jpg)](https://youtu.be/nP8MuRwcDN8 "Inpaint like a pro with Stable Diffusion! auto-sd-krita workflow guide")
+
+## Breaking Changes
+
+- The URL is different now, so reset "Backend URL" to default under the Config tab.
+- It is now an AUTOMATIC1111 extension.
+  - Do <https://github.com/Interpause/auto-sd-krita/wiki/Quick-Switch-Using-Existing-AUTOMATIC1111-Install> in reverse for a quick fix.
+- The plugin/extension will no longer auto-update, refer to <https://github.com/Interpause/auto-sd-paint-ext/wiki/Update-Guide>.
+- `krita_config.yaml` was renamed to `auto-sd-paint-ext-backend.yaml`.
 
 ## FAQ
 
@@ -64,6 +73,10 @@ Q: Will it work with other Krita plugin backends?
 A: Unfortunately no, all plugins so far have different APIs. The official API is coming soon though...
 
 ## UI Changelog
+
+### 2022-10-31
+
+- Moved base size/max size & some other quick config options based on user feedback.
 
 ### 2022-10-25
 
