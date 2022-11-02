@@ -1,28 +1,25 @@
-# auto-sd-krita
+# auto-sd-paint-ext
 
-> AUTOMATIC1111's webUI + Krita Plugin
+Formerly known as `auto-sd-krita`.
+
+> Extension for AUTOMATIC1111's webUI with Krita Plugin (other drawing studios soon?)
 
 ![demo image](https://user-images.githubusercontent.com/42513874/194701722-e7a3f7eb-be4a-4f43-93a5-480835c9260f.jpg)
 
 Why use this?
 
-- Optimized focus inpainting workflow allowing multiple models to be used for advanced composition of multiple characters.
-- AUTOMATIC1111's webUI works alongside plugin to allow using features not available yet in the plugin's UI without restarting.
-- Updated regularly with upstream AUTOMATIC1111's features & fixes.
-
-This repository was originally a fork of [sddebz/stable-diffusion-krita-plugin](https://github.com/sddebz/stable-diffusion-krita-plugin), which is itself a fork of [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui), the most featureful & performant SD fork yet. The main value adds are fixing the commit history, thoroughly refactoring the plugin code for future development, and maintenance.
+- Optimized workflow & UI design.
+- Only drawing studio plugin that exposes the Script API.
+- idk come up with more reasons.
 
 ## Quick Jump
 
 - Full Installation & Workflow Tutorial Video! (Coming Soon...)
-- [Installation Guide](https://github.com/Interpause/auto-sd-krita/wiki/Install-Guide)
-  - Similar in difficulty to AUTOMATIC1111 + 1 extra step
-- [Test out auto-sd-krita with Existing AUTOMATIC1111 Install!](https://github.com/Interpause/auto-sd-krita/wiki/Quick-Switch-Using-Existing-AUTOMATIC1111-Install)
-- [Usage Guide](https://github.com/Interpause/auto-sd-krita/wiki/Usage-Guide)
-- [Features](https://github.com/Interpause/auto-sd-krita/wiki/Features)
-- [TODO](https://github.com/Interpause/auto-sd-krita/wiki/TODO)
-- [Contribution Guide](https://github.com/Interpause/auto-sd-krita/wiki/Contribution-Guide)
-- Use Google Colab as the plugin backend: https://github.com/danilw/Krita-StableDiffusion-WebUI-Colab
+- [Installation Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Install-Guide)
+- [Usage Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Usage-Guide)
+- [Features](https://github.com/Interpause/auto-sd-paint-ext/wiki/Features)
+- [TODO](https://github.com/Interpause/auto-sd-paint-ext/wiki/TODO)
+- [Contribution Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Contribution-Guide)
 
 Usage & Workflow Demo:
 
@@ -31,18 +28,6 @@ Usage & Workflow Demo:
 [![Youtube Video](http://img.youtube.com/vi/nP8MuRwcDN8/0.jpg)](https://youtu.be/nP8MuRwcDN8 "Inpaint like a pro with Stable Diffusion! auto-sd-krita workflow guide")
 
 ## FAQ
-
-Q: How hard is it to install?
-
-A: It is basically AUTOMATIC1111 + a few extra steps. aka almost one-click install.
-
-<hr/>
-
-Q: How hard is it to run?
-
-A: The launch process is exactly the same as AUTOMATIC1111, to the point the Gradio webUI functions normally.
-
-<hr/>
 
 Q: How does the base_size, max_size system work?
 
@@ -70,7 +55,7 @@ A: No, it shares the same backend. Both the Krita plugin and webUI can be used c
 
 Q: How can you commit to updating regularly?
 
-A: The plugin builds on top the internal API without modifying it, and good documentation practices facilitate adapting to upstream changes and bugfixing.
+A: It is easy for me.
 
 <hr/>
 
