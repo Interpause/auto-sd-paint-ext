@@ -69,8 +69,8 @@ class ConfigTabWidget(QWidget):
             <em>Tip:</em> You should look through & configure all the backend/webUI settings at least once.
             <br/><br/>
             <a href="http://127.0.0.1:7860/" target="_blank">Configure all settings in webUI</a><br/>
-            <a href="https://github.com/Interpause/auto-sd-krita/wiki" target="_blank">Read the guide</a><br/>
-            <a href="https://github.com/Interpause/auto-sd-krita/issues" target="_blank">Report bugs or suggest features</a>
+            <a href="https://github.com/Interpause/auto-sd-paint-ext/wiki" target="_blank">Read the guide</a><br/>
+            <a href="https://github.com/Interpause/auto-sd-paint-ext/issues" target="_blank">Report bugs or suggest features</a>
             """
         )
         info_label.setOpenExternalLinks(True)
