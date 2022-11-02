@@ -12,6 +12,7 @@ from .defaults import (
     ERR_NO_CONNECTION,
     GET_CONFIG_TIMEOUT,
     POST_TIMEOUT,
+    ROUTE_PREFIX,
     STATE_READY,
     STATE_URLERROR,
     THREADED,
@@ -20,6 +21,14 @@ from .utils import fix_prompt, get_ext_args, get_ext_key, img_to_b64
 
 # NOTE: backend queues up responses, so no explicit need to block multiple requests
 # except to prevent user from spamming themselves
+
+
+def get_url(cfg: Config, route: str = ...):
+    url = urljoin(cfg("base_url", str), ROUTE_PREFIX)
+    if route is not ...:
+        url = urljoin(url, route)
+    # print(url)
+    return url
 
 
 # krita doesn't reexport QtNetwork
@@ -132,9 +141,9 @@ class Client(QObject):
         if not self.is_connected:
             self.status.emit(ERR_NO_CONNECTION)
             return
-        base_url = self.cfg("base_url", str) if base_url is ... else base_url
+        url = get_url(self.cfg, route) if base_url is ... else urljoin(base_url, route)
         # TODO: how to cancel this? destroy the thread?
-        req, start = AsyncRequest.request(urljoin(base_url, route), body, POST_TIMEOUT)
+        req, start = AsyncRequest.request(url, body, POST_TIMEOUT)
         self.reqs.append(req)
         req.finished.connect(lambda: self.reqs.remove(req))
         req.result.connect(cb)
@@ -218,7 +227,7 @@ class Client(QObject):
             return
 
         req, start = AsyncRequest.request(
-            urljoin(self.cfg("base_url", str), "config"), None, GET_CONFIG_TIMEOUT
+            get_url(self.cfg, "config"), None, GET_CONFIG_TIMEOUT
         )
         self.reqs.append(req)
         req.finished.connect(lambda: self.reqs.remove(req))
@@ -250,7 +259,7 @@ class Client(QObject):
                 script_args=ext_args,
             )
 
-        self.post("/txt2img", params, cb)
+        self.post("txt2img", params, cb)
 
     def post_img2img(self, cb, src_img, mask_img, has_selection):
         params = dict(
@@ -278,7 +287,7 @@ class Client(QObject):
                 seed=seed,
             )
 
-        self.post("/img2img", params, cb)
+        self.post("img2img", params, cb)
 
     def post_inpaint(self, cb, src_img, mask_img, has_selection):
         params = dict(
@@ -315,7 +324,7 @@ class Client(QObject):
                 include_grid=False,  # it is never useful for inpaint mode
             )
 
-        self.post("/img2img", params, cb)
+        self.post("img2img", params, cb)
 
     def post_upscale(self, cb, src_img):
         params = (
@@ -327,4 +336,4 @@ class Client(QObject):
             if not self.cfg("just_use_yaml", bool)
             else {"src_img": img_to_b64(src_img)}
         )
-        self.post("/upscale", params, cb)
+        self.post("upscale", params, cb)

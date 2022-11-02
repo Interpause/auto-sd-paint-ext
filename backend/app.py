@@ -5,10 +5,11 @@ import os
 import time
 
 import modules
-from fastapi import FastAPI
+from fastapi import APIRouter
 from modules import shared
 from PIL import Image, ImageOps
 
+from .config import LOGGER_NAME
 from .script_hack import get_script_info, get_scripts_metadata, process_script_args
 from .structs import (
     ConfigResponse,
@@ -32,9 +33,9 @@ from .utils import (
     sddebz_highres_fix,
 )
 
-app = FastAPI()
+router = APIRouter()
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(LOGGER_NAME)
 
 # NOTE: how to run a script
 # - get scripts_txt2img/scripts_img2img from modules.scripts
@@ -47,7 +48,7 @@ log = logging.getLogger(__name__)
 # So the more scripts, the longer array args would be for the last script.
 
 
-@app.get("/config", response_model=ConfigResponse)
+@router.get("/config", response_model=ConfigResponse)
 async def get_state():
     """Get information about backend API.
 
@@ -76,7 +77,7 @@ async def get_state():
     }
 
 
-@app.post("/txt2img", response_model=ImageResponse)
+@router.post("/txt2img", response_model=ImageResponse)
 async def f_txt2img(req: Txt2ImgRequest):
     """Post request for Txt2Img.
 
@@ -153,7 +154,7 @@ async def f_txt2img(req: Txt2ImgRequest):
     return {"outputs": outputs, "info": info}
 
 
-@app.post("/img2img", response_model=ImageResponse)
+@router.post("/img2img", response_model=ImageResponse)
 async def f_img2img(req: Img2ImgRequest):
     """Post request for Img2Img.
 
@@ -272,7 +273,7 @@ async def f_img2img(req: Img2ImgRequest):
     return {"outputs": outputs, "info": info}
 
 
-@app.post("/upscale", response_model=UpscaleResponse)
+@router.post("/upscale", response_model=UpscaleResponse)
 async def f_upscale(req: UpscaleRequest):
     """Post request for upscaling.
 

@@ -25,6 +25,7 @@ EXT_CFG_NAME = "krita_diff_plugin_scripts"  # name of config file
 # selection mask can only be added after image is added, so timeout is needed
 ADD_MASK_TIMEOUT = 200
 THREADED = True
+ROUTE_PREFIX = "/sdapi/interpause/"
 
 # error messages
 ERR_MISSING_CONFIG = "Report this bug, developer missed out a config key somewhere."
@@ -34,7 +35,7 @@ ERR_NO_CONNECTION = "Cannot reach backend!"
 
 @dataclass(frozen=True)
 class Defaults:
-    base_url: str = "http://127.0.0.1:8000"
+    base_url: str = "http://127.0.0.1:7860"
     just_use_yaml: bool = False
     create_mask_layer: bool = True
     save_temp_images: bool = False

@@ -9,7 +9,9 @@ from typing import List, Tuple
 import gradio as gr
 import modules
 
-log = logging.getLogger(__name__)
+from .config import LOGGER_NAME
+
+log = logging.getLogger(LOGGER_NAME)
 
 
 def inspect_ui(script: modules.scripts.Script, is_img2img: bool):

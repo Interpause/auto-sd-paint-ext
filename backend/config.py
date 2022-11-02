@@ -4,7 +4,11 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-# NOTE: I changed some field names from krita_config.yaml to match the API endpoints
+SCRIPT_NAME = "Interpause Backend API"
+SCRIPT_ID = "interpause_backend_api"
+ROUTE_PREFIX = "/sdapi/interpause"
+CONFIG_PATH = "auto-sd-paint-ext-backend.yaml"
+LOGGER_NAME = "auto-sd-paint-ext"
 
 
 class BaseOptions(BaseModel):

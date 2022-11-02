@@ -13,11 +13,9 @@ from modules import shared
 from PIL import Image
 from pydantic import BaseModel
 
-from .config import MainConfig
+from .config import CONFIG_PATH, LOGGER_NAME, MainConfig
 
-log = logging.getLogger(__name__)
-
-CONFIG_PATH = "auto-sd-paint-ext-backend.yaml"
+log = logging.getLogger(LOGGER_NAME)
 
 
 def load_config():
