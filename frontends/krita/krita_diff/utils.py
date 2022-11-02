@@ -26,7 +26,12 @@ def get_ext_key(ext_type: str, ext_name: str, index: int = None):
 
 def get_ext_args(ext_cfg: Config, ext_type: str, ext_name: str):
     """Get args for script in positional list form."""
-    meta = json.loads(ext_cfg(get_ext_key(ext_type, ext_name)))
+    raw = ext_cfg(get_ext_key(ext_type, ext_name))
+    meta = []
+    try:
+        meta = json.loads(raw)
+    except json.JSONDecodeError:
+        print(f"Invalid metadata: {raw}")
     args = []
     for i, o in enumerate(meta):
         typ = type(o["val"])
