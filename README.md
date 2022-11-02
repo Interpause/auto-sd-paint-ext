@@ -8,9 +8,10 @@ Formerly known as `auto-sd-krita`.
 
 Why use this?
 
-- Optimized workflow & UI design.
+- Optimized workflow (txt2img, img2img, inpaint, outpaint, upscale) & UI design.
 - Only drawing studio plugin that exposes the Script API.
-- idk come up with more reasons.
+- Easily create/save profiles (prompts, samplers, model, etc used).
+- Some of the above isn't actually implemented yet.
 
 ## Quick Jump
 
