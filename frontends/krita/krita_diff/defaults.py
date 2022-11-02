@@ -44,7 +44,8 @@ class Defaults:
     filter_nsfw: bool = False
     do_exact_steps: bool = True
     sample_path: str = "."
-    tab_index: int = 2
+    tab_index: int = 5
+    minimize_ui: bool = False
 
     sd_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
     sd_model: str = "model.ckpt"

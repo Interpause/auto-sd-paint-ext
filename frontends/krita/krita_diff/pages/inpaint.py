@@ -1,7 +1,7 @@
 from krita import QHBoxLayout, QPushButton
 
 from ..script import script
-from ..widgets import QCheckBox, QComboBoxLayout, QLabel, QSpinBoxLayout
+from ..widgets import QCheckBox, QComboBoxLayout, QSpinBoxLayout, TipsLayout
 from .img_base import ImgTabBaseWidget
 
 
@@ -37,21 +37,20 @@ class InpaintTabWidget(ImgTabBaseWidget):
         inline2.addWidget(self.full_res)
         inline2.addLayout(self.full_res_padding_layout)
 
+        self.tips = TipsLayout(
+            [
+                "Ensure the inpaint layer is selected.",
+                "Select what the model will see when inpainting. <em>Inpaint full res</em> is unnecessary.",
+            ]
+        )
         self.btn = QPushButton("Start inpaint")
 
         self.layout.addLayout(inline1)
         self.layout.addLayout(self.fill_layout)
         self.layout.addLayout(inline2)
-        self.layout.addWidget(
-            QLabel("<em>Tip:</em> Ensure the inpaint layer is selected.")
-        )
-        self.layout.addWidget(
-            QLabel(
-                "<em>Tip:</em> Select what the model will see when inpainting. <em>Inpaint full res</em> is unnecessary."
-            )
-        )
-        self.layout.addStretch()
         self.layout.addWidget(self.btn)
+        self.layout.addLayout(self.tips)
+        self.layout.addStretch()
 
     def cfg_init(self):
         super(InpaintTabWidget, self).cfg_init()
@@ -60,6 +59,8 @@ class InpaintTabWidget(ImgTabBaseWidget):
         self.full_res_padding_layout.cfg_init()
         self.invert_mask.cfg_init()
         self.full_res.cfg_init()
+
+        self.tips.setVisible(not script.cfg("minimize_ui", bool))
 
     def cfg_connect(self):
         super(InpaintTabWidget, self).cfg_connect()

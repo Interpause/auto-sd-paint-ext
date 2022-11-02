@@ -1,6 +1,6 @@
 from functools import partial
 
-from krita import QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from krita import QHBoxLayout, QLineEdit, QPushButton, QScrollArea, QVBoxLayout, QWidget
 
 from ..defaults import DEFAULTS
 from ..script import script
@@ -41,6 +41,7 @@ class ConfigTabWidget(QWidget):
         self.include_grid = QCheckBox(
             script.cfg, "include_grid", "Include grid for txt2img and img2img"
         )
+        self.minimize_ui = QCheckBox(script.cfg, "minimize_ui", "Minimize parts of UI")
 
         # webUI/backend settings
         self.filter_nsfw = QCheckBox(script.cfg, "filter_nsfw", "Filter NSFW content")
@@ -63,41 +64,44 @@ class ConfigTabWidget(QWidget):
         self.refresh_btn = QPushButton("Auto-Refresh Options Now")
         self.restore_defaults = QPushButton("Restore Defaults")
 
-        info_label = QLabel(
-            """
-            <em>Tip:</em> Only a selected few backend/webUI settings are exposed above.<br/>
-            <em>Tip:</em> You should look through & configure all the backend/webUI settings at least once.
-            <br/><br/>
-            <a href="http://127.0.0.1:7860/" target="_blank">Configure all settings in webUI</a><br/>
-            <a href="https://github.com/Interpause/auto-sd-paint-ext/wiki" target="_blank">Read the guide</a><br/>
-            <a href="https://github.com/Interpause/auto-sd-paint-ext/issues" target="_blank">Report bugs or suggest features</a>
-            """
-        )
-        info_label.setOpenExternalLinks(True)
-        info_label.setWordWrap(True)
+        self.info_label = QLabel()
+        self.info_label.setOpenExternalLinks(True)
+        self.info_label.setWordWrap(True)
+
+        # scroll_area = QScrollArea()
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout_inner = QVBoxLayout()
+        layout_inner.setContentsMargins(0, 0, 0, 0)
 
+        layout_inner.addWidget(QLabel("<em>Plugin settings:</em>"))
+        layout_inner.addWidget(self.create_mask_layer)
+        layout_inner.addWidget(self.fix_aspect_ratio)
+        layout_inner.addWidget(self.only_full_img_tiling)
+        layout_inner.addWidget(self.include_grid)
+        layout_inner.addWidget(self.save_temp_images)
+        layout_inner.addWidget(self.just_use_yaml)
+        layout_inner.addWidget(self.minimize_ui)
+
+        layout_inner.addWidget(QLabel("<em>Backend/webUI settings:</em>"))
+        layout_inner.addWidget(self.filter_nsfw)
+        layout_inner.addWidget(self.img2img_color_correct)
+        layout_inner.addWidget(self.inpaint_color_correct)
+        layout_inner.addWidget(self.do_exact_steps)
+
+        # TODO: figure out how to set height of scroll area when there are too many options
+        # or maybe an option search bar
+        # scroll_area.setLayout(layout_inner)
+        # scroll_area.setWidgetResizable(True)
+        # layout.addWidget(scroll_area)
         layout.addWidget(QLabel("<em>Backend url:</em>"))
         layout.addLayout(inline1)
-
-        layout.addWidget(QLabel("<em>Plugin settings:</em>"))
-        layout.addWidget(self.just_use_yaml)
-        layout.addWidget(self.create_mask_layer)
-        layout.addWidget(self.save_temp_images)
-        layout.addWidget(self.fix_aspect_ratio)
-        layout.addWidget(self.only_full_img_tiling)
-        layout.addWidget(self.include_grid)
-
-        layout.addWidget(QLabel("<em>Backend/webUI settings:</em>"))
-        layout.addWidget(self.filter_nsfw)
-        layout.addWidget(self.img2img_color_correct)
-        layout.addWidget(self.inpaint_color_correct)
-        layout.addWidget(self.do_exact_steps)
-        layout.addStretch()
+        layout.addLayout(layout_inner)
         layout.addWidget(self.refresh_btn)
         layout.addWidget(self.restore_defaults)
-        layout.addWidget(info_label)
+        layout.addWidget(self.info_label)
+        layout.addStretch()
 
         self.setLayout(layout)
 
@@ -117,6 +121,19 @@ class ConfigTabWidget(QWidget):
         self.img2img_color_correct.cfg_init()
         self.inpaint_color_correct.cfg_init()
         self.do_exact_steps.cfg_init()
+        self.minimize_ui.cfg_init()
+
+        info_text = """
+            <em>Tip:</em> Only a selected few backend/webUI settings are exposed above.<br/>
+            <em>Tip:</em> You should look through & configure all the backend/webUI settings at least once.
+            <br/><br/>
+            <a href="http://127.0.0.1:7860/" target="_blank">Configure all settings in webUI</a><br/>
+            <a href="https://github.com/Interpause/auto-sd-paint-ext/wiki" target="_blank">Read the guide</a><br/>
+            <a href="https://github.com/Interpause/auto-sd-paint-ext/issues" target="_blank">Report bugs or suggest features</a>
+            """
+        if script.cfg("minimize_ui", bool):
+            info_text = "\n".join(info_text.split("\n")[-4:-1])
+        self.info_label.setText(info_text)
 
     def cfg_connect(self):
         self.base_url.textChanged.connect(partial(script.cfg.set, "base_url"))
@@ -135,6 +152,7 @@ class ConfigTabWidget(QWidget):
         self.img2img_color_correct.cfg_connect()
         self.inpaint_color_correct.cfg_connect()
         self.do_exact_steps.cfg_connect()
+        self.minimize_ui.cfg_connect()
 
         def update_remote_config():
             script.update_config()
@@ -148,3 +166,5 @@ class ConfigTabWidget(QWidget):
 
         self.refresh_btn.released.connect(update_remote_config)
         self.restore_defaults.released.connect(restore_defaults)
+        # NOTE: crappy workaround because the config system doesnt emit signals
+        self.minimize_ui.toggled.connect(lambda _: self.update_func())

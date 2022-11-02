@@ -12,6 +12,7 @@ from .pages import (
     UpscaleTabWidget,
 )
 from .script import script
+from .style import style
 from .widgets import QLabel
 
 # TODO:
@@ -44,17 +45,21 @@ class SDPluginDocker(DockWidget):
         tabs.addTab(self.inpaint_widget, "Inpaint")
         tabs.addTab(self.upscale_widget, "Upscale")
         tabs.addTab(self.config_widget, "Config")
+        tabs.setTabPosition(QTabWidget.West)
 
         self.status_bar = QLabel()
         self.update_status_bar(STATE_INIT)
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+
         layout.addWidget(self.quick_widget)
         layout.addWidget(self.status_bar)
         layout.addWidget(tabs)
         layout.addStretch()
 
         self.widget = QScrollArea()
+        self.widget.setStyleSheet(style)
         widget = QWidget(self)
         widget.setLayout(layout)
         self.widget.setWidget(widget)

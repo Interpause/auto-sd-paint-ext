@@ -1,18 +1,13 @@
 from krita import QPlainTextEdit, QSizePolicy, QVBoxLayout
 
 from ..config import Config
-from .misc import QLabel
 
 
 class QPromptEdit(QPlainTextEdit):
-    placeholder: str = "Enter prompt..."
-    num_lines: int = 5
-    """height of prompt box in lines"""
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, placeholder="Enter prompt...", num_lines=5, *args, **kwargs):
         super(QPromptEdit, self).__init__(*args, **kwargs)
-        self.setPlaceholderText(self.placeholder)
-        self.setFixedHeight(self.fontMetrics().lineSpacing() * self.num_lines)
+        self.setPlaceholderText(placeholder)
+        self.setFixedHeight(self.fontMetrics().lineSpacing() * num_lines)
         self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Maximum)
 
 
@@ -37,14 +32,10 @@ class QPromptLayout(QVBoxLayout):
         self.prompt_cfg = prompt_cfg
         self.neg_prompt_cfg = neg_prompt_cfg
 
-        self.qlabel_prompt = QLabel(self.prompt_label)
-        self.qedit_prompt = QPromptEdit()
-        self.qlabel_neg_prompt = QLabel(self.neg_prompt_label)
-        self.qedit_neg_prompt = QPromptEdit()
+        self.qedit_prompt = QPromptEdit(placeholder=self.prompt_label)
+        self.qedit_neg_prompt = QPromptEdit(placeholder=self.neg_prompt_label)
 
-        self.addWidget(self.qlabel_prompt)
         self.addWidget(self.qedit_prompt)
-        self.addWidget(self.qlabel_neg_prompt)
         self.addWidget(self.qedit_neg_prompt)
 
     def cfg_init(self):

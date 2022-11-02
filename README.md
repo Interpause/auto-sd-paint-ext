@@ -23,7 +23,7 @@ Why use this?
 - [TODO](https://github.com/Interpause/auto-sd-paint-ext/wiki/TODO)
 - [Contribution Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Contribution-Guide)
 
-Usage & Workflow Demo:
+(Outdated) Usage & Workflow Demo:
 
 **Update**: The UI no longer freezes during image generation!
 

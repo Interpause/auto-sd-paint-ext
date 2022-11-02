@@ -42,6 +42,8 @@ class ImgTabBaseWidget(QWidget):
         inline_layout.addLayout(self.cfg_scale_layout)
 
         self.layout = layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+
         layout.addLayout(self.ext_layout)
         layout.addLayout(self.prompt_layout)
         layout.addLayout(self.seed_layout)

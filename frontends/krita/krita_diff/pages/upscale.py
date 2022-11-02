@@ -19,7 +19,7 @@ class UpscaleTabWidget(QWidget):
             "Downscale image x0.5 before upscaling",
         )
 
-        note = QLabel(
+        self.note = QLabel(
             """
 NOTE:<br/>
  - txt2img & img2img will use the <em>Quick Config</em> Upscaler when needing to scale up.<br/>
@@ -27,22 +27,26 @@ NOTE:<br/>
  - In the future, SD Upscaling will replace this tab! For now, use the WebUI.
             """
         )
-        note.setWordWrap(True)
+        self.note.setWordWrap(True)
 
         self.btn = QPushButton("Start upscaling")
 
         layout = QVBoxLayout()
-        layout.addWidget(note)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        layout.addWidget(self.note)
         layout.addLayout(self.upscaler_layout)
         layout.addWidget(self.downscale_first)
-        layout.addStretch()
         layout.addWidget(self.btn)
+        layout.addStretch()
 
         self.setLayout(layout)
 
     def cfg_init(self):
         self.upscaler_layout.cfg_init()
         self.downscale_first.cfg_init()
+
+        self.note.setVisible(not script.cfg("minimize_ui", bool))
 
     def cfg_connect(self):
         self.upscaler_layout.cfg_connect()

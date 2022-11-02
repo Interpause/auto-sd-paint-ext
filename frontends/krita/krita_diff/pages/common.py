@@ -8,7 +8,7 @@ class SDCommonWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super(SDCommonWidget, self).__init__(*args, **kwargs)
 
-        title = QLabel("<em>Quick Config</em>")
+        self.title = QLabel("<em>Quick Config</em>")
 
         # Model list
         self.sd_model_layout = QComboBoxLayout(
@@ -60,7 +60,9 @@ class SDCommonWidget(QWidget):
         self.tiling = QCheckBox(script.cfg, "sd_tiling", "Tiling mode")
 
         layout = QVBoxLayout()
-        layout.addWidget(title)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        layout.addWidget(self.title)
         layout.addLayout(self.upscaler_layout)
         layout.addLayout(self.face_restorer_layout)
         layout.addLayout(self.codeformer_weight_layout)
@@ -81,6 +83,8 @@ class SDCommonWidget(QWidget):
         self.face_restorer_layout.cfg_init()
         self.codeformer_weight_layout.cfg_init()
         self.tiling.cfg_init()
+
+        self.title.setVisible(not script.cfg("minimize_ui", bool))
 
     def cfg_connect(self):
         self.sd_model_layout.cfg_connect()
