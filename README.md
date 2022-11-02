@@ -4,12 +4,9 @@ Formerly known as `auto-sd-krita`.
 
 > Extension for AUTOMATIC1111's webUI with Krita Plugin (other drawing studios soon?)
 
-Left: Outdated demostration, Right: New UI (TODO: demonstration image)
 Outdated demo | New UI (TODO: demo image)
 --- | ---
 ![demo image](https://user-images.githubusercontent.com/42513874/194701722-e7a3f7eb-be4a-4f43-93a5-480835c9260f.jpg) | ![demo image 2](https://user-images.githubusercontent.com/42513874/199507299-66729f9b-3581-43a3-b5f4-57eb90b8f981.png)
-
-
 
 Why use this?
 
