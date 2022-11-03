@@ -111,7 +111,7 @@ class Client(QObject):
         self.cfg = cfg
         self.ext_cfg = ext_cfg
         self.reqs = []
-        # TODO: this is a hacky workaround for detecting if backend is reachable
+        # NOTE: this is a hacky workaround for detecting if backend is reachable
         # this is to prevent zombie post requests (since they have no timeout)
         self.is_connected = False
 
@@ -142,7 +142,7 @@ class Client(QObject):
             self.status.emit(ERR_NO_CONNECTION)
             return
         url = get_url(self.cfg, route) if base_url is ... else urljoin(base_url, route)
-        # TODO: how to cancel this? destroy the thread?
+        # TODO: how to cancel this? destroy the thread after sending API interrupt request?
         req, start = AsyncRequest.request(url, body, POST_TIMEOUT)
         self.reqs.append(req)
         req.finished.connect(lambda: self.reqs.remove(req))

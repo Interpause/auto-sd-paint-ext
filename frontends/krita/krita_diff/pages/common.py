@@ -3,6 +3,10 @@ from krita import QHBoxLayout, QVBoxLayout, QWidget
 from ..script import script
 from ..widgets import QCheckBox, QComboBoxLayout, QLabel, QSpinBoxLayout
 
+# Notes:
+# - move tiling mode to config?
+# - move upscaler/face restorer to config?
+
 
 class SDCommonWidget(QWidget):
     def __init__(self, *args, **kwargs):

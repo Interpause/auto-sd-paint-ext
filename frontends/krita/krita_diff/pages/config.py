@@ -22,43 +22,37 @@ class ConfigTabWidget(QWidget):
 
         # Plugin settings
         self.just_use_yaml = QCheckBox(
-            script.cfg,
-            "just_use_yaml",
-            "Override with krita_config.yaml (unrecommended)",
+            script.cfg, "just_use_yaml", "(unrecommended) Ignore settings"
         )
         self.create_mask_layer = QCheckBox(
-            script.cfg, "create_mask_layer", "Create transparency mask from selection"
+            script.cfg, "create_mask_layer", "Use selection as mask"
         )
         self.save_temp_images = QCheckBox(
-            script.cfg, "save_temp_images", "Save images sent to/from backend for debug"
+            script.cfg, "save_temp_images", "Save images for debug"
         )
         self.fix_aspect_ratio = QCheckBox(
-            script.cfg, "fix_aspect_ratio", "Fix aspect ratio for selections"
+            script.cfg, "fix_aspect_ratio", "Adjust selection aspect ratio"
         )
         self.only_full_img_tiling = QCheckBox(
-            script.cfg, "only_full_img_tiling", "Only allow tiling with no selection"
+            script.cfg, "only_full_img_tiling", "Disallow tiling with selection"
         )
         self.include_grid = QCheckBox(
-            script.cfg, "include_grid", "Include grid for txt2img and img2img"
+            script.cfg, "include_grid", "Include txt2img/img2img grid"
         )
-        self.minimize_ui = QCheckBox(script.cfg, "minimize_ui", "Minimize parts of UI")
+        self.minimize_ui = QCheckBox(script.cfg, "minimize_ui", "Squeeze the UI")
 
         # webUI/backend settings
-        self.filter_nsfw = QCheckBox(script.cfg, "filter_nsfw", "Filter NSFW content")
+        self.filter_nsfw = QCheckBox(script.cfg, "filter_nsfw", "Filter NSFW")
         self.img2img_color_correct = QCheckBox(
-            script.cfg,
-            "img2img_color_correct",
-            "Color correct img2img for better blending",
+            script.cfg, "img2img_color_correct", "Color correct img2img"
         )
         self.inpaint_color_correct = QCheckBox(
-            script.cfg,
-            "inpaint_color_correct",
-            "Color correct inpaint for better blending",
+            script.cfg, "inpaint_color_correct", "Color correct inpaint"
         )
         self.do_exact_steps = QCheckBox(
             script.cfg,
             "do_exact_steps",
-            "Don't decrease steps based on denoising strength",
+            "Exact number of steps for denoising",
         )
 
         self.refresh_btn = QPushButton("Auto-Refresh Options Now")
@@ -76,13 +70,13 @@ class ConfigTabWidget(QWidget):
         layout_inner.setContentsMargins(0, 0, 0, 0)
 
         layout_inner.addWidget(QLabel("<em>Plugin settings:</em>"))
+        layout_inner.addWidget(self.minimize_ui)
         layout_inner.addWidget(self.create_mask_layer)
         layout_inner.addWidget(self.fix_aspect_ratio)
         layout_inner.addWidget(self.only_full_img_tiling)
         layout_inner.addWidget(self.include_grid)
         layout_inner.addWidget(self.save_temp_images)
-        layout_inner.addWidget(self.just_use_yaml)
-        layout_inner.addWidget(self.minimize_ui)
+        # layout_inner.addWidget(self.just_use_yaml)
 
         layout_inner.addWidget(QLabel("<em>Backend/webUI settings:</em>"))
         layout_inner.addWidget(self.filter_nsfw)

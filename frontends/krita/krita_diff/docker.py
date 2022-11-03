@@ -15,10 +15,9 @@ from .script import script
 from .style import style
 from .widgets import QLabel
 
-# TODO:
-# - Consider making QuickConfig a dropdown to save vertical space
-# - Come up with more ways to save vertical space for inpaint
-# - Save horizontal space too
+# Notes:
+# - Consider making QuickConfig an accordion to save vertical space
+#    - There's no accordion in Qt. Cry. I wanna go back to using Preact & JSX...
 
 
 class SDPluginDocker(DockWidget):

@@ -44,7 +44,7 @@ class Defaults:
     filter_nsfw: bool = False
     do_exact_steps: bool = True
     sample_path: str = "."
-    tab_index: int = 5
+    tab_index: int = 4
     minimize_ui: bool = False
 
     sd_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
