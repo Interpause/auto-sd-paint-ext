@@ -4,7 +4,7 @@ converting to pyQt elements on the plugin side.
 """
 
 import logging
-from typing import List, Tuple
+from typing import List, Sequence, Tuple
 
 import gradio as gr
 import modules
@@ -20,6 +20,9 @@ def inspect_ui(script: modules.scripts.Script, is_img2img: bool):
         elems = script.ui(is_img2img)
 
     metadata = []
+    if not isinstance(elems, Sequence):
+        return metadata
+
     for elem in elems:
         data = {
             "type": "None",
