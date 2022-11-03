@@ -46,19 +46,18 @@ def on_ui_settings():
 
 
 def krita_help(folder):
+    folder = "<path_to_pykrita>" if not bool(folder) else folder
     return f"""
         Search for "Command Prompt" in the Start Menu, right-click and click "Run as Administrator...", paste the follow commands and hit Enter:
         ```bat
-        cd {"<path_to_pykrita>" if not bool(folder) else folder}
-        mklink /j krita_diff {(PLUGIN_LOCATION / "krita_diff").resolve()}
-        mklink krita_diff.desktop {(PLUGIN_LOCATION / "krita_diff.desktop").resolve()}
+        mklink /j "{folder}\\krita_diff" "{(PLUGIN_LOCATION / 'krita_diff').resolve()}"
+        mklink "{folder}\\krita_diff.desktop" "{(PLUGIN_LOCATION / 'krita_diff.desktop').resolve()}"
         ```
 
         Linux command:
         ```sh
-        cd {"<path_to_pykrita>" if not bool(folder) else folder}
-        ln -s {(PLUGIN_LOCATION / "krita_diff").resolve()} krita_diff
-        ln -s {(PLUGIN_LOCATION / "krita_diff.desktop").resolve()} krita_diff.desktop
+        ln -s "{(PLUGIN_LOCATION / 'krita_diff').resolve()}" "{folder}/krita_diff"
+        ln -s "{(PLUGIN_LOCATION / 'krita_diff.desktop').resolve()}" "{folder}/krita_diff.desktop"
         ```
         """
 
