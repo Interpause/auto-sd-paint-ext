@@ -18,7 +18,7 @@ from .defaults import (
     STATE_URLERROR,
     THREADED,
 )
-from .utils import fix_prompt, get_ext_args, get_ext_key, img_to_b64
+from .utils import bytewise_xor, fix_prompt, get_ext_args, get_ext_key, img_to_b64
 
 # NOTE: backend queues up responses, so no explicit need to block multiple requests
 # except to prevent user from spamming themselves
@@ -26,7 +26,7 @@ from .utils import fix_prompt, get_ext_args, get_ext_key, img_to_b64
 
 def get_url(cfg: Config, route: str = ...):
     base = cfg("base_url", str)
-    if not urlparse(base).scheme in ("http", "https"):
+    if not urlparse(base).scheme in {"http", "https"}:
         return None
     url = urljoin(base, ROUTE_PREFIX)
     if route is not ...:
@@ -48,7 +48,8 @@ class AsyncRequest(QObject):
         data: Any = None,
         timeout: int = ...,
         method: str = ...,
-        headers: dict = {},
+        headers: dict = ...,
+        key: str = None,
     ):
         """Create an AsyncRequest object.
 
@@ -61,18 +62,30 @@ class AsyncRequest(QObject):
             data (Any, optional): Payload to send. Defaults to None.
             timeout (int, optional): Timeout for request. Defaults to `...`.
             method (str, optional): Which HTTP method to use. Defaults to `...`.
+            key (Union[str, None], Optional): Key to use for encryption/decryption. Defaults to None.
         """
         super(AsyncRequest, self).__init__()
         self.url = url
         self.data = None if data is None else json.dumps(data).encode("utf-8")
+        self.headers = {} if headers is ... else headers
+
+        self.key = None
+        if isinstance(key, str) and key.strip() != "":
+            self.key = key.strip().encode("utf-8")
+
+        if self.key is not None:
+            self.headers["X-Encrypted-Body"] = "XOR"
         if timeout is not ...:
             self.timeout = timeout
         if method is ...:
             self.method = "GET" if data is None else "POST"
         else:
             self.method = method
-        self.headers = headers
         if self.data is not None:
+            if self.key is not None:
+                # print(f"Encrypting with ${self.key}:\n{self.data}")
+                self.data = bytewise_xor(self.data, self.key)
+                # print(f"Encrypt Result:\n{self.data}")
             self.headers["Content-Type"] = "application/json"
             self.headers["Content-Length"] = str(len(self.data))
 
@@ -80,7 +93,15 @@ class AsyncRequest(QObject):
         req = Request(self.url, headers=self.headers, method=self.method)
         try:
             with urlopen(req, self.data, self.timeout) as res:
-                self.result.emit(json.loads(res.read()))
+                data = res.read()
+                enc_type = res.getheader("X-Encrypted-Body", None)
+                assert enc_type in {"XOR", None}, "Unknown server encryption!"
+                if enc_type == "XOR":
+                    assert self.key, f"Key needed to decrypt server response!"
+                    # print(f"Decrypting with ${self.key}:\n{data}")
+                    data = bytewise_xor(data, self.key)
+                    # print(f"Decrypt Result:\n{data}")
+                self.result.emit(json.loads(data))
         except Exception as e:
             self.error.emit(e)
         finally:
@@ -150,7 +171,9 @@ class Client(QObject):
             self.status.emit(ERR_BAD_URL)
             return
         # TODO: how to cancel this? destroy the thread after sending API interrupt request?
-        req, start = AsyncRequest.request(url, body, POST_TIMEOUT)
+        req, start = AsyncRequest.request(
+            url, body, POST_TIMEOUT, key=self.cfg("encryption_key")
+        )
         self.reqs.append(req)
         req.finished.connect(lambda: self.reqs.remove(req))
         req.result.connect(cb)
@@ -197,6 +220,7 @@ class Client(QObject):
                 self.status.emit(
                     f"{STATE_URLERROR}: incompatible response, are you running the right API?"
                 )
+                print("Invalid Response:\n", obj)
                 return
 
             # replace only after verifying
@@ -213,7 +237,7 @@ class Client(QObject):
 
             # extension script cfg
             obj["scripts_inpaint"] = obj["scripts_img2img"]
-            for ext_type in ("scripts_txt2img", "scripts_img2img", "scripts_inpaint"):
+            for ext_type in {"scripts_txt2img", "scripts_img2img", "scripts_inpaint"}:
                 metadata: Dict[str, List[dict]] = obj[ext_type]
                 self.ext_cfg.set(f"{ext_type}_len", len(metadata))
                 for ext_name, ext_meta in metadata.items():
@@ -237,7 +261,9 @@ class Client(QObject):
         if not url:
             self.status.emit(ERR_BAD_URL)
             return
-        req, start = AsyncRequest.request(url, None, GET_CONFIG_TIMEOUT)
+        req, start = AsyncRequest.request(
+            url, None, GET_CONFIG_TIMEOUT, key=self.cfg("encryption_key")
+        )
         self.reqs.append(req)
         req.finished.connect(lambda: self.reqs.remove(req))
         req.result.connect(cb)

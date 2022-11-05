@@ -5,9 +5,11 @@ import os
 import time
 
 import modules
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+from fastapi.responses import StreamingResponse
 from modules import shared
 from PIL import Image, ImageOps
+from starlette.concurrency import iterate_in_threadpool
 
 from .config import LOGGER_NAME
 from .script_hack import get_script_info, get_scripts_metadata, process_script_args
@@ -21,6 +23,8 @@ from .structs import (
 )
 from .utils import (
     b64_to_img,
+    bytewise_xor,
+    get_encrypt_key,
     get_sampler_index,
     get_upscaler_index,
     img_to_b64,
@@ -325,3 +329,27 @@ async def f_upscale(req: UpscaleRequest):
     log.info(f"output size: {len(output)}")
     log.info("finished upscale!")
     return {"output": output}
+
+
+async def app_encryption_middleware(req: Request, call_next):
+    """Used to decrypt/encrypt HTTP request body."""
+    is_encrypted = "X-Encrypted-Body" in req.headers
+    # only supported method now is XOR
+    assert not is_encrypted or req.headers["X-Encrypted-Body"] == "XOR"
+    if is_encrypted:
+        key = get_encrypt_key()
+        assert key is not None, "Unable to decrypt request without key."
+        body = await req.body()
+        body = bytewise_xor(body, key)
+        # NOTE: FastAPI refuses to work with requests that have already been consumed idk why
+        async def receive():
+            return dict(type="http.request", body=body, more_body=False)
+
+        req = Request(req.scope, receive, req._send)
+
+    res: StreamingResponse = await call_next(req)
+    if is_encrypted:
+        res.headers["X-Encrypted-Body"] = req.headers["X-Encrypted-Body"]
+        body = [bytewise_xor(chunk, key) async for chunk in res.body_iterator]
+        res.body_iterator = iterate_in_threadpool(iter(body))
+    return res

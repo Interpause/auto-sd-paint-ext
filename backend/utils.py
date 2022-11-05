@@ -3,8 +3,10 @@ from __future__ import annotations
 import inspect
 import logging
 import os
+import secrets
 from base64 import b64decode, b64encode
 from io import BytesIO
+from itertools import cycle
 from math import ceil
 
 import modules
@@ -13,7 +15,7 @@ from modules import shared
 from PIL import Image
 from pydantic import BaseModel
 
-from .config import CONFIG_PATH, LOGGER_NAME, MainConfig
+from .config import CONFIG_PATH, ENCRYPT_FILE, LOGGER_NAME, MainConfig
 
 log = logging.getLogger(LOGGER_NAME)
 
@@ -223,7 +225,7 @@ def parse_prompt(val):
     """Parse different representations of prompt/negative prompt.
 
     Args:
-        val (Any): Key containing the prompt to parse.
+        val (Any): Prompt to parse.
 
     Raises:
         SyntaxError: Value of the prompt key cannot be parsed.
@@ -233,6 +235,7 @@ def parse_prompt(val):
     """
     if val is None:
         return ""
+    # Below cases are meant for prompts read from the yaml config
     if isinstance(val, str):
         return val
     if isinstance(val, list):
@@ -247,7 +250,7 @@ def parse_prompt(val):
             else:
                 prompt += f"({item}:{weight})"
         return prompt
-    raise SyntaxError("prompt field in krita_config.yml is invalid")
+    raise SyntaxError(f"prompt field in {CONFIG_PATH} is invalid")
 
 
 def get_sampler_index(sampler_name: str):
@@ -301,3 +304,28 @@ def prepare_mask(mask: Image.Image):
     base = Image.new("RGBA", mask.size, "BLACK")
     base.paste(mask, (0, 0), mask)
     return base.convert("L").point(lambda x: 255 if x > 0 else 0, mode="1")
+
+
+def bytewise_xor(msg: bytes, key: bytes):
+    """Used for decrypting/encrypting request/response bodies."""
+    return bytes(v ^ k for v, k in zip(msg, cycle(key)))
+
+
+def get_encrypt_key():
+    """Read encryption key from file."""
+    try:
+        with open(ENCRYPT_FILE) as f:
+            return f.read().strip().encode("utf-8")
+    except:
+        if not os.path.exists(ENCRYPT_FILE):
+            log.warning(
+                f"Encryption key file doesn't exist at {os.path.abspath(ENCRYPT_FILE)}."
+            )
+            log.warning(f"Creating random encryption key.")
+            with open(ENCRYPT_FILE, "w") as f:
+                f.write(secrets.token_hex(16))
+            log.warning(
+                f"Key in {ENCRYPT_FILE} is completely optional. It can be used to encrypt messages between backend & Krita and is editable."
+            )
+            return get_encrypt_key()
+    return None

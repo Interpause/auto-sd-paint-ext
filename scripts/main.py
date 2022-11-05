@@ -3,7 +3,9 @@ from pathlib import Path
 
 import backend
 import gradio as gr
+from backend.app import app_encryption_middleware
 from backend.config import LOGGER_NAME, ROUTE_PREFIX, SCRIPT_ID, SCRIPT_NAME
+from backend.utils import get_encrypt_key
 from fastapi import FastAPI
 from modules import script_callbacks, scripts, shared
 
@@ -25,18 +27,28 @@ class BackendScript(scripts.Script):
 
 
 def on_app_started(demo: gr.Blocks, app: FastAPI):
+    logger = logging.getLogger(LOGGER_NAME)
+    logger.setLevel(logging.INFO)
+    handler = logging.StreamHandler()
+    handler.setFormatter(
+        logging.Formatter(
+            fmt="%(name)s:%(levelname)s: %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+    )
+    logger.addHandler(handler)
+
     if shared.cmd_opts.api:
         app.include_router(backend.router, prefix=ROUTE_PREFIX, tags=[SCRIPT_NAME])
-        logger = logging.getLogger(LOGGER_NAME)
-        logger.setLevel(logging.INFO)
-        handler = logging.StreamHandler()
-        handler.setFormatter(
-            logging.Formatter(
-                fmt="%(name)s:%(levelname)s: %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S",
+        app.middleware("http")(app_encryption_middleware)
+        # on first run, this creates a key file
+        get_encrypt_key()
+        if not shared.cmd_opts.listen:
+            logger.info(
+                "Add --listen to COMMANDLINE_ARGS to enable usage as a remote backend."
             )
-        )
-        logger.addHandler(handler)
+    else:
+        logger.warning("COMMANDLINE_ARGS does not contain --api, API won't be mounted.")
     # if you wanted to do anything massive to the UI, you could modify demo, but why?
 
 

@@ -1,5 +1,6 @@
 import json
 import re
+from itertools import cycle
 from math import ceil
 
 from krita import Document, QBuffer, QByteArray, QImage, QIODevice
@@ -179,3 +180,8 @@ def b64_to_img(enc: str):
     """Converts base64-encoded string to QImage"""
     ba = QByteArray.fromBase64(enc.encode("utf-8"))
     return QImage.fromData(ba, "PNG")
+
+
+def bytewise_xor(msg: bytes, key: bytes):
+    """Used for decrypting/encrypting request/response bodies."""
+    return bytes(v ^ k for v, k in zip(msg, cycle(key)))

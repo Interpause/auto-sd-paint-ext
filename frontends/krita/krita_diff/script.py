@@ -136,7 +136,7 @@ class Script(QObject):
 
     def get_mask_image(self) -> Union[QImage, None]:
         """QImage of mask layer for inpainting"""
-        if self.node.type() not in ("paintlayer", "filelayer"):
+        if self.node.type() not in {"paintlayer", "filelayer"}:
             return None
 
         return QImage(

@@ -9,6 +9,7 @@ SCRIPT_ID = "interpause_backend_api"
 ROUTE_PREFIX = "/sdapi/interpause"
 CONFIG_PATH = "auto-sd-paint-ext-backend.yaml"
 LOGGER_NAME = "auto-sd-paint-ext"
+ENCRYPT_FILE = "xor_pass.txt"
 
 
 class BaseOptions(BaseModel):

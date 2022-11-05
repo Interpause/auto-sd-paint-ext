@@ -4,7 +4,7 @@ from krita import QHBoxLayout, QLineEdit, QPushButton, QScrollArea, QVBoxLayout,
 
 from ..defaults import DEFAULTS
 from ..script import script
-from ..widgets import QCheckBox, QLabel
+from ..widgets import QCheckBox, QLabel, QLineEditLayout
 
 
 class ConfigTabWidget(QWidget):
@@ -19,6 +19,10 @@ class ConfigTabWidget(QWidget):
         inline1 = QHBoxLayout()
         inline1.addWidget(self.base_url)
         inline1.addWidget(self.base_url_reset)
+
+        self.enc_key = QLineEditLayout(
+            script.cfg, "encryption_key", "Optional Encryption Key"
+        )
 
         # Plugin settings
         self.just_use_yaml = QCheckBox(
@@ -91,6 +95,7 @@ class ConfigTabWidget(QWidget):
         # layout.addWidget(scroll_area)
         layout.addWidget(QLabel("<em>Backend url:</em>"))
         layout.addLayout(inline1)
+        layout.addLayout(self.enc_key)
         layout.addLayout(layout_inner)
         layout.addWidget(self.refresh_btn)
         layout.addWidget(self.restore_defaults)
@@ -105,6 +110,7 @@ class ConfigTabWidget(QWidget):
         if self.base_url.text() != base_url:
             self.base_url.setText(base_url)
 
+        self.enc_key.cfg_init()
         self.just_use_yaml.cfg_init()
         self.create_mask_layer.cfg_init()
         self.save_temp_images.cfg_init()
@@ -136,6 +142,7 @@ class ConfigTabWidget(QWidget):
         self.base_url_reset.released.connect(
             lambda: self.base_url.setText(DEFAULTS.base_url)
         )
+        self.enc_key.cfg_connect()
         self.just_use_yaml.cfg_connect()
         self.create_mask_layer.cfg_connect()
         self.save_temp_images.cfg_connect()
