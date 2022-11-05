@@ -2,13 +2,14 @@ import json
 import socket
 from typing import Any, Dict, List
 from urllib.error import URLError
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
 
 from krita import QObject, QThread, pyqtSignal
 
 from .config import Config
 from .defaults import (
+    ERR_BAD_URL,
     ERR_NO_CONNECTION,
     GET_CONFIG_TIMEOUT,
     POST_TIMEOUT,
@@ -24,10 +25,13 @@ from .utils import fix_prompt, get_ext_args, get_ext_key, img_to_b64
 
 
 def get_url(cfg: Config, route: str = ...):
-    url = urljoin(cfg("base_url", str), ROUTE_PREFIX)
+    base = cfg("base_url", str)
+    if not urlparse(base).scheme in ("http", "https"):
+        return None
+    url = urljoin(base, ROUTE_PREFIX)
     if route is not ...:
         url = urljoin(url, route)
-    # print(url)
+    # print("url:", url)
     return url
 
 
@@ -142,6 +146,9 @@ class Client(QObject):
             self.status.emit(ERR_NO_CONNECTION)
             return
         url = get_url(self.cfg, route) if base_url is ... else urljoin(base_url, route)
+        if not url:
+            self.status.emit(ERR_BAD_URL)
+            return
         # TODO: how to cancel this? destroy the thread after sending API interrupt request?
         req, start = AsyncRequest.request(url, body, POST_TIMEOUT)
         self.reqs.append(req)
@@ -226,9 +233,11 @@ class Client(QObject):
         if len(self.reqs) > 0:
             return
 
-        req, start = AsyncRequest.request(
-            get_url(self.cfg, "config"), None, GET_CONFIG_TIMEOUT
-        )
+        url = get_url(self.cfg, "config")
+        if not url:
+            self.status.emit(ERR_BAD_URL)
+            return
+        req, start = AsyncRequest.request(url, None, GET_CONFIG_TIMEOUT)
         self.reqs.append(req)
         req.finished.connect(lambda: self.reqs.remove(req))
         req.result.connect(cb)

@@ -46,7 +46,7 @@ def on_ui_settings():
 
 
 def krita_help(folder):
-    folder = "<path_to_pykrita>" if not bool(folder) else folder
+    folder = "<path_to_pykrita>" if not folder else folder
     return f"""
         Search for "Command Prompt" in the Start Menu, right-click and click "Run as Administrator...", paste the follow commands and hit Enter:
         ```bat
