@@ -99,6 +99,13 @@ class Script(QObject):
             self.width = self.selection.width()
             self.height = self.selection.height()
 
+        assert (
+            self.doc.colorDepth() == "U8"
+        ), f'Only "8-bit integer/channel" supported, Document Color Depth: {self.doc.colorDepth()}'
+        assert (
+            self.doc.colorModel() == "RGBA"
+        ), f'Only "RGB/Alpha" supported, Document Color Model: {self.doc.colorModel()}'
+
     def adjust_selection(self):
         """Adjust selection region to account for scaling and striding to prevent image stretch."""
         if self.selection is not None and self.cfg("fix_aspect_ratio", bool):
@@ -155,7 +162,11 @@ class Script(QObject):
             )
             ba = img_to_ba(image)
             layer = create_layer(self.doc, layer_name)
-            print(f"Raw data size: {ba.size()}, Expected size: {width * height * 4}")
+            # layer.setColorSpace() doesn't pernamently convert layer depth etc...
+            size = ba.size()
+            expected = layer.pixelData(x, y, width, height).size()
+            # Don't fail silently for setPixelData()
+            assert expected == size, f"Raw data size: {size}, Expected size: {expected}"
             print(f"inserting at x: {x}, y: {y}, w: {width}, h: {height}")
             layer.setPixelData(ba, x, y, width, height)
             return layer
