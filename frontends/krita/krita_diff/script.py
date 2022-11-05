@@ -149,12 +149,13 @@ class Script(QObject):
         def insert(layer_name, enc):
             print(f"inserting layer {layer_name}")
             print(f"data size: {len(enc)}")
-            image = b64_to_img(enc)
+            image = b64_to_img(enc).convertToFormat(QImage.Format_RGBA8888)
             print(
                 f"image created: {image}, {image.width()}x{image.height()}, depth: {image.depth()}, format: {image.format()}"
             )
             ba = img_to_ba(image)
             layer = create_layer(self.doc, layer_name)
+            print(f"Raw data size: {ba.size()}, Expected size: {width * height * 4}")
             print(f"inserting at x: {x}, y: {y}, w: {width}, h: {height}")
             layer.setPixelData(ba, x, y, width, height)
             return layer
