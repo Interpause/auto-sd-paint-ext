@@ -15,9 +15,9 @@ if auto_update:
         #     "[auto-sd-paint-ext] Get commit hash.",
         # ).strip()
 
-        run(f'"{git}" -C {REPO_LOCATION} fetch', "[auto-sd-paint-ext] Fetch upstream.")
+        run(f'"{git}" -C "{REPO_LOCATION}" fetch', "[auto-sd-paint-ext] Fetch upstream.")
 
-        run(f'"{git}" -C {REPO_LOCATION} pull', "[auto-sd-paint-ext] Pull upstream.")
+        run(f'"{git}" -C "{REPO_LOCATION}" pull', "[auto-sd-paint-ext] Pull upstream.")
     except Exception as e:
         print("[auto-sd-paint-ext] Auto-update failed:")
         print(e)
