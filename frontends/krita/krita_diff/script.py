@@ -156,7 +156,10 @@ class Script(QObject):
         def insert(layer_name, enc):
             print(f"inserting layer {layer_name}")
             print(f"data size: {len(enc)}")
-            image = b64_to_img(enc).convertToFormat(QImage.Format_RGBA8888)
+            # QImage.Format_RGB32 (4) is default format after decoding image
+            # QImage.Format_RGBA8888 (17) is format used in Krita tutorial
+            # both are compatible, & converting from 4 to 17 required a RGB swap
+            image = b64_to_img(enc)
             print(
                 f"image created: {image}, {image.width()}x{image.height()}, depth: {image.depth()}, format: {image.format()}"
             )
