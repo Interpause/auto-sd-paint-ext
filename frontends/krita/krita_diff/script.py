@@ -1,5 +1,6 @@
 import os
 import time
+from typing import Union
 
 from krita import Document, Krita, Node, QImage, QObject, QTimer, Selection, pyqtSignal
 
@@ -126,8 +127,11 @@ class Script(QObject):
             QImage.Format_RGBA8888,
         ).rgbSwapped()
 
-    def get_mask_image(self) -> QImage:
-        """QImage of mask layer"""
+    def get_mask_image(self) -> Union[QImage, None]:
+        """QImage of mask layer for inpainting"""
+        if self.node.type() not in ("paintlayer", "filelayer"):
+            return None
+
         return QImage(
             self.node.pixelData(self.x, self.y, self.width, self.height),
             self.width,
@@ -185,7 +189,7 @@ class Script(QObject):
         mask_path = os.path.join(
             self.cfg("sample_path", str), f"{int(time.time())}_mask.png"
         )
-        if mode == 1:
+        if mode == 1 and mask_image is not None:
             if self.cfg("save_temp_images", bool):
                 save_img(mask_image, mask_path)
             # auto-hide mask layer before getting selection image

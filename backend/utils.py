@@ -55,7 +55,7 @@ def merge_default_config(config: BaseModel, default: BaseModel):
 
     for field in config.__fields__:
         if not field in config.__fields_set__ or field is None:
-            setattr(config, field, getattr(default, field))
+            setattr(config, field, getattr(default, field, None))
 
     return config
 

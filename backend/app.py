@@ -174,7 +174,11 @@ async def f_img2img(req: Img2ImgRequest):
     args = process_script_args(script_ind, script, meta, req.script_args)
 
     image = b64_to_img(req.src_img)
-    mask = prepare_mask(b64_to_img(req.mask_img)) if req.mode == 1 else None
+    mask = (
+        prepare_mask(b64_to_img(req.mask_img))
+        if req.mode == 1 and req.mask_img is not None
+        else None
+    )
 
     orig_width, orig_height = image.size
 

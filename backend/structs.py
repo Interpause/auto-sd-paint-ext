@@ -35,9 +35,9 @@ class Img2ImgRequest(DefaultImg2ImgOptions):
     """
 
     src_img: str
-    """Path to image being used."""
-    mask_img: Optional[str]
-    """Path to image mask being used."""
+    """Image being used."""
+    mask_img: Optional[str] = None
+    """Image mask being used."""
 
 
 @optional
@@ -51,7 +51,7 @@ class UpscaleRequest(DefaultUpscaleOptions):
     """
 
     src_img: str
-    """Path to image being used."""
+    """Image being used."""
 
 
 class ConfigResponse(PluginOptions):
