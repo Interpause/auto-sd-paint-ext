@@ -12,22 +12,22 @@ class Hotkeys(Extension):
 
     def createActions(self, window):
         txt2img_action = window.createAction(
-            "txt2img", "Apply txt2img transform", "tools/scripts"
+            "txt2img", "Apply txt2img", "tools/scripts"
         )
         txt2img_action.triggered.connect(lambda: script.action_txt2img())
         img2img_action = window.createAction(
-            "img2img", "Apply img2img transform", "tools/scripts"
+            "img2img", "Apply img2img", "tools/scripts"
         )
         img2img_action.triggered.connect(lambda: script.action_img2img())
         upscale_x_action = window.createAction(
-            "img2img_upscale", "Apply img2img upscale transform", "tools/scripts"
+            "img2img_upscale", "Apply img2img upscale", "tools/scripts"
         )
         upscale_x_action.triggered.connect(lambda: script.action_sd_upscale())
         upscale_x_action = window.createAction(
-            "img2img_inpaint", "Apply img2img inpaint transform", "tools/scripts"
+            "img2img_inpaint", "Apply img2img inpaint", "tools/scripts"
         )
         upscale_x_action.triggered.connect(lambda: script.action_inpaint())
         simple_upscale_action = window.createAction(
-            "simple_upscale", "Apply ESRGAN upscaler", "tools/scripts"
+            "simple_upscale", "Apply simple upscaler", "tools/scripts"
         )
         simple_upscale_action.triggered.connect(lambda: script.action_simple_upscale())

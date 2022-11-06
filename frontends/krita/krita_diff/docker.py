@@ -19,6 +19,12 @@ from .widgets import QLabel
 # - Consider making QuickConfig an accordion to save vertical space
 #    - There's no accordion in Qt. Cry. I wanna go back to using Preact & JSX...
 
+# TODO:
+# - split each tab into its own Docker
+# - by default, dock all the tabs onto each other except quick config
+# - see https://scripting.krita.org/lessons/docker-widgets
+# - Might want to seriously consider drawing the line on what is done by backend/frontend
+
 
 class SDPluginDocker(DockWidget):
     def __init__(self, *args, **kwargs):
