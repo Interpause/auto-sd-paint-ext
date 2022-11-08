@@ -43,12 +43,19 @@ class InpaintTabWidget(ImgTabBaseWidget):
                 "Select what the model will see when inpainting. <em>Inpaint full res</em> is unnecessary.",
             ]
         )
+        self.tips2 = TipsLayout(
+            [
+                '<a href="https://github.com/Interpause/auto-sd-paint-ext/wiki/Usage-Guide#inpainting" target="_blank">Inpaint Full Res & Mask Blur is obsolete; Click for new method.</a>'
+            ],
+            prefix="",
+        )
         self.btn = QPushButton("Start inpaint")
 
         self.layout.addLayout(self.fill_layout)
         self.layout.addLayout(inline1)
         self.layout.addLayout(inline2)
         self.layout.addWidget(self.btn)
+        self.layout.addLayout(self.tips2)
         self.layout.addLayout(self.tips)
         self.layout.addStretch()
 

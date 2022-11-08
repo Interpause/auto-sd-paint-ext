@@ -81,6 +81,12 @@ A: Unfortunately no, all plugins so far have different APIs. The official API is
 
 ## UI Changelog
 
+### 2022-11-08
+
+- Inpainting is finally 100% fixed! No more weird borders. Blur works properly.
+- Inpainting Full Resolution and Mask Blur were deemed obsolete and removed.
+  - See <https://github.com/Interpause/auto-sd-paint-ext/wiki/Usage-Guide#inpainting> on better ways to do so.
+
 ### 2022-10-31
 
 - Moved base size/max size & some other quick config options based on user feedback.
