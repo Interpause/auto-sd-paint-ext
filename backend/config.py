@@ -100,12 +100,12 @@ class FaceRestorationOptions(BaseModel):
 class InpaintingOptions(BaseModel):
     inpainting_fill: int = 1
     """What to fill inpainted region with. 0 is blur/fill, 1 is original, 2 is latent noise, and 3 is latent empty."""
-    inpaint_full_res: bool = True
-    """Whether to use the full resolution for inpainting."""
-    inpaint_full_res_padding: int = 32
-    """Padding when using full resolution for inpainting."""
-    mask_blur: int = 4
-    """Size of blur at boundaries of mask."""
+    inpaint_full_res: bool = False
+    """(DISABLED) Whether to use the full resolution for inpainting."""
+    inpaint_full_res_padding: int = 0
+    """(DISABLED) Padding when using full resolution for inpainting."""
+    mask_blur: int = 0
+    """(DISABLED) Size of blur at boundaries of mask."""
     invert_mask: bool = False
     """Whether to invert the mask."""
 
@@ -121,9 +121,6 @@ class Img2ImgOptions(
     """Img2Img mode. 0 is normal img2img on the selected region, 1 is inpainting, and 2 (unsupported) is batch processing."""
     resize_mode: int = 1
     """Unused by Krita plugin since rescaling is done by us. 0 is stretch to fit, 1 is cover, 2 is contain."""
-
-    alpha_mask: bool = False
-    """Use alpha mask, whatever it does."""
 
     steps: int = 50
 

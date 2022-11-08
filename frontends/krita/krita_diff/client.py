@@ -351,10 +351,10 @@ class Client(QObject):
                 script_args=ext_args,
                 seed=seed,
                 invert_mask=self.cfg("inpaint_invert_mask", bool),
-                mask_blur=self.cfg("inpaint_mask_blur", int),
+                # mask_blur=self.cfg("inpaint_mask_blur", int),
                 inpainting_fill=fill,
-                inpaint_full_res=self.cfg("inpaint_full_res", bool),
-                inpaint_full_res_padding=self.cfg("inpaint_full_res_padding", int),
+                # inpaint_full_res=self.cfg("inpaint_full_res", bool),
+                # inpaint_full_res_padding=self.cfg("inpaint_full_res_padding", int),
                 include_grid=False,  # it is never useful for inpaint mode
             )
 
