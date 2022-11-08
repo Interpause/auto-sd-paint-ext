@@ -110,9 +110,9 @@ def find_optimal_selection_region(
     fix_ratio = find_fixed_aspect_ratio(base_size, max_size, orig_width, orig_height)
 
     # h * (w/h - w/h) = w
-    xpad_limit = ceil(abs(fix_ratio - orig_ratio) * orig_height)
+    xpad_limit = ceil(abs(fix_ratio - orig_ratio) * orig_height) * 2
     # w * (h/w - h/w) = h
-    ypad_limit = ceil(abs(1 / fix_ratio - 1 / orig_ratio) * orig_width)
+    ypad_limit = ceil(abs(1 / fix_ratio - 1 / orig_ratio) * orig_width) * 2
 
     best_x = orig_x
     best_y = orig_y
