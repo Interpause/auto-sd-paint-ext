@@ -95,6 +95,9 @@ def prepare_backend(opt: BaseModel):
     if hasattr(opt, "filter_nsfw"):
         shared.opts.filter_nsfw = opt.filter_nsfw
 
+    if hasattr(opt, "inpaint_mask_weight"):
+        shared.opts.inpainting_mask_weight = opt.inpaint_mask_weight
+
     # Ensure the output/input folders exist
     if hasattr(opt, "sample_path"):
         os.makedirs(opt.sample_path, exist_ok=True)

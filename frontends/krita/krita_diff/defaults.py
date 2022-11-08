@@ -108,6 +108,7 @@ class Defaults:
     inpaint_color_correct: bool = False
     inpaint_script: str = "None"
     inpaint_script_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
+    inpaint_mask_weight: float = 1.0
 
     upscale_upscaler_name: str = "None"
     upscale_downscale_first: bool = False

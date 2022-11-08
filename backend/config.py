@@ -108,6 +108,8 @@ class InpaintingOptions(BaseModel):
     """(DISABLED) Size of blur at boundaries of mask."""
     invert_mask: bool = False
     """Whether to invert the mask."""
+    inpaint_mask_weight: float = 1.0
+    """Mask weight for specialized inpainting models."""
 
 
 class Txt2ImgOptions(BaseOptions, GenerationOptions, FaceRestorationOptions):

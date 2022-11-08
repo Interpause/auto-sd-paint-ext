@@ -355,6 +355,7 @@ class Client(QObject):
                 inpainting_fill=fill,
                 # inpaint_full_res=self.cfg("inpaint_full_res", bool),
                 # inpaint_full_res_padding=self.cfg("inpaint_full_res_padding", int),
+                inpaint_mask_weight=self.cfg("inpaint_mask_weight", float),
                 include_grid=False,  # it is never useful for inpaint mode
             )
 
