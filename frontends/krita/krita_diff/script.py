@@ -152,6 +152,8 @@ class Script(QObject):
 
     def img_inserter(self, x, y, width, height):
         """Return frozen image inserter to insert images as new layer."""
+        # TODO: Insert images inside a group layer for better organization
+        # Group layer name can contain model name, prompt, etc
         # Selection may change before callback, so freeze selection region
         def insert(layer_name, enc):
             print(f"inserting layer {layer_name}")

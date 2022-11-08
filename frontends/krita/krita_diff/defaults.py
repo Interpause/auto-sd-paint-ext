@@ -97,14 +97,14 @@ class Defaults:
     inpaint_denoising_strength: float = 0.40
     inpaint_seed: str = ""
     inpaint_invert_mask: bool = False
-    inpaint_mask_blur: int = 4
+    # inpaint_mask_blur: int = 4
     inpaint_fill_list: List[str] = field(
         # NOTE: list order corresponds to number to use in internal API!!!
         default_factory=lambda: ["blur", "preserve", "latent noise", "latent empty"]
     )
     inpaint_fill: str = "preserve"
-    inpaint_full_res: bool = False
-    inpaint_full_res_padding: int = 32
+    # inpaint_full_res: bool = False
+    # inpaint_full_res_padding: int = 32
     inpaint_color_correct: bool = False
     inpaint_script: str = "None"
     inpaint_script_list: List[str] = field(default_factory=lambda: [ERROR_MSG])

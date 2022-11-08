@@ -16,7 +16,7 @@ class Txt2ImgTabWidget(ImgTabBaseWidget):
         inline_layout.addLayout(self.denoising_strength_layout)
 
         self.tips = TipsLayout(
-            ["Set base_size && max_size higher for AUTO's txt2img highres fix to work."]
+            ["Set base_size & max_size higher for AUTO's txt2img highres fix to work."]
         )
 
         self.btn = QPushButton("Start txt2img")
