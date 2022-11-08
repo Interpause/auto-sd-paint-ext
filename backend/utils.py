@@ -292,18 +292,13 @@ def get_upscaler_index(upscaler_name: str):
 def prepare_mask(mask: Image.Image):
     """Prepare mask for usage.
 
-    1. Convert transparent white/light pixels to black to fix the luminance calculation.
-    2. Convert to luminance mask.
-
     Args:
         mask (Image): mask.
 
     Returns:
         Image: The luminance mask.
     """
-    base = Image.new("RGBA", mask.size, "BLACK")
-    base.paste(mask, (0, 0), mask)
-    return base.convert("L").point(lambda x: 255 if x > 0 else 0, mode="1")
+    return mask.getchannel("A")
 
 
 def bytewise_xor(msg: bytes, key: bytes):

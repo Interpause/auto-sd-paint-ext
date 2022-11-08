@@ -215,10 +215,11 @@ async def f_img2img(req: Img2ImgRequest):
         {"image": image, "mask": mask},  # init_img_with_mask
         image,  # init_img_inpaint
         mask,  # init_mask_inpaint
-        0,  # mask_mode: internally checks if equal 0. enables Alpha Mask but idk what it does.
+        # using 1 for uploaded mask mode; processing done by prepare_mask to ensure its correct
+        1,  # mask_mode: internally checks if equal 0. 1 enables alpha mask (remove erased parts)
         req.steps,  # steps
         get_sampler_index(req.sampler_name),  # sampler_index
-        req.mask_blur,  # mask_blur
+        0,  # req.mask_blur,  # mask_blur
         req.inpainting_fill,  # inpainting_fill
         req.restore_faces,  # restore_faces
         req.tiling,  # tiling
@@ -235,8 +236,8 @@ async def f_img2img(req: Img2ImgRequest):
         height,  # height
         width,  # width
         req.resize_mode,  # resize_mode
-        req.inpaint_full_res,  # inpaint_full_res
-        req.inpaint_full_res_padding,  # inpaint_full_res_padding
+        False,  # req.inpaint_full_res,  # inpaint_full_res
+        0,  # req.inpaint_full_res_padding,  # inpaint_full_res_padding
         req.invert_mask,  # inpainting_mask_invert
         "",  # img2img_batch_input_dir (unspported)
         "",  # img2img_batch_output_dir (unspported)
@@ -257,14 +258,13 @@ async def f_img2img(req: Img2ImgRequest):
 
     if req.mode == 1:
 
-        def remove_not_masked(img):
-            masked_img = Image.new("RGBA", img.size, (0, 0, 0, 0))
-            masked_img.paste(
-                img, (0, 0), mask=ImageOps.invert(mask) if req.invert_mask else mask
-            )
-            return masked_img
+        def apply_mask(img):
+            """Mask inpaint using original mask, including alpha."""
+            r, g, b = img.split()  # img2img/inpaint gives rgb image
+            a = ImageOps.invert(mask) if req.invert_mask else mask
+            return Image.merge("RGBA", (r, g, b, a))
 
-        resized_images = [remove_not_masked(x) for x in resized_images]
+        resized_images = [apply_mask(x) for x in resized_images]
 
     # save images for debugging/logging purposes
     if req.save_samples:
