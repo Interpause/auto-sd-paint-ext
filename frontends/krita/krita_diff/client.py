@@ -157,6 +157,8 @@ class Client(QObject):
             self.status.emit(f"{STATE_URLERROR}: invalid JSON response")
         except ValueError as e:
             self.status.emit(f"{STATE_URLERROR}: Invalid backend URL")
+        except ConnectionError as e:
+            self.status.emit(f"{STATE_URLERROR}: connection error during request")
         except Exception as e:
             # self.status.emit(f"{STATE_URLERROR}: Unexpected Error")
             # self.status.emit(str(e))
