@@ -20,6 +20,7 @@ Why use this?
 - Full Installation & Workflow Tutorial Video! (Coming Soon...)
 - [Installation Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Install-Guide)
 - [Usage Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Usage-Guide)
+  - [Step by Step Guide to Better Inpainting](https://github.com/Interpause/auto-sd-paint-ext/wiki/Usage-Guide#inpainting-step-by-step)
 - [Update Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Update-Guide)
 - [Features](https://github.com/Interpause/auto-sd-paint-ext/wiki/Features)
 - [TODO](https://github.com/Interpause/auto-sd-paint-ext/wiki/TODO)
@@ -32,7 +33,7 @@ Why use this?
 #### Differences
 
 - UI no longer freezes during image update
-- Inpainting layer no longer has to be manually hidden, nor use white specifically
+- Inpainting experience is better
 - UI has been improved & squeezed further
 - Scripts API is now possible
 
