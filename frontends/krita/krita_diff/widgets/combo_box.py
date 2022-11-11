@@ -45,16 +45,25 @@ class QComboBoxLayout(QHBoxLayout):
     def cfg_init(self):
         # prevent value from getting wiped
         val = self.cfg(self.selected_cfg, str)
-        opts = set(
-            self.cfg(self.options_cfg, "QStringList")
-            if isinstance(self.options_cfg, str)
-            else self.options_cfg
+        opts = sorted(
+            set(
+                self.cfg(self.options_cfg, "QStringList")
+                if isinstance(self.options_cfg, str)
+                else self.options_cfg
+            ),
+            key=str.casefold,
         )
+
+        # NOTE: assumes the None option will always be labelled as "None"
+        if "None" in opts:
+            opts.remove("None")
+            opts.insert(0, "None")
+
         # prevent dropdown from closing when cfg_init is called by update
         if opts != self._items:
             self._items = opts
             self.qcombo.clear()
-            self.qcombo.addItems(list(opts))
+            self.qcombo.addItems(opts)
 
         # doesn't throw error if val is not in options; good for us
         self.qcombo.setCurrentText(val)

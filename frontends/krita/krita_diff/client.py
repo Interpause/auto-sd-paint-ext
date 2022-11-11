@@ -227,6 +227,7 @@ class Client(QObject):
 
             # replace only after verifying
             self.cfg.set("sample_path", obj["sample_path"])
+            # NOTE: sorting these lists is risky; ivent 100% verified that I removed all reliance on indexes
             self.cfg.set("upscaler_list", obj["upscalers"])
             self.cfg.set("txt2img_sampler_list", obj["samplers"])
             self.cfg.set("img2img_sampler_list", obj["samplers_img2img"])
