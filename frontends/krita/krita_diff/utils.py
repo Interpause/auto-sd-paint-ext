@@ -9,9 +9,8 @@ from .config import Config
 
 
 def fix_prompt(prompt: str):
-    """Multiline tokens -> comma-separated tokens. Replace empty prompts with None."""
-    joined = ", ".join(filter(bool, [x.strip() for x in prompt.splitlines()]))
-    return joined if joined != "" else None
+    """Replace empty prompts with None."""
+    return prompt if prompt != "" else None
 
 
 def get_ext_key(ext_type: str, ext_name: str, index: int = None):
