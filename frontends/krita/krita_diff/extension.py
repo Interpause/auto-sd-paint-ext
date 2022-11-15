@@ -1,9 +1,9 @@
 from krita import Extension
 
-from .docker import script
+from .script import script
 
 
-class Hotkeys(Extension):
+class SDPluginExtension(Extension):
     def __init__(self, parent):
         super().__init__(parent)
 
