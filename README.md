@@ -30,12 +30,12 @@ Why use this?
 
 [![Youtube Video](http://img.youtube.com/vi/nP8MuRwcDN8/0.jpg)](https://youtu.be/nP8MuRwcDN8 "Inpaint like a pro with Stable Diffusion! auto-sd-krita workflow guide")
 
-#### Differences
+### Differences from Video
 
-- UI no longer freezes during image update
+- Scripts API is now possible (e.g. SD Upscale, Outpaint Mk 2)
 - Inpainting experience is better
+- UI no longer freezes during image update
 - UI has been improved & squeezed further
-- Scripts API is now possible
 
 ## Breaking Changes
 
