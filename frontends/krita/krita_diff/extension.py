@@ -1,5 +1,6 @@
-from krita import Extension
+from krita import Extension, QTimer
 
+from .defaults import REFRESH_INTERVAL
 from .script import script
 
 
@@ -8,7 +9,9 @@ class SDPluginExtension(Extension):
         super().__init__(parent)
 
     def setup(self):
-        pass
+        self.update_timer = QTimer()
+        self.update_timer.timeout.connect(script.action_update_config)
+        self.update_timer.start(REFRESH_INTERVAL)
 
     def createActions(self, window):
         txt2img_action = window.createAction(

@@ -1,8 +1,8 @@
 from functools import partial
 
-from krita import DockWidget, QScrollArea, QTabWidget, QTimer, QVBoxLayout, QWidget
+from krita import DockWidget, QScrollArea, QTabWidget, QVBoxLayout, QWidget
 
-from .defaults import REFRESH_INTERVAL, STATE_INIT, STATE_READY, STATE_URLERROR
+from .defaults import STATE_INIT, STATE_READY, STATE_URLERROR
 from .pages import (
     ConfigTabWidget,
     Img2ImgTabWidget,
@@ -70,8 +70,6 @@ class SDPluginDocker(DockWidget):
         self.widget.setWidget(widget)
         self.widget.setWidgetResizable(True)
 
-        self.update_timer = QTimer()
-
     def update_interfaces(self):
         self.quick_widget.cfg_init()
         self.txt2img_widget.cfg_init()
@@ -90,8 +88,6 @@ class SDPluginDocker(DockWidget):
         self.upscale_widget.cfg_connect()
         self.config_widget.cfg_connect()
 
-        self.update_timer.timeout.connect(script.action_update_config)
-        self.update_timer.start(REFRESH_INTERVAL)
         script.status_changed.connect(self.update_status_bar)
         script.config_updated.connect(self.update_interfaces)
         self.tabs.currentChanged.connect(partial(script.cfg.set, "tab_index"))
