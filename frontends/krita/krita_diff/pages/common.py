@@ -1,6 +1,5 @@
 from krita import QHBoxLayout, QVBoxLayout, QWidget
 
-from ..defaults import STATE_INIT, STATE_READY, STATE_URLERROR
 from ..script import script
 from ..widgets import QCheckBox, QComboBoxLayout, QLabel, QSpinBoxLayout
 
@@ -16,9 +15,6 @@ class SDCommonPage(QWidget):
         super(SDCommonPage, self).__init__(*args, **kwargs)
 
         self.title = QLabel("<em>Quick Config</em>")
-
-        self.status_bar = QLabel()
-        self.update_status_bar(STATE_INIT)
 
         # Model list
         self.sd_model_layout = QComboBoxLayout(
@@ -80,7 +76,6 @@ class SDCommonPage(QWidget):
         layout.addLayout(self.sd_model_layout)
         layout.addLayout(batch_layout)
         layout.addLayout(size_layout)
-        layout.addWidget(self.status_bar)
         layout.addStretch()
 
         self.setLayout(layout)
@@ -109,8 +104,6 @@ class SDCommonPage(QWidget):
         self.codeformer_weight_layout.cfg_connect()
         self.tiling.cfg_connect()
 
-        script.status_changed.connect(self.update_status_bar)
-
         # Hide codeformer_weight when model isnt codeformer
         def toggle_codeformer_weights(visible):
             self.codeformer_weight_layout.qspin.setVisible(visible)
@@ -122,8 +115,3 @@ class SDCommonPage(QWidget):
         toggle_codeformer_weights(
             self.face_restorer_layout.qcombo.currentText() == "CodeFormer"
         )
-
-    def update_status_bar(self, s):
-        if s == STATE_READY and STATE_URLERROR not in self.status_bar.text():
-            return
-        self.status_bar.setText(f"<b>Status:</b> {s}")

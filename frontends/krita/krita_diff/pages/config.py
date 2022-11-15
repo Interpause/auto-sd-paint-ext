@@ -4,7 +4,7 @@ from krita import QHBoxLayout, QLineEdit, QPushButton, QScrollArea, QVBoxLayout,
 
 from ..defaults import DEFAULTS
 from ..script import script
-from ..widgets import QCheckBox, QLabel, QLineEditLayout
+from ..widgets import QCheckBox, QLabel, QLineEditLayout, StatusBar
 
 
 class ConfigPage(QWidget):
@@ -12,6 +12,8 @@ class ConfigPage(QWidget):
 
     def __init__(self, *args, **kwargs):
         super(ConfigPage, self).__init__(*args, **kwargs)
+
+        self.status_bar = StatusBar()
 
         self.base_url = QLineEdit()
         self.base_url_reset = QPushButton("Default")
@@ -92,6 +94,7 @@ class ConfigPage(QWidget):
         # scroll_area.setLayout(layout_inner)
         # scroll_area.setWidgetResizable(True)
         # layout.addWidget(scroll_area)
+        layout.addWidget(self.status_bar)
         layout.addWidget(QLabel("<em>Backend url:</em>"))
         layout.addLayout(inline1)
         layout.addLayout(self.enc_key)
@@ -162,3 +165,4 @@ class ConfigPage(QWidget):
         self.refresh_btn.released.connect(script.action_update_config)
         self.restore_defaults.released.connect(restore_defaults)
         self.minimize_ui.toggled.connect(lambda _: script.config_updated.emit())
+        script.status_changed.connect(self.status_bar.set_status)

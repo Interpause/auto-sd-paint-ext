@@ -1,13 +1,21 @@
 from krita import QHBoxLayout, QVBoxLayout, QWidget
 
 from ..script import script
-from ..widgets import QComboBoxLayout, QLineEditLayout, QPromptLayout, QSpinBoxLayout
+from ..widgets import (
+    QComboBoxLayout,
+    QLineEditLayout,
+    QPromptLayout,
+    QSpinBoxLayout,
+    StatusBar,
+)
 from .extension import ExtSectionLayout
 
 
 class SDImgPageBase(QWidget):
     def __init__(self, cfg_prefix: str, *args, **kwargs):
         super(SDImgPageBase, self).__init__(*args, **kwargs)
+
+        self.status_bar = StatusBar()
 
         self.prompt_layout = QPromptLayout(
             script.cfg, f"{cfg_prefix}_prompt", f"{cfg_prefix}_negative_prompt"
@@ -44,6 +52,7 @@ class SDImgPageBase(QWidget):
         self.layout = layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
 
+        layout.addWidget(self.status_bar)
         layout.addLayout(self.ext_layout)
         layout.addLayout(self.prompt_layout)
         layout.addLayout(self.seed_layout)
@@ -77,3 +86,5 @@ class SDImgPageBase(QWidget):
         self.steps_layout.cfg_connect()
         self.cfg_scale_layout.cfg_connect()
         self.denoising_strength_layout.cfg_connect()
+
+        script.status_changed.connect(self.status_bar.set_status)
