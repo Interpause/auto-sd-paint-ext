@@ -30,12 +30,16 @@ Why use this?
 
 [![Youtube Video](http://img.youtube.com/vi/nP8MuRwcDN8/0.jpg)](https://youtu.be/nP8MuRwcDN8 "Inpaint like a pro with Stable Diffusion! auto-sd-krita workflow guide")
 
-#### Differences
+### Differences from Video
 
-- UI no longer freezes during image update
+- All webUI scripts have been tested to work!
+  - SD Upscale, Outpainting Mk 2, Img2Img Alt, etc
 - Inpainting experience is better
-- UI has been improved & squeezed further
-- Scripts API is now possible
+  - Inpaint mask is auto-hidden
+  - Better mask blur & inpaint full resolution technique than webUI
+- UI no longer freezes during image update
+- UI has been improved, takes up less space
+- Error messages have been improved
 
 ## Breaking Changes
 
@@ -58,9 +62,14 @@ This is actually smarter than the builtin highres fix + firstphase width/height 
 
 <hr/>
 
-Q: Outpainting?
+Q: Outpainting tab?
 
-A: No outpainting MK2 yet, but nothing stopping you from doing basic outpainting. 1) expand canvas 2) scribble in blank area 3) img2img on blank area + some of image.
+A:
+While the outpainting tab is still WIP, the outpainting scripts (under img2img tab) works perfectly fine! Alternatively, if you want more control over outpainting, you can:
+
+1. Expand the canvas
+2. Scribble in the newly added blank area
+3. img2img on the blank area + some of the image
 
 <hr/>
 
@@ -81,6 +90,12 @@ Q: Will it work with other Krita plugin backends?
 A: Unfortunately no, all plugins so far have different APIs. The official API is coming soon though...
 
 ## UI Changelog
+
+### 2022-11-15
+
+- Scripts/features that increase the image size (Simple upscaling, SD upscaling, Outpaint Mk 2, etc) will now expand the canvas when image generation is complete **only if** _there is no active selection_.
+  - If there is a selection, the image will be scaled to fit the selection region.
+  - Using Ctrl+A to select the entire image is considered an active selection!
 
 ### 2022-11-08
 
@@ -116,26 +131,6 @@ A: Unfortunately no, all plugins so far have different APIs. The official API is
 ## Credits
 
 - [@sddebz](https://github.com/sddebz) for writing the original backend API and Krita plugin while keeping the Gradio webUI functionality intact.
-- Stable Diffusion - https://github.com/CompVis/stable-diffusion, https://github.com/CompVis/taming-transformers
-- k-diffusion - https://github.com/crowsonkb/k-diffusion.git
-- GFPGAN - https://github.com/TencentARC/GFPGAN.git
-- CodeFormer - https://github.com/sczhou/CodeFormer
-- ESRGAN - https://github.com/xinntao/ESRGAN
-- SwinIR - https://github.com/JingyunLiang/SwinIR
-- Swin2SR - https://github.com/mv-lab/swin2sr
-- LDSR - https://github.com/Hafiidz/latent-diffusion
-- Ideas for optimizations - https://github.com/basujindal/stable-diffusion
-- Doggettx - Cross Attention layer optimization - https://github.com/Doggettx/stable-diffusion, original idea for prompt editing.
-- InvokeAI, lstein - Cross Attention layer optimization - https://github.com/invoke-ai/InvokeAI (originally http://github.com/lstein/stable-diffusion)
-- Rinon Gal - Textual Inversion - https://github.com/rinongal/textual_inversion (we're not using his code, but we are using his ideas).
-- Idea for SD upscale - https://github.com/jquesnelle/txt2imghd
-- Noise generation for outpainting mk2 - https://github.com/parlance-zz/g-diffuser-bot
-- CLIP interrogator idea and borrowing some code - https://github.com/pharmapsychotic/clip-interrogator
-- Idea for Composable Diffusion - https://github.com/energy-based-model/Compositional-Visual-Generation-with-Composable-Diffusion-Models-PyTorch
-- xformers - https://github.com/facebookresearch/xformers
-- DeepDanbooru - interrogator for anime diffusers https://github.com/KichangKim/DeepDanbooru
-- Initial Gradio script - posted on 4chan by an Anonymous user. Thank you Anonymous user.
-- (You)
 
 ## License
 
