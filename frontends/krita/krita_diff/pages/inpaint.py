@@ -6,6 +6,8 @@ from .img_base import ImgTabBaseWidget
 
 
 class InpaintTabWidget(ImgTabBaseWidget):
+    name = "inpaint"
+
     def __init__(self, *args, **kwargs):
         super(InpaintTabWidget, self).__init__(cfg_prefix="inpaint", *args, **kwargs)
         self.layout.addLayout(self.denoising_strength_layout)

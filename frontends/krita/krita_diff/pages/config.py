@@ -8,11 +8,10 @@ from ..widgets import QCheckBox, QLabel, QLineEditLayout
 
 
 class ConfigTabWidget(QWidget):
-    def __init__(self, update_func, *args, **kwargs):
-        super(ConfigTabWidget, self).__init__(*args, **kwargs)
+    name = "config"
 
-        # callback to update all the other widgets
-        self.update_func = update_func
+    def __init__(self, *args, **kwargs):
+        super(ConfigTabWidget, self).__init__(*args, **kwargs)
 
         self.base_url = QLineEdit()
         self.base_url_reset = QPushButton("Default")
@@ -162,5 +161,4 @@ class ConfigTabWidget(QWidget):
 
         self.refresh_btn.released.connect(script.action_update_config)
         self.restore_defaults.released.connect(restore_defaults)
-        # NOTE: crappy workaround because the config system doesnt emit signals
-        self.minimize_ui.toggled.connect(lambda _: self.update_func())
+        self.minimize_ui.toggled.connect(lambda _: script.config_updated.emit())

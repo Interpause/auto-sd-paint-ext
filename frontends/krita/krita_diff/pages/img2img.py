@@ -6,6 +6,8 @@ from .img_base import ImgTabBaseWidget
 
 
 class Img2ImgTabWidget(ImgTabBaseWidget):
+    name = "img2img"
+
     def __init__(self, *args, **kwargs):
         super(Img2ImgTabWidget, self).__init__(cfg_prefix="img2img", *args, **kwargs)
 
