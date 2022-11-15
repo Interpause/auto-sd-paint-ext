@@ -189,10 +189,6 @@ async def f_img2img(req: Img2ImgRequest):
     if script and script.title() == "SD upscale":
         # in SD upscale mode, width & height determines tile size
         width = height = req.base_size
-        # SD scales by 2x image size; we alr scaled up in Krita so downscale here
-        image = image.resize((image.width // 2, image.height // 2))
-        if mask:
-            mask = mask.resize((image.width // 2, image.height // 2))
     else:
         width, height = sddebz_highres_fix(
             req.base_size, req.max_size, orig_width, orig_height
