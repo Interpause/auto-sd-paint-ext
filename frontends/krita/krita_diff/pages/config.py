@@ -138,7 +138,7 @@ class ConfigTabWidget(QWidget):
     def cfg_connect(self):
         self.base_url.textChanged.connect(partial(script.cfg.set, "base_url"))
         # NOTE: this triggers on every keystroke; theres no focus lost signal...
-        self.base_url.textChanged.connect(script.update_config)
+        self.base_url.textChanged.connect(script.action_update_config)
         self.base_url_reset.released.connect(
             lambda: self.base_url.setText(DEFAULTS.base_url)
         )
@@ -155,17 +155,12 @@ class ConfigTabWidget(QWidget):
         self.do_exact_steps.cfg_connect()
         self.minimize_ui.cfg_connect()
 
-        def update_remote_config():
-            script.update_config()
-            self.update_func()
-
         def restore_defaults():
             script.restore_defaults()
             # retrieve list of available stuff again
-            script.update_config()
-            self.update_func()
+            script.action_update_config()
 
-        self.refresh_btn.released.connect(update_remote_config)
+        self.refresh_btn.released.connect(script.action_update_config)
         self.restore_defaults.released.connect(restore_defaults)
         # NOTE: crappy workaround because the config system doesnt emit signals
         self.minimize_ui.toggled.connect(lambda _: self.update_func())

@@ -128,7 +128,7 @@ class AsyncRequest(QObject):
 
 class Client(QObject):
     status = pyqtSignal(str)
-    """error message, Exception object"""
+    config_updated = pyqtSignal()
 
     def __init__(self, cfg: Config, ext_cfg: Config):
         """It is highly dependent on config's structure to the point it writes directly to it. :/"""
@@ -207,7 +207,7 @@ class Client(QObject):
         )
         return params
 
-    def get_config(self) -> bool:
+    def get_config(self):
         def cb(obj):
             try:
                 assert "sample_path" in obj
@@ -254,6 +254,7 @@ class Client(QObject):
 
             self.is_connected = True
             self.status.emit(STATE_READY)
+            self.config_updated.emit()
 
         # only get config if there are no pending post requests jamming the backend
         # NOTE: this might prevent get_config() from ever working if zombie requests can happen

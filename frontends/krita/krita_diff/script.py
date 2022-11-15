@@ -62,6 +62,7 @@ class Script(QObject):
     height: int
     """Height of selection"""
     status_changed = pyqtSignal(str)
+    config_updated = pyqtSignal()
 
     def __init__(self):
         super(Script, self).__init__()
@@ -71,6 +72,7 @@ class Script(QObject):
         self.ext_cfg = Config(name=EXT_CFG_NAME, model=None)
         self.client = Client(self.cfg, self.ext_cfg)
         self.client.status.connect(self.status_changed.emit)
+        self.client.config_updated.connect(self.config_updated.emit)
 
     def restore_defaults(self, if_empty=False):
         """Restore to default config."""
@@ -156,10 +158,6 @@ class Script(QObject):
             self.height,
             QImage.Format_RGBA8888,
         ).rgbSwapped()
-
-    def update_config(self):
-        """Update certain config/state from the backend."""
-        return self.client.get_config()
 
     def img_inserter(self, x, y, width, height):
         """Return frozen image inserter to insert images as new layer."""
@@ -362,6 +360,10 @@ class Script(QObject):
         if not self.doc:
             return
         self.apply_simple_upscale()
+
+    def action_update_config(self):
+        """Update certain config/state from the backend."""
+        self.client.get_config()
 
 
 script = Script()

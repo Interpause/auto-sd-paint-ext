@@ -31,7 +31,7 @@ class SDPluginDocker(DockWidget):
         super(SDPluginDocker, self).__init__(*args, **kwargs)
         self.setWindowTitle("SD Plugin")
         self.create_interfaces()
-        self.update_remote_config()
+        script.action_update_config()
         self.update_interfaces()
         self.connect_interfaces()
         self.setWidget(self.widget)
@@ -90,19 +90,16 @@ class SDPluginDocker(DockWidget):
         self.upscale_widget.cfg_connect()
         self.config_widget.cfg_connect()
 
-        self.update_timer.timeout.connect(self.update_remote_config)
+        self.update_timer.timeout.connect(script.action_update_config)
         self.update_timer.start(REFRESH_INTERVAL)
         script.status_changed.connect(self.update_status_bar)
+        script.config_updated.connect(self.update_interfaces)
         self.tabs.currentChanged.connect(partial(script.cfg.set, "tab_index"))
 
     def update_status_bar(self, s):
         if s == STATE_READY and STATE_URLERROR not in self.status_bar.text():
             return
         self.status_bar.setText(f"<b>Status:</b> {s}")
-
-    def update_remote_config(self):
-        script.update_config()
-        self.update_interfaces()
 
     def canvasChanged(self, canvas):
         pass
