@@ -242,6 +242,9 @@ async def f_img2img(req: Img2ImgRequest):
 
     if not req.include_grid and len(images) > 1 and script_ind == 0:
         images = images[1:]
+    # This is a workaround.
+    if script and script.title() == "Loopback" and len(images) > 1:
+        images = images[1:]
 
     # NOTE: this is a dumb assumption:
     # if size of image is different from size given to pipeline (after sbbedz fix)
