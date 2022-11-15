@@ -32,10 +32,14 @@ Why use this?
 
 ### Differences from Video
 
-- Scripts API is now possible (e.g. SD Upscale, Outpaint Mk 2)
+- All webUI scripts have been tested to work!
+  - SD Upscale, Outpainting Mk 2, Img2Img Alt, etc
 - Inpainting experience is better
+  - Inpaint mask is auto-hidden
+  - Better mask blur & inpaint full resolution technique than webUI
 - UI no longer freezes during image update
-- UI has been improved & squeezed further
+- UI has been improved, takes up less space
+- Error messages have been improved
 
 ## Breaking Changes
 
@@ -58,9 +62,14 @@ This is actually smarter than the builtin highres fix + firstphase width/height 
 
 <hr/>
 
-Q: Outpainting?
+Q: Outpainting tab?
 
-A: No outpainting MK2 yet, but nothing stopping you from doing basic outpainting. 1) expand canvas 2) scribble in blank area 3) img2img on blank area + some of image.
+A:
+While the outpainting tab is still WIP, the outpainting scripts (under img2img tab) works perfectly fine! Alternatively, if you want more control over outpainting, you can:
+
+1. Expand the canvas
+2. Scribble in the newly added blank area
+3. img2img on the blank area + some of the image
 
 <hr/>
 
@@ -87,7 +96,6 @@ A: Unfortunately no, all plugins so far have different APIs. The official API is
 - Scripts/features that increase the image size (Simple upscaling, SD upscaling, Outpaint Mk 2, etc) will now expand the canvas when image generation is complete **only if** _there is no active selection_.
   - If there is a selection, the image will be scaled to fit the selection region.
   - Using Ctrl+A to select the entire image is considered an active selection!
-
 
 ### 2022-11-08
 
