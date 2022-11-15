@@ -2,7 +2,17 @@ import os
 import time
 from typing import Union
 
-from krita import Document, Krita, Node, QImage, QObject, QTimer, Selection, pyqtSignal
+from krita import (
+    Document,
+    Krita,
+    Node,
+    QImage,
+    QObject,
+    Qt,
+    QTimer,
+    Selection,
+    pyqtSignal,
+)
 
 from .client import Client
 from .config import Config
@@ -93,6 +103,7 @@ class Script(QObject):
             self.y = 0
             self.width = self.doc.width()
             self.height = self.doc.height()
+            self.selection = None  # for the two other cases of invalid selection
         else:
             self.x = self.selection.x()
             self.y = self.selection.y()
@@ -152,26 +163,58 @@ class Script(QObject):
 
     def img_inserter(self, x, y, width, height):
         """Return frozen image inserter to insert images as new layer."""
+        # Selection may change before callback, so freeze selection region
+        has_selection = self.selection is not None
+
         # TODO: Insert images inside a group layer for better organization
         # Group layer name can contain model name, prompt, etc
-        # Selection may change before callback, so freeze selection region
         def insert(layer_name, enc):
+            nonlocal x, y, width, height, has_selection
             print(f"inserting layer {layer_name}")
             print(f"data size: {len(enc)}")
+
             # QImage.Format_RGB32 (4) is default format after decoding image
             # QImage.Format_RGBA8888 (17) is format used in Krita tutorial
             # both are compatible, & converting from 4 to 17 required a RGB swap
+            # Likewise for 5 & 18 (their RGBA counterparts)
             image = b64_to_img(enc)
             print(
                 f"image created: {image}, {image.width()}x{image.height()}, depth: {image.depth()}, format: {image.format()}"
             )
+
+            # NOTE: Scaling is usually done by backend (although I am reconsidering this)
+            # The scaling here is for SD Upscale or Upscale on a selection region rather than whole image
+            # Image won't be scaled down ONLY if there is no selection; i.e. selecting whole image will scale down,
+            # not selecting anything won't scale down, leading to the canvas being resized afterwards
+            if has_selection and (image.width() != width or image.height() != height):
+                print(f"Rescaling image to selection: {width}x{height}")
+                image = image.scaled(
+                    width, height, transformMode=Qt.SmoothTransformation
+                )
+
+            # Resize (not scale!) canvas if image is larger (i.e. outpainting or Upscale was used)
+            if image.width() > self.doc.width() or image.height() > self.doc.height():
+                # NOTE:
+                # - user's selection will be partially ignored if image is larger than canvas
+                # - it is complex to scale/resize the image such that image fits in the newly scaled selection
+                # - the canvas will still be resized even if the image fits after transparency masking
+                print("Image is larger than canvas! Resizing...")
+                new_width, new_height = self.doc.width(), self.doc.height()
+                if image.width() > self.doc.width():
+                    x, width, new_width = 0, image.width(), image.width()
+                if image.height() > self.doc.height():
+                    y, height, new_height = 0, image.height(), image.height()
+                self.doc.resizeImage(0, 0, new_width, new_height)
+
             ba = img_to_ba(image)
             layer = create_layer(self.doc, layer_name)
             # layer.setColorSpace() doesn't pernamently convert layer depth etc...
+
+            # Don't fail silently for setPixelData(); fails if bit depth or number of channels mismatch
             size = ba.size()
             expected = layer.pixelData(x, y, width, height).size()
-            # Don't fail silently for setPixelData()
             assert expected == size, f"Raw data size: {size}, Expected size: {expected}"
+
             print(f"inserting at x: {x}, y: {y}, w: {width}, h: {height}")
             layer.setPixelData(ba, x, y, width, height)
             return layer

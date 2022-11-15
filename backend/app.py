@@ -104,7 +104,7 @@ async def f_txt2img(req: Txt2ImgRequest):
         req.base_size, req.max_size, req.orig_width, req.orig_height
     )
 
-    output_images, info, html = modules.txt2img.txt2img(
+    images, info, html = modules.txt2img.txt2img(
         parse_prompt(req.prompt),  # prompt
         parse_prompt(req.negative_prompt),  # negative_prompt
         "None",  # prompt_style: saved prompt styles (unsupported)
@@ -131,31 +131,31 @@ async def f_txt2img(req: Txt2ImgRequest):
         *args,
     )
 
-    if not req.include_grid and len(output_images) > 1 and script_ind == 0:
-        output_images = output_images[1:]
+    if not req.include_grid and len(images) > 1 and script_ind == 0:
+        images = images[1:]
 
-    log.info(
-        f"img size: {output_images[0].width}x{output_images[0].height}, target: {req.orig_width}x{req.orig_height}"
-    )
-
-    resized_images = [
-        modules.images.resize_image(0, image, req.orig_width, req.orig_height)
-        for image in output_images
-    ]
+    if not script or (width == images[0].width and height == images[0].height):
+        log.info(
+            f"img size: {images[0].width}x{images[0].height}, target: {req.orig_width}x{req.orig_height}"
+        )
+        images = [
+            modules.images.resize_image(0, image, req.orig_width, req.orig_height)
+            for image in images
+        ]
 
     # save images for debugging/logging purposes
     if req.save_samples:
         output_paths = [
             save_img(image, opt.sample_path, filename=f"{int(time.time())}_{i}.png")
-            for i, image in enumerate(resized_images)
+            for i, image in enumerate(images)
         ]
         log.info(f"saved: {output_paths}")
 
-    outputs = [img_to_b64(image) for image in resized_images]
+    images = [img_to_b64(image) for image in images]
 
-    log.info(f"output sizes: {[len(i) for i in outputs]}")
+    log.info(f"output sizes: {[len(i) for i in images]}")
     log.info(f"finished txt2img!")
-    return {"outputs": outputs, "info": info}
+    return {"outputs": images, "info": info}
 
 
 @router.post("/img2img", response_model=ImageResponse)
@@ -201,7 +201,7 @@ async def f_img2img(req: Img2ImgRequest):
     #   I dont know why
     # - the internal code for img2img is confusing and duplicative...
 
-    output_images, info, html = modules.img2img.img2img(
+    images, info, html = modules.img2img.img2img(
         req.mode,  # mode
         parse_prompt(req.prompt),  # prompt
         parse_prompt(req.negative_prompt),  # negative_prompt
@@ -240,17 +240,20 @@ async def f_img2img(req: Img2ImgRequest):
         *args,
     )
 
-    if not req.include_grid and len(output_images) > 1 and script_ind == 0:
-        output_images = output_images[1:]
+    if not req.include_grid and len(images) > 1 and script_ind == 0:
+        images = images[1:]
 
-    log.info(
-        f"img Size: {output_images[0].width}x{output_images[0].height}, target: {orig_width}x{orig_height}"
-    )
-
-    resized_images = [
-        modules.images.resize_image(0, image, orig_width, orig_height)
-        for image in output_images
-    ]
+    # NOTE: this is a dumb assumption:
+    # if size of image is different from size given to pipeline (after sbbedz fix)
+    # then it must be intentional (i.e. SD Upscale/outpaint) so dont scale back
+    if not script or (width == images[0].width and height == images[0].height):
+        log.info(
+            f"img Size: {images[0].width}x{images[0].height}, target: {orig_width}x{orig_height}"
+        )
+        images = [
+            modules.images.resize_image(0, image, orig_width, orig_height)
+            for image in images
+        ]
 
     if req.mode == 1:
 
@@ -260,21 +263,21 @@ async def f_img2img(req: Img2ImgRequest):
             a = ImageOps.invert(mask) if req.invert_mask else mask
             return Image.merge("RGBA", (r, g, b, a))
 
-        resized_images = [apply_mask(x) for x in resized_images]
+        images = [apply_mask(x) for x in images]
 
     # save images for debugging/logging purposes
     if req.save_samples:
         output_paths = [
             save_img(image, opt.sample_path, filename=f"{int(time.time())}_{i}.png")
-            for i, image in enumerate(resized_images)
+            for i, image in enumerate(images)
         ]
         log.info(f"saved: {output_paths}")
 
-    outputs = [img_to_b64(image) for image in resized_images]
+    images = [img_to_b64(image) for image in images]
 
-    log.info(f"output sizes: {[len(i) for i in outputs]}")
+    log.info(f"output sizes: {[len(i) for i in images]}")
     log.info(f"finished img2img!")
-    return {"outputs": outputs, "info": info}
+    return {"outputs": images, "info": info}
 
 
 @router.post("/upscale", response_model=UpscaleResponse)
@@ -306,22 +309,14 @@ async def f_upscale(req: UpscaleRequest):
     if req.downscale_first:
         image = modules.images.resize_image(0, image, orig_width // 2, orig_height // 2)
 
-    upscaled_image = upscaler.scaler.upscale(image, upscaler.scale, upscaler.data_path)
-    resized_image = modules.images.resize_image(
-        0, upscaled_image, orig_width, orig_height
-    )
-
-    log.info(
-        f"img size: {image.width}x{image.height}, target: {orig_width}x{orig_height}"
-    )
-
+    image = upscaler.scaler.upscale(image, upscaler.scale, upscaler.data_path)
     if req.save_samples:
         output_path = save_img(
-            resized_image, opt.sample_path, filename=f"{int(time.time())}.png"
+            image, opt.sample_path, filename=f"{int(time.time())}.png"
         )
         log.info(f"saved: {output_path}")
 
-    output = img_to_b64(resized_image)
+    output = img_to_b64(image)
     log.info(f"output size: {len(output)}")
     log.info("finished upscale!")
     return {"output": output}
