@@ -7,11 +7,11 @@ from ..script import script
 from ..widgets import QCheckBox, QLabel, QLineEditLayout
 
 
-class ConfigTabWidget(QWidget):
-    name = "config"
+class ConfigPage(QWidget):
+    name = "SD Plugin Config"
 
     def __init__(self, *args, **kwargs):
-        super(ConfigTabWidget, self).__init__(*args, **kwargs)
+        super(ConfigPage, self).__init__(*args, **kwargs)
 
         self.base_url = QLineEdit()
         self.base_url_reset = QPushButton("Default")

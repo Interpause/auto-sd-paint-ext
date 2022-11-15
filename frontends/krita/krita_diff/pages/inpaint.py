@@ -2,14 +2,14 @@ from krita import QHBoxLayout, QPushButton
 
 from ..script import script
 from ..widgets import QCheckBox, QComboBoxLayout, QSpinBoxLayout, TipsLayout
-from .img_base import ImgTabBaseWidget
+from .img_base import SDImgPageBase
 
 
-class InpaintTabWidget(ImgTabBaseWidget):
-    name = "inpaint"
+class InpaintPage(SDImgPageBase):
+    name = "Inpaint"
 
     def __init__(self, *args, **kwargs):
-        super(InpaintTabWidget, self).__init__(cfg_prefix="inpaint", *args, **kwargs)
+        super(InpaintPage, self).__init__(cfg_prefix="inpaint", *args, **kwargs)
         self.layout.addLayout(self.denoising_strength_layout)
 
         self.invert_mask = QCheckBox(script.cfg, "inpaint_invert_mask", "Invert mask")
@@ -66,7 +66,7 @@ class InpaintTabWidget(ImgTabBaseWidget):
         self.layout.addStretch()
 
     def cfg_init(self):
-        super(InpaintTabWidget, self).cfg_init()
+        super(InpaintPage, self).cfg_init()
         # self.mask_blur_layout.cfg_init()
         self.fill_layout.cfg_init()
         self.inpaint_mask_weight.cfg_init()
@@ -77,7 +77,7 @@ class InpaintTabWidget(ImgTabBaseWidget):
         self.tips.setVisible(not script.cfg("minimize_ui", bool))
 
     def cfg_connect(self):
-        super(InpaintTabWidget, self).cfg_connect()
+        super(InpaintPage, self).cfg_connect()
         # self.mask_blur_layout.cfg_connect()
         self.fill_layout.cfg_connect()
         self.inpaint_mask_weight.cfg_connect()

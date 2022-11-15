@@ -5,11 +5,11 @@ from ..widgets import QCheckBox, QComboBoxLayout, QLabel
 
 
 # TODO: Become SD Upscale tab.
-class UpscaleTabWidget(QWidget):
-    name = "upscale"
+class UpscalePage(QWidget):
+    name = "Upscale"
 
     def __init__(self, *args, **kwargs):
-        super(UpscaleTabWidget, self).__init__(*args, **kwargs)
+        super(UpscalePage, self).__init__(*args, **kwargs)
 
         self.upscaler_layout = QComboBoxLayout(
             script.cfg, "upscaler_list", "upscale_upscaler_name", label="Upscaler:"

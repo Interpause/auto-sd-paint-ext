@@ -3,12 +3,12 @@ from krita import DockWidgetFactory, DockWidgetFactoryBase, Krita
 from .docker import create_docker
 from .extension import SDPluginExtension
 from .pages import (
-    ConfigTabWidget,
-    Img2ImgTabWidget,
-    InpaintTabWidget,
-    SDCommonWidget,
-    Txt2ImgTabWidget,
-    UpscaleTabWidget,
+    ConfigPage,
+    Img2ImgPage,
+    InpaintPage,
+    SDCommonPage,
+    Txt2ImgPage,
+    UpscalePage,
 )
 
 # TODO:
@@ -23,41 +23,41 @@ instance.addDockWidgetFactory(
     DockWidgetFactory(
         "krita_diff_sdcommon",
         DockWidgetFactoryBase.DockLeft,
-        create_docker(SDCommonWidget),
+        create_docker(SDCommonPage),
     )
 )
 instance.addDockWidgetFactory(
     DockWidgetFactory(
         "krita_diff_txt2img",
         DockWidgetFactoryBase.DockLeft,
-        create_docker(Txt2ImgTabWidget),
+        create_docker(Txt2ImgPage),
     )
 )
 instance.addDockWidgetFactory(
     DockWidgetFactory(
         "krita_diff_img2img",
         DockWidgetFactoryBase.DockLeft,
-        create_docker(Img2ImgTabWidget),
+        create_docker(Img2ImgPage),
     )
 )
 instance.addDockWidgetFactory(
     DockWidgetFactory(
         "krita_diff_inpaint",
         DockWidgetFactoryBase.DockLeft,
-        create_docker(InpaintTabWidget),
+        create_docker(InpaintPage),
     )
 )
 instance.addDockWidgetFactory(
     DockWidgetFactory(
         "krita_diff_upscale",
         DockWidgetFactoryBase.DockLeft,
-        create_docker(UpscaleTabWidget),
+        create_docker(UpscalePage),
     )
 )
 instance.addDockWidgetFactory(
     DockWidgetFactory(
         "krita_diff_config",
         DockWidgetFactoryBase.DockLeft,
-        create_docker(ConfigTabWidget),
+        create_docker(ConfigPage),
     )
 )

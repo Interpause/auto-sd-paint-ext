@@ -2,14 +2,14 @@ from krita import QHBoxLayout, QPushButton
 
 from ..script import script
 from ..widgets import QCheckBox, TipsLayout
-from .img_base import ImgTabBaseWidget
+from .img_base import SDImgPageBase
 
 
-class Txt2ImgTabWidget(ImgTabBaseWidget):
-    name = "txt2img"
+class Txt2ImgPage(SDImgPageBase):
+    name = "Txt2Img"
 
     def __init__(self, *args, **kwargs):
-        super(Txt2ImgTabWidget, self).__init__(cfg_prefix="txt2img", *args, **kwargs)
+        super(Txt2ImgPage, self).__init__(cfg_prefix="txt2img", *args, **kwargs)
 
         self.highres = QCheckBox(script.cfg, "txt2img_highres", "Highres fix")
 
@@ -29,13 +29,13 @@ class Txt2ImgTabWidget(ImgTabBaseWidget):
         self.layout.addStretch()
 
     def cfg_init(self):
-        super(Txt2ImgTabWidget, self).cfg_init()
+        super(Txt2ImgPage, self).cfg_init()
         self.highres.cfg_init()
 
         self.tips.setVisible(not script.cfg("minimize_ui", bool))
 
     def cfg_connect(self):
-        super(Txt2ImgTabWidget, self).cfg_connect()
+        super(Txt2ImgPage, self).cfg_connect()
 
         def toggle_highres(enabled):
             # hide/show denoising strength

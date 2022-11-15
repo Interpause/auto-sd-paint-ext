@@ -9,11 +9,11 @@ from ..widgets import QCheckBox, QComboBoxLayout, QLabel, QSpinBoxLayout
 # - move upscaler/face restorer to config?
 
 
-class SDCommonWidget(QWidget):
-    name = "Quick Config"
+class SDCommonPage(QWidget):
+    name = "SD Common Options"
 
     def __init__(self, *args, **kwargs):
-        super(SDCommonWidget, self).__init__(*args, **kwargs)
+        super(SDCommonPage, self).__init__(*args, **kwargs)
 
         self.title = QLabel("<em>Quick Config</em>")
 

@@ -5,9 +5,9 @@ from ..widgets import QComboBoxLayout, QLineEditLayout, QPromptLayout, QSpinBoxL
 from .extension import ExtSectionLayout
 
 
-class ImgTabBaseWidget(QWidget):
+class SDImgPageBase(QWidget):
     def __init__(self, cfg_prefix: str, *args, **kwargs):
-        super(ImgTabBaseWidget, self).__init__(*args, **kwargs)
+        super(SDImgPageBase, self).__init__(*args, **kwargs)
 
         self.prompt_layout = QPromptLayout(
             script.cfg, f"{cfg_prefix}_prompt", f"{cfg_prefix}_negative_prompt"
