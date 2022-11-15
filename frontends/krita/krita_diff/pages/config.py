@@ -4,15 +4,16 @@ from krita import QHBoxLayout, QLineEdit, QPushButton, QScrollArea, QVBoxLayout,
 
 from ..defaults import DEFAULTS
 from ..script import script
-from ..widgets import QCheckBox, QLabel, QLineEditLayout
+from ..widgets import QCheckBox, QLabel, QLineEditLayout, StatusBar
 
 
-class ConfigTabWidget(QWidget):
-    def __init__(self, update_func, *args, **kwargs):
-        super(ConfigTabWidget, self).__init__(*args, **kwargs)
+class ConfigPage(QWidget):
+    name = "SD Plugin Config"
 
-        # callback to update all the other widgets
-        self.update_func = update_func
+    def __init__(self, *args, **kwargs):
+        super(ConfigPage, self).__init__(*args, **kwargs)
+
+        self.status_bar = StatusBar()
 
         self.base_url = QLineEdit()
         self.base_url_reset = QPushButton("Default")
@@ -93,6 +94,7 @@ class ConfigTabWidget(QWidget):
         # scroll_area.setLayout(layout_inner)
         # scroll_area.setWidgetResizable(True)
         # layout.addWidget(scroll_area)
+        layout.addWidget(self.status_bar)
         layout.addWidget(QLabel("<em>Backend url:</em>"))
         layout.addLayout(inline1)
         layout.addLayout(self.enc_key)
@@ -138,7 +140,7 @@ class ConfigTabWidget(QWidget):
     def cfg_connect(self):
         self.base_url.textChanged.connect(partial(script.cfg.set, "base_url"))
         # NOTE: this triggers on every keystroke; theres no focus lost signal...
-        self.base_url.textChanged.connect(script.update_config)
+        self.base_url.textChanged.connect(script.action_update_config)
         self.base_url_reset.released.connect(
             lambda: self.base_url.setText(DEFAULTS.base_url)
         )
@@ -155,17 +157,12 @@ class ConfigTabWidget(QWidget):
         self.do_exact_steps.cfg_connect()
         self.minimize_ui.cfg_connect()
 
-        def update_remote_config():
-            script.update_config()
-            self.update_func()
-
         def restore_defaults():
             script.restore_defaults()
             # retrieve list of available stuff again
-            script.update_config()
-            self.update_func()
+            script.action_update_config()
 
-        self.refresh_btn.released.connect(update_remote_config)
+        self.refresh_btn.released.connect(script.action_update_config)
         self.restore_defaults.released.connect(restore_defaults)
-        # NOTE: crappy workaround because the config system doesnt emit signals
-        self.minimize_ui.toggled.connect(lambda _: self.update_func())
+        self.minimize_ui.toggled.connect(lambda _: script.config_updated.emit())
+        script.status_changed.connect(self.status_bar.set_status)

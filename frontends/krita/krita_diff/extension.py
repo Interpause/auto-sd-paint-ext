@@ -1,14 +1,18 @@
-from krita import Extension
+from krita import Extension, QTimer
 
-from .docker import script
+from .defaults import REFRESH_INTERVAL
+from .script import script
 
 
-class Hotkeys(Extension):
+class SDPluginExtension(Extension):
     def __init__(self, parent):
         super().__init__(parent)
 
     def setup(self):
-        pass
+        self.update_timer = QTimer()
+        self.update_timer.timeout.connect(script.action_update_config)
+        self.update_timer.start(REFRESH_INTERVAL)
+        script.action_update_config()
 
     def createActions(self, window):
         txt2img_action = window.createAction(

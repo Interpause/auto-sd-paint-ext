@@ -2,12 +2,14 @@ from krita import QPushButton
 
 from ..script import script
 from ..widgets import TipsLayout
-from .img_base import ImgTabBaseWidget
+from .img_base import SDImgPageBase
 
 
-class Img2ImgTabWidget(ImgTabBaseWidget):
+class Img2ImgPage(SDImgPageBase):
+    name = "Img2Img"
+
     def __init__(self, *args, **kwargs):
-        super(Img2ImgTabWidget, self).__init__(cfg_prefix="img2img", *args, **kwargs)
+        super(Img2ImgPage, self).__init__(cfg_prefix="img2img", *args, **kwargs)
 
         self.btn = QPushButton("Start img2img")
         self.tips = TipsLayout(
@@ -20,10 +22,10 @@ class Img2ImgTabWidget(ImgTabBaseWidget):
         self.layout.addStretch()
 
     def cfg_init(self):
-        super(Img2ImgTabWidget, self).cfg_init()
+        super(Img2ImgPage, self).cfg_init()
 
         self.tips.setVisible(not script.cfg("minimize_ui", bool))
 
     def cfg_connect(self):
-        super(Img2ImgTabWidget, self).cfg_connect()
+        super(Img2ImgPage, self).cfg_connect()
         self.btn.released.connect(lambda: script.action_img2img())

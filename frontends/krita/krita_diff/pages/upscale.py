@@ -1,13 +1,17 @@
 from krita import QPushButton, QVBoxLayout, QWidget
 
 from ..script import script
-from ..widgets import QCheckBox, QComboBoxLayout, QLabel
+from ..widgets import QCheckBox, QComboBoxLayout, QLabel, StatusBar
 
 
 # TODO: Become SD Upscale tab.
-class UpscaleTabWidget(QWidget):
+class UpscalePage(QWidget):
+    name = "Upscale"
+
     def __init__(self, *args, **kwargs):
-        super(UpscaleTabWidget, self).__init__(*args, **kwargs)
+        super(UpscalePage, self).__init__(*args, **kwargs)
+
+        self.status_bar = StatusBar()
 
         self.upscaler_layout = QComboBoxLayout(
             script.cfg, "upscaler_list", "upscale_upscaler_name", label="Upscaler:"
@@ -34,6 +38,7 @@ NOTE:<br/>
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
 
+        layout.addWidget(self.status_bar)
         layout.addWidget(self.note)
         layout.addLayout(self.upscaler_layout)
         layout.addWidget(self.downscale_first)
@@ -52,3 +57,4 @@ NOTE:<br/>
         self.upscaler_layout.cfg_connect()
         self.downscale_first.cfg_connect()
         self.btn.released.connect(lambda: script.action_simple_upscale())
+        script.status_changed.connect(self.status_bar.set_status)
