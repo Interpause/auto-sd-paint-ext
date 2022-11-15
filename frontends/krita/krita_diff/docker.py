@@ -29,7 +29,6 @@ def create_docker(page):
             script.config_updated.connect(self.update_interface)
 
         def canvasChanged(self, canvas):
-            # TODO: use this callback to save config settings per document
             pass
 
     return Docker

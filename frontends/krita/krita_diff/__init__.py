@@ -11,12 +11,6 @@ from .pages import (
     UpscalePage,
 )
 
-# TODO:
-# - split each tab into its own Docker
-# - by default, dock all the tabs onto each other except quick config
-# - see https://scripting.krita.org/lessons/docker-widgets
-# - Might want to seriously consider drawing the line on what is done by backend/frontend
-
 instance = Krita.instance()
 instance.addExtension(SDPluginExtension(instance))
 instance.addDockWidgetFactory(

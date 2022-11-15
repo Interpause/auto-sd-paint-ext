@@ -51,6 +51,21 @@ log = logging.getLogger(LOGGER_NAME)
 # scripts, which each script taking up "slots" in the input args array.
 # So the more scripts, the longer array args would be for the last script.
 
+# NOTE: where to draw the line on what is done by the backend vs the frontend?
+# TODO: Create separate Outpainting route, add img2img structs to Upscale route
+# - yes I know its highly inconsistent what should be a route or not, but to prevent
+#   incredibly hacky workarounds on the frontend for script calling, it should be
+#   done by the backend, which has better access to the script information.
+# - Upscale tab UI:
+#    - Upscaler dropdown + 0.5x downscale checkbox + SD upscale checkbox
+#    - SD upscale checkbox hides 0.5x downscale checkbox, renames upscaler dropdown
+#    - to prescaler, and shows modified img2img UI (ofc uses its own cfg namespace)
+# - Outpaint tab UI:
+#    - modified img2img UI with own cfg namespace
+#    - try and hijack more control (Pixel to expand per direction instead of all directions)
+#    - self-sketch mode: basically sketch + inpaint but the inpaint mask is auto-calculated
+#    - option to select poor man, mk 2 or self-sketch
+
 
 @router.get("/config", response_model=ConfigResponse)
 async def get_state():
