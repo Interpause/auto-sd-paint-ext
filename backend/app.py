@@ -130,9 +130,9 @@ async def f_txt2img(req: Txt2ImgRequest):
         req.firstphase_height,  # firstphase_height (yes its inconsistently width/height first)
         *args,
     )
-
-    if not req.include_grid and len(images) > 1 and script_ind == 0:
-        images = images[1:]
+    if shared.opts.return_grid:
+        if not req.include_grid and len(images) > 1 and script_ind == 0:
+            images = images[1:]
 
     if not script or (width == images[0].width and height == images[0].height):
         log.info(
@@ -239,12 +239,12 @@ async def f_img2img(req: Img2ImgRequest):
         "",  # img2img_batch_output_dir (unspported)
         *args,
     )
-
-    if not req.include_grid and len(images) > 1 and script_ind == 0:
-        images = images[1:]
-    # This is a workaround.
-    if script and script.title() == "Loopback" and len(images) > 1:
-        images = images[1:]
+    if shared.opts.return_grid:
+        if not req.include_grid and len(images) > 1 and script_ind == 0:
+            images = images[1:]
+        # This is a workaround.
+        if script and script.title() == "Loopback" and len(images) > 1:
+            images = images[1:]
 
     # NOTE: this is a dumb assumption:
     # if size of image is different from size given to pipeline (after sbbedz fix)
