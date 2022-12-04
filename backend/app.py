@@ -51,6 +51,7 @@ log = logging.getLogger(LOGGER_NAME)
 # scripts, which each script taking up "slots" in the input args array.
 # So the more scripts, the longer array args would be for the last script.
 
+# TODO: Consider using pipeline directly instead of Gradio API for less surprises & better control
 
 @router.get("/config", response_model=ConfigResponse)
 async def get_state():
@@ -199,6 +200,7 @@ async def f_img2img(req: Img2ImgRequest):
     # - mask is used only in inpaint mode
     # - mask_mode determines whethere init_img_with_mask or init_img_inpaint is used,
     #   I dont know why
+    # - new color sketch functionality in webUI is irrelevant so None is used for their options.
     # - the internal code for img2img is confusing and duplicative...
 
     images, info, html = modules.img2img.img2img(
@@ -209,6 +211,7 @@ async def f_img2img(req: Img2ImgRequest):
         "None",  # prompt_style2: saved prompt styles (unsupported)
         image,  # init_img
         {"image": image, "mask": mask},  # init_img_with_mask
+        None,  # init_img_with_mask_orig # only used by webUI color sketch if init_img_with_mask isn't dict
         image,  # init_img_inpaint
         mask,  # init_mask_inpaint
         # using 1 for uploaded mask mode; processing done by prepare_mask to ensure its correct
@@ -216,6 +219,7 @@ async def f_img2img(req: Img2ImgRequest):
         req.steps,  # steps
         get_sampler_index(req.sampler_name),  # sampler_index
         0,  # req.mask_blur,  # mask_blur
+        None,  # mask_alpha # only used by webUI color sketch if init_img_with_mask isn't dict
         req.inpainting_fill,  # inpainting_fill
         req.restore_faces,  # restore_faces
         req.tiling,  # tiling
