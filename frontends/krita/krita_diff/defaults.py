@@ -14,6 +14,7 @@ STATE_TXT2IMG = "txt2img done!"
 STATE_IMG2IMG = "img2img done!"
 STATE_INPAINT = "inpaint done!"
 STATE_UPSCALE = "upscale done!"
+STATE_INTERRUPT = "Interrupted!"
 
 # Other currently hardcoded stuff
 GET_CONFIG_TIMEOUT = 10  # there is prevention for get request accumulation
@@ -26,6 +27,7 @@ EXT_CFG_NAME = "krita_diff_plugin_scripts"  # name of config file
 ADD_MASK_TIMEOUT = 200
 THREADED = True
 ROUTE_PREFIX = "/sdapi/interpause/"
+OFFICIAL_ROUTE_PREFIX = "/sdapi/v1/"
 
 # error messages
 ERR_MISSING_CONFIG = "Report this bug, developer missed out a config key somewhere."

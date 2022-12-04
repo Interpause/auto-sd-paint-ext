@@ -12,6 +12,7 @@ from .defaults import (
     ERR_BAD_URL,
     ERR_NO_CONNECTION,
     GET_CONFIG_TIMEOUT,
+    OFFICIAL_ROUTE_PREFIX,
     POST_TIMEOUT,
     ROUTE_PREFIX,
     STATE_READY,
@@ -24,11 +25,11 @@ from .utils import bytewise_xor, fix_prompt, get_ext_args, get_ext_key, img_to_b
 # except to prevent user from spamming themselves
 
 
-def get_url(cfg: Config, route: str = ...):
+def get_url(cfg: Config, route: str = ..., prefix: str = ROUTE_PREFIX):
     base = cfg("base_url", str)
     if not urlparse(base).scheme in {"http", "https"}:
         return None
-    url = urljoin(base, ROUTE_PREFIX)
+    url = urljoin(base, prefix)
     if route is not ...:
         url = urljoin(url, route)
     # print("url:", url)
@@ -137,7 +138,6 @@ class Client(QObject):
         self.ext_cfg = ext_cfg
         self.reqs = []
         # NOTE: this is a hacky workaround for detecting if backend is reachable
-        # this is to prevent zombie post requests (since they have no timeout)
         self.is_connected = False
 
     def handle_api_error(self, exc: Exception):
@@ -255,11 +255,6 @@ class Client(QObject):
             self.is_connected = True
             self.status.emit(STATE_READY)
 
-        # only get config if there are no pending post requests jamming the backend
-        # NOTE: this might prevent get_config() from ever working if zombie requests can happen
-        if len(self.reqs) > 0:
-            return
-
         url = get_url(self.cfg, "config")
         if not url:
             self.status.emit(ERR_BAD_URL)
@@ -375,3 +370,8 @@ class Client(QObject):
             else {"src_img": img_to_b64(src_img)}
         )
         self.post("upscale", params, cb)
+
+    def post_interrupt(self, cb):
+        # get official API url
+        url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
+        self.post("interrupt", {}, cb, base_url=url)

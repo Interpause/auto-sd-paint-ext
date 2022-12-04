@@ -1,4 +1,4 @@
-from krita import QHBoxLayout, QVBoxLayout, QWidget
+from krita import QHBoxLayout, QPushButton, QVBoxLayout, QWidget
 
 from ..script import script
 from ..widgets import QCheckBox, QComboBoxLayout, QLabel, QSpinBoxLayout
@@ -63,6 +63,9 @@ class SDCommonWidget(QWidget):
         # Tiling mode
         self.tiling = QCheckBox(script.cfg, "sd_tiling", "Tiling mode")
 
+        # Interrupt button
+        self.interrupt_btn = QPushButton("Interrupt")
+
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -74,6 +77,7 @@ class SDCommonWidget(QWidget):
         layout.addLayout(self.sd_model_layout)
         layout.addLayout(batch_layout)
         layout.addLayout(size_layout)
+        layout.addWidget(self.interrupt_btn)
 
         self.setLayout(layout)
 
@@ -112,3 +116,5 @@ class SDCommonWidget(QWidget):
         toggle_codeformer_weights(
             self.face_restorer_layout.qcombo.currentText() == "CodeFormer"
         )
+
+        self.interrupt_btn.released.connect(script.action_interrupt)
