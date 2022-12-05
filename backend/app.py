@@ -56,7 +56,7 @@ log = logging.getLogger(LOGGER_NAME)
 
 
 @router.get("/config", response_model=ConfigResponse)
-def get_state():
+async def get_state():
     """Get information about backend API.
 
     Returns config from `krita_config.yaml`, other metadata,
