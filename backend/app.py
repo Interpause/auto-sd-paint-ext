@@ -133,7 +133,7 @@ def f_txt2img(req: Txt2ImgRequest):
         req.firstphase_height,  # firstphase_height (yes its inconsistently width/height first)
         *args,
     )
-    if len(images) < 1:
+    if images is None or len(images) < 1:
         log.warning("Interrupted!")
         return {"outputs": [], "info": info}
 
@@ -249,7 +249,7 @@ def f_img2img(req: Img2ImgRequest):
         "",  # img2img_batch_output_dir (unspported)
         *args,
     )
-    if len(images) < 1:
+    if images is None or len(images) < 1:
         log.warning("Interrupted!")
         return {"outputs": [], "info": info}
 
