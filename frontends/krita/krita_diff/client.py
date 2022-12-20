@@ -11,10 +11,11 @@ from .config import Config
 from .defaults import (
     ERR_BAD_URL,
     ERR_NO_CONNECTION,
-    GET_TIMEOUT,
+    LONG_TIMEOUT,
     OFFICIAL_ROUTE_PREFIX,
-    POST_TIMEOUT,
     ROUTE_PREFIX,
+    SHORT_TIMEOUT,
+    STATE_DONE,
     STATE_READY,
     STATE_URLERROR,
     THREADED,
@@ -23,6 +24,8 @@ from .utils import bytewise_xor, fix_prompt, get_ext_args, get_ext_key, img_to_b
 
 # NOTE: backend queues up responses, so no explicit need to block multiple requests
 # except to prevent user from spamming themselves
+
+# TODO: tab showing all queued up requests (local plugin instance only)
 
 
 def get_url(cfg: Config, route: str = ..., prefix: str = ROUTE_PREFIX):
@@ -136,7 +139,8 @@ class Client(QObject):
         super(Client, self).__init__()
         self.cfg = cfg
         self.ext_cfg = ext_cfg
-        self.reqs = []
+        self.short_reqs = []
+        self.long_reqs = []
         # NOTE: this is a hacky workaround for detecting if backend is reachable
         self.is_connected = False
 
@@ -164,8 +168,10 @@ class Client(QObject):
             # self.status.emit(str(e))
             assert False, e
 
-    def post(self, route, body, cb, base_url=...):
-        if not self.is_connected:
+    def post(
+        self, route, body, cb, base_url=..., is_long=True, ignore_no_connection=False
+    ):
+        if not ignore_no_connection and not self.is_connected:
             self.status.emit(ERR_NO_CONNECTION)
             return
         url = get_url(self.cfg, route) if base_url is ... else urljoin(base_url, route)
@@ -174,28 +180,37 @@ class Client(QObject):
             return
         # TODO: how to cancel this? destroy the thread after sending API interrupt request?
         req, start = AsyncRequest.request(
-            url, body, POST_TIMEOUT, key=self.cfg("encryption_key")
+            url,
+            body,
+            LONG_TIMEOUT if is_long else SHORT_TIMEOUT,
+            key=self.cfg("encryption_key"),
         )
-        self.reqs.append(req)
-        req.finished.connect(lambda: self.reqs.remove(req))
-        req.result.connect(cb)
+
+        if is_long:
+            self.long_reqs.append(req)
+        else:
+            self.short_reqs.append(req)
+
+        def wrap(resp=None):
+            arr = self.long_reqs if is_long else self.short_reqs
+            arr.remove(req)
+            cb(resp)
+            if is_long and len(self.long_reqs) == 0:
+                self.status.emit(STATE_DONE)
+
+        req.result.connect(wrap)
         req.error.connect(self.handle_api_error)
         start()
 
-    # TODO: because my AsyncRequest implementation infers the method, the code here is repetitive...
-    def get(self, route, cb, base_url=...):
-        url = get_url(self.cfg, route) if base_url is ... else urljoin(base_url, route)
-        if not url:
-            self.status.emit(ERR_BAD_URL)
-            return
-        req, start = AsyncRequest.request(
-            url, None, GET_TIMEOUT, key=self.cfg("encryption_key")
+    def get(self, route, cb, base_url=..., is_long=False, ignore_no_connection=False):
+        self.post(
+            route,
+            None,
+            cb,
+            base_url=base_url,
+            is_long=is_long,
+            ignore_no_connection=ignore_no_connection,
         )
-        self.reqs.append(req)
-        req.finished.connect(lambda: self.reqs.remove(req))
-        req.result.connect(cb)
-        req.error.connect(self.handle_api_error)
-        start()
 
     def common_params(self, has_selection):
         """Parameters nearly all the post routes share."""
@@ -271,7 +286,7 @@ class Client(QObject):
             self.status.emit(STATE_READY)
             self.config_updated.emit()
 
-        self.get("config", cb)
+        self.get("config", cb, ignore_no_connection=True)
 
     def post_txt2img(self, cb, width, height, has_selection):
         params = dict(orig_width=width, orig_height=height)

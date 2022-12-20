@@ -10,15 +10,12 @@ STATE_INIT = "Errors will be shown here"
 STATE_URLERROR = "Network error"
 STATE_RESET_DEFAULT = "All settings reset"
 STATE_WAIT = "Please wait..."
-STATE_TXT2IMG = "txt2img done!"
-STATE_IMG2IMG = "img2img done!"
-STATE_INPAINT = "inpaint done!"
-STATE_UPSCALE = "upscale done!"
+STATE_DONE = "Done!"
 STATE_INTERRUPT = "Interrupted!"
 
 # Other currently hardcoded stuff
-GET_TIMEOUT = 10  # there is prevention for get request accumulation
-POST_TIMEOUT = None  # post might take "forever" depending on batch size/count
+SHORT_TIMEOUT = 10
+LONG_TIMEOUT = None  # requests that might take "forever", i.e., image generation with high batch count
 REFRESH_INTERVAL = 3000  # 3 seconds between auto-config refresh
 ETA_REFRESH_INTERVAL = 1000  # 1 second between eta refresh
 CFG_FOLDER = "krita"  # which folder in ~/.config to store config
