@@ -8,6 +8,7 @@ import modules
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from modules import shared
+from modules.call_queue import wrap_gradio_gpu_call
 from PIL import Image, ImageOps
 from starlette.concurrency import iterate_in_threadpool
 
@@ -65,6 +66,7 @@ log = logging.getLogger(LOGGER_NAME)
 #    - try and hijack more control (Pixel to expand per direction instead of all directions)
 #    - self-sketch mode: basically sketch + inpaint but the inpaint mask is auto-calculated
 #    - option to select poor man, mk 2 or self-sketch
+# TODO: Consider using pipeline directly instead of Gradio API for less surprises & better control
 
 
 @router.get("/config", response_model=ConfigResponse)
@@ -97,7 +99,7 @@ async def get_state():
 
 
 @router.post("/txt2img", response_model=ImageResponse)
-async def f_txt2img(req: Txt2ImgRequest):
+def f_txt2img(req: Txt2ImgRequest):
     """Post request for Txt2Img.
 
     Args:
@@ -119,7 +121,7 @@ async def f_txt2img(req: Txt2ImgRequest):
         req.base_size, req.max_size, req.orig_width, req.orig_height
     )
 
-    images, info, html = modules.txt2img.txt2img(
+    images, info, html = wrap_gradio_gpu_call(modules.txt2img.txt2img)(
         parse_prompt(req.prompt),  # prompt
         parse_prompt(req.negative_prompt),  # negative_prompt
         "None",  # prompt_style: saved prompt styles (unsupported)
@@ -145,9 +147,13 @@ async def f_txt2img(req: Txt2ImgRequest):
         req.firstphase_height,  # firstphase_height (yes its inconsistently width/height first)
         *args,
     )
+    if images is None or len(images) < 1:
+        log.warning("Interrupted!")
+        return {"outputs": [], "info": info}
 
-    if not req.include_grid and len(images) > 1 and script_ind == 0:
-        images = images[1:]
+    if shared.opts.return_grid:
+        if not req.include_grid and len(images) > 1 and script_ind == 0:
+            images = images[1:]
 
     if not script or (width == images[0].width and height == images[0].height):
         log.info(
@@ -174,7 +180,7 @@ async def f_txt2img(req: Txt2ImgRequest):
 
 
 @router.post("/img2img", response_model=ImageResponse)
-async def f_img2img(req: Img2ImgRequest):
+def f_img2img(req: Img2ImgRequest):
     """Post request for Img2Img.
 
     Args:
@@ -214,9 +220,10 @@ async def f_img2img(req: Img2ImgRequest):
     # - mask is used only in inpaint mode
     # - mask_mode determines whethere init_img_with_mask or init_img_inpaint is used,
     #   I dont know why
+    # - new color sketch functionality in webUI is irrelevant so None is used for their options.
     # - the internal code for img2img is confusing and duplicative...
 
-    images, info, html = modules.img2img.img2img(
+    images, info, html = wrap_gradio_gpu_call(modules.img2img.img2img)(
         req.mode,  # mode
         parse_prompt(req.prompt),  # prompt
         parse_prompt(req.negative_prompt),  # negative_prompt
@@ -224,6 +231,7 @@ async def f_img2img(req: Img2ImgRequest):
         "None",  # prompt_style2: saved prompt styles (unsupported)
         image,  # init_img
         {"image": image, "mask": mask},  # init_img_with_mask
+        None,  # init_img_with_mask_orig # only used by webUI color sketch if init_img_with_mask isn't dict
         image,  # init_img_inpaint
         mask,  # init_mask_inpaint
         # using 1 for uploaded mask mode; processing done by prepare_mask to ensure its correct
@@ -231,6 +239,7 @@ async def f_img2img(req: Img2ImgRequest):
         req.steps,  # steps
         get_sampler_index(req.sampler_name),  # sampler_index
         0,  # req.mask_blur,  # mask_blur
+        None,  # mask_alpha # only used by webUI color sketch if init_img_with_mask isn't dict
         req.inpainting_fill,  # inpainting_fill
         req.restore_faces,  # restore_faces
         req.tiling,  # tiling
@@ -254,12 +263,16 @@ async def f_img2img(req: Img2ImgRequest):
         "",  # img2img_batch_output_dir (unspported)
         *args,
     )
+    if images is None or len(images) < 1:
+        log.warning("Interrupted!")
+        return {"outputs": [], "info": info}
 
-    if not req.include_grid and len(images) > 1 and script_ind == 0:
-        images = images[1:]
-    # This is a workaround.
-    if script and script.title() == "Loopback" and len(images) > 1:
-        images = images[1:]
+    if shared.opts.return_grid:
+        if not req.include_grid and len(images) > 1 and script_ind == 0:
+            images = images[1:]
+        # This is a workaround.
+        if script and script.title() == "Loopback" and len(images) > 1:
+            images = images[1:]
 
     # NOTE: this is a dumb assumption:
     # if size of image is different from size given to pipeline (after sbbedz fix)
@@ -299,7 +312,7 @@ async def f_img2img(req: Img2ImgRequest):
 
 
 @router.post("/upscale", response_model=UpscaleResponse)
-async def f_upscale(req: UpscaleRequest):
+def f_upscale(req: UpscaleRequest):
     """Post request for upscaling.
 
     Args:

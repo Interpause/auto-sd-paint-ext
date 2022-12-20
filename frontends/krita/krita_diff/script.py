@@ -22,6 +22,7 @@ from .defaults import (
     EXT_CFG_NAME,
     STATE_IMG2IMG,
     STATE_INPAINT,
+    STATE_INTERRUPT,
     STATE_RESET_DEFAULT,
     STATE_TXT2IMG,
     STATE_UPSCALE,
@@ -364,6 +365,12 @@ class Script(QObject):
     def action_update_config(self):
         """Update certain config/state from the backend."""
         self.client.get_config()
+
+    def action_interrupt(self):
+        def cb(response=None):
+            self.status_changed.emit(STATE_INTERRUPT)
+
+        self.client.post_interrupt(cb)
 
 
 script = Script()

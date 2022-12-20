@@ -29,7 +29,12 @@ class ExtWidget(QWidget):
         super(ExtWidget, self).__init__(*args, **kwargs)
 
         get_key = partial(get_ext_key, ext_type, ext_name)
-        meta: List[dict] = json.loads(ext_cfg(get_key()))
+        
+        try:
+            meta: List[dict] = json.loads(ext_cfg(get_key()))
+        except json.JSONDecodeError:
+            meta = []
+            print(f"Script metadata is invalid: {ext_cfg(get_key())}")
 
         layout = QVBoxLayout()
         self.widgets = []

@@ -15,9 +15,8 @@ log = logging.getLogger(LOGGER_NAME)
 
 
 def inspect_ui(script: modules.scripts.Script, is_img2img: bool):
-    """Get metadata about accepted arguments by inspecting GUI."""
-    with gr.Blocks():
-        elems = script.ui(is_img2img)
+    """Get metadata about accepted arguments by inspecting GUI. Needs Gradio Blocks context."""
+    elems = script.ui(is_img2img)
 
     metadata = []
     if not isinstance(elems, Sequence):
@@ -98,8 +97,9 @@ def get_scripts_metadata(is_img2img: bool):
     elif txt2img_script_meta and len(txt2img_script_meta) - 1 == len(runner.titles):
         return txt2img_script_meta
 
-    for name, script in zip(runner.titles, runner.selectable_scripts):
-        metadata[name] = inspect_ui(script, is_img2img)
+    with gr.Blocks(visible=False, analytics_enabled=False):
+        for name, script in zip(runner.titles, runner.selectable_scripts):
+            metadata[name] = inspect_ui(script, is_img2img)
     if is_img2img:
         img2img_script_meta = metadata
     else:
