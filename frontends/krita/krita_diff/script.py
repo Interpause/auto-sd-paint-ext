@@ -19,6 +19,7 @@ from .config import Config
 from .defaults import (
     ADD_MASK_TIMEOUT,
     ERR_NO_DOCUMENT,
+    ETA_REFRESH_INTERVAL,
     EXT_CFG_NAME,
     STATE_IMG2IMG,
     STATE_INPAINT,
@@ -74,6 +75,9 @@ class Script(QObject):
         self.client = Client(self.cfg, self.ext_cfg)
         self.client.status.connect(self.status_changed.emit)
         self.client.config_updated.connect(self.config_updated.emit)
+        self.eta_timer = QTimer()
+        self.eta_timer.setInterval(ETA_REFRESH_INTERVAL)
+        self.eta_timer.timeout.connect(self.action_update_eta)
 
     def restore_defaults(self, if_empty=False):
         """Restore to default config."""
@@ -226,6 +230,7 @@ class Script(QObject):
         mask_trigger = self.transparency_mask_inserter()
 
         def cb(response):
+            self.eta_timer.stop()
             assert response is not None, "Backend Error, check terminal"
             outputs = response["outputs"]
             layers = [
@@ -235,6 +240,7 @@ class Script(QObject):
             mask_trigger(layers)
             self.status_changed.emit(STATE_TXT2IMG)
 
+        self.eta_timer.start(ETA_REFRESH_INTERVAL)
         self.client.post_txt2img(
             cb, self.width, self.height, self.selection is not None
         )
@@ -260,6 +266,7 @@ class Script(QObject):
             save_img(sel_image, path)
 
         def cb(response):
+            self.eta_timer.stop()
             assert response is not None, "Backend Error, check terminal"
 
             outputs = response["outputs"]
@@ -278,6 +285,7 @@ class Script(QObject):
                 self.status_changed.emit(STATE_INPAINT)
 
         method = self.client.post_inpaint if mode == 1 else self.client.post_img2img
+        self.eta_timer.start()
         method(
             cb,
             sel_image,
@@ -367,10 +375,16 @@ class Script(QObject):
         self.client.get_config()
 
     def action_interrupt(self):
-        def cb(response=None):
+        def cb(resp=None):
             self.status_changed.emit(STATE_INTERRUPT)
 
         self.client.post_interrupt(cb)
+
+    def action_update_eta(self):
+        def cb(resp=None):
+            self.status_changed.emit(STATE_WAIT + f"({resp['eta_relative']:.0f}s)")
+
+        self.client.get_progress(cb)
 
 
 script = Script()

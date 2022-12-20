@@ -17,9 +17,10 @@ STATE_UPSCALE = "upscale done!"
 STATE_INTERRUPT = "Interrupted!"
 
 # Other currently hardcoded stuff
-GET_CONFIG_TIMEOUT = 10  # there is prevention for get request accumulation
+GET_TIMEOUT = 10  # there is prevention for get request accumulation
 POST_TIMEOUT = None  # post might take "forever" depending on batch size/count
 REFRESH_INTERVAL = 3000  # 3 seconds between auto-config refresh
+ETA_REFRESH_INTERVAL = 1000  # 1 second between eta refresh
 CFG_FOLDER = "krita"  # which folder in ~/.config to store config
 CFG_NAME = "krita_diff_plugin"  # name of config file
 EXT_CFG_NAME = "krita_diff_plugin_scripts"  # name of config file

@@ -11,7 +11,7 @@ from .config import Config
 from .defaults import (
     ERR_BAD_URL,
     ERR_NO_CONNECTION,
-    GET_CONFIG_TIMEOUT,
+    GET_TIMEOUT,
     OFFICIAL_ROUTE_PREFIX,
     POST_TIMEOUT,
     ROUTE_PREFIX,
@@ -182,7 +182,22 @@ class Client(QObject):
         req.error.connect(self.handle_api_error)
         start()
 
-    def get_common_params(self, has_selection):
+    # TODO: because my AsyncRequest implementation infers the method, the code here is repetitive...
+    def get(self, route, cb, base_url=...):
+        url = get_url(self.cfg, route) if base_url is ... else urljoin(base_url, route)
+        if not url:
+            self.status.emit(ERR_BAD_URL)
+            return
+        req, start = AsyncRequest.request(
+            url, None, GET_TIMEOUT, key=self.cfg("encryption_key")
+        )
+        self.reqs.append(req)
+        req.finished.connect(lambda: self.reqs.remove(req))
+        req.result.connect(cb)
+        req.error.connect(self.handle_api_error)
+        start()
+
+    def common_params(self, has_selection):
         """Parameters nearly all the post routes share."""
         tiling = self.cfg("sd_tiling", bool) and not (
             self.cfg("only_full_img_tiling", bool) and has_selection
@@ -256,18 +271,7 @@ class Client(QObject):
             self.status.emit(STATE_READY)
             self.config_updated.emit()
 
-        url = get_url(self.cfg, "config")
-        if not url:
-            self.status.emit(ERR_BAD_URL)
-            return
-        req, start = AsyncRequest.request(
-            url, None, GET_CONFIG_TIMEOUT, key=self.cfg("encryption_key")
-        )
-        self.reqs.append(req)
-        req.finished.connect(lambda: self.reqs.remove(req))
-        req.result.connect(cb)
-        req.error.connect(self.handle_api_error)
-        start()
+        self.get("config", cb)
 
     def post_txt2img(self, cb, width, height, has_selection):
         params = dict(orig_width=width, orig_height=height)
@@ -279,7 +283,7 @@ class Client(QObject):
             )
             ext_name = self.cfg("txt2img_script", str)
             ext_args = get_ext_args(self.ext_cfg, "scripts_txt2img", ext_name)
-            params.update(self.get_common_params(has_selection))
+            params.update(self.common_params(has_selection))
             params.update(
                 prompt=fix_prompt(self.cfg("txt2img_prompt", str)),
                 negative_prompt=fix_prompt(self.cfg("txt2img_negative_prompt", str)),
@@ -305,7 +309,7 @@ class Client(QObject):
             )
             ext_name = self.cfg("img2img_script", str)
             ext_args = get_ext_args(self.ext_cfg, "scripts_img2img", ext_name)
-            params.update(self.get_common_params(has_selection))
+            params.update(self.common_params(has_selection))
             params.update(
                 prompt=fix_prompt(self.cfg("img2img_prompt", str)),
                 negative_prompt=fix_prompt(self.cfg("img2img_negative_prompt", str)),
@@ -337,7 +341,7 @@ class Client(QObject):
             )
             ext_name = self.cfg("inpaint_script", str)
             ext_args = get_ext_args(self.ext_cfg, "scripts_inpaint", ext_name)
-            params.update(self.get_common_params(has_selection))
+            params.update(self.common_params(has_selection))
             params.update(
                 prompt=fix_prompt(self.cfg("inpaint_prompt", str)),
                 negative_prompt=fix_prompt(self.cfg("inpaint_negative_prompt", str)),
@@ -376,3 +380,8 @@ class Client(QObject):
         # get official API url
         url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
         self.post("interrupt", {}, cb, base_url=url)
+
+    def get_progress(self, cb):
+        # get official API url
+        url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
+        self.get("progress", cb, base_url=url)
