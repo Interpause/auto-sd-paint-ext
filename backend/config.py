@@ -11,6 +11,10 @@ CONFIG_PATH = "auto-sd-paint-ext-backend.yaml"
 LOGGER_NAME = "auto-sd-paint-ext"
 ENCRYPT_FILE = "xor_pass.txt"
 
+# names of scripts to apply workarounds for
+NAME_SCRIPT_LOOPBACK = "Loopback"
+NAME_SCRIPT_UPSCALE = "SD upscale"
+
 
 class BaseOptions(BaseModel):
     sample_path: str = "outputs/krita-out"

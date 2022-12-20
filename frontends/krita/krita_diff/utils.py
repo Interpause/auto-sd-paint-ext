@@ -3,9 +3,17 @@ import re
 from itertools import cycle
 from math import ceil
 
-from krita import Document, QBuffer, QByteArray, QImage, QIODevice
+from krita import Document, Krita, QBuffer, QByteArray, QImage, QIODevice, Qt
 
 from .config import Config
+from .defaults import (
+    TAB_CONFIG,
+    TAB_IMG2IMG,
+    TAB_INPAINT,
+    TAB_SDCOMMON,
+    TAB_TXT2IMG,
+    TAB_UPSCALE,
+)
 
 
 def fix_prompt(prompt: str):
@@ -184,3 +192,34 @@ def b64_to_img(enc: str):
 def bytewise_xor(msg: bytes, key: bytes):
     """Used for decrypting/encrypting request/response bodies."""
     return bytes(v ^ k for v, k in zip(msg, cycle(key)))
+
+
+def reset_docker_layout():
+    """NOTE: Default stacking of dockers hardcoded here."""
+    docker_ids = {
+        TAB_SDCOMMON,
+        TAB_CONFIG,
+        TAB_IMG2IMG,
+        TAB_TXT2IMG,
+        TAB_UPSCALE,
+        TAB_INPAINT,
+    }
+    instance = Krita.instance()
+    # Assumption that currently active window is the main window
+    window = instance.activeWindow()
+    dockers = {
+        d.objectName(): d for d in instance.dockers() if d.objectName() in docker_ids
+    }
+    qmainwindow = window.qwindow()
+    # Reset all dockers
+    for d in dockers.values():
+        d.setFloating(False)
+        d.setVisible(True)
+        qmainwindow.addDockWidget(Qt.LeftDockWidgetArea, d)
+
+    qmainwindow.tabifyDockWidget(dockers[TAB_SDCOMMON], dockers[TAB_CONFIG])
+    qmainwindow.tabifyDockWidget(dockers[TAB_TXT2IMG], dockers[TAB_IMG2IMG])
+    qmainwindow.tabifyDockWidget(dockers[TAB_TXT2IMG], dockers[TAB_INPAINT])
+    qmainwindow.tabifyDockWidget(dockers[TAB_TXT2IMG], dockers[TAB_UPSCALE])
+    dockers[TAB_SDCOMMON].raise_()
+    dockers[TAB_INPAINT].raise_()

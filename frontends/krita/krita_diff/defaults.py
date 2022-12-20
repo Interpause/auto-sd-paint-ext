@@ -10,16 +10,14 @@ STATE_INIT = "Errors will be shown here"
 STATE_URLERROR = "Network error"
 STATE_RESET_DEFAULT = "All settings reset"
 STATE_WAIT = "Please wait..."
-STATE_TXT2IMG = "txt2img done!"
-STATE_IMG2IMG = "img2img done!"
-STATE_INPAINT = "inpaint done!"
-STATE_UPSCALE = "upscale done!"
+STATE_DONE = "Done!"
 STATE_INTERRUPT = "Interrupted!"
 
 # Other currently hardcoded stuff
-GET_CONFIG_TIMEOUT = 10  # there is prevention for get request accumulation
-POST_TIMEOUT = None  # post might take "forever" depending on batch size/count
+SHORT_TIMEOUT = 10
+LONG_TIMEOUT = None  # requests that might take "forever", i.e., image generation with high batch count
 REFRESH_INTERVAL = 3000  # 3 seconds between auto-config refresh
+ETA_REFRESH_INTERVAL = 1000  # 1 second between eta refresh
 CFG_FOLDER = "krita"  # which folder in ~/.config to store config
 CFG_NAME = "krita_diff_plugin"  # name of config file
 EXT_CFG_NAME = "krita_diff_plugin_scripts"  # name of config file
@@ -35,6 +33,14 @@ ERR_NO_DOCUMENT = "No document open yet!"
 ERR_NO_CONNECTION = "Cannot reach backend!"
 ERR_BAD_URL = "Invalid backend URL!"
 
+# tab IDs
+TAB_SDCOMMON = "krita_diff_sdcommon"
+TAB_CONFIG = "krita_diff_config"
+TAB_TXT2IMG = "krita_diff_txt2img"
+TAB_IMG2IMG = "krita_diff_img2img"
+TAB_INPAINT = "krita_diff_inpaint"
+TAB_UPSCALE = "krita_diff_upscale"
+
 
 @dataclass(frozen=True)
 class Defaults:
@@ -48,8 +54,8 @@ class Defaults:
     filter_nsfw: bool = False
     do_exact_steps: bool = True
     sample_path: str = "."
-    tab_index: int = 4
     minimize_ui: bool = False
+    first_setup: bool = True  # only used for the initial docker layout
 
     sd_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
     sd_model: str = "model.ckpt"

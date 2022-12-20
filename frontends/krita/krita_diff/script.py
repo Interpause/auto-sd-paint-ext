@@ -19,13 +19,10 @@ from .config import Config
 from .defaults import (
     ADD_MASK_TIMEOUT,
     ERR_NO_DOCUMENT,
+    ETA_REFRESH_INTERVAL,
     EXT_CFG_NAME,
-    STATE_IMG2IMG,
-    STATE_INPAINT,
     STATE_INTERRUPT,
     STATE_RESET_DEFAULT,
-    STATE_TXT2IMG,
-    STATE_UPSCALE,
     STATE_WAIT,
 )
 from .utils import (
@@ -63,6 +60,7 @@ class Script(QObject):
     height: int
     """Height of selection"""
     status_changed = pyqtSignal(str)
+    config_updated = pyqtSignal()
 
     def __init__(self):
         super(Script, self).__init__()
@@ -72,6 +70,10 @@ class Script(QObject):
         self.ext_cfg = Config(name=EXT_CFG_NAME, model=None)
         self.client = Client(self.cfg, self.ext_cfg)
         self.client.status.connect(self.status_changed.emit)
+        self.client.config_updated.connect(self.config_updated.emit)
+        self.eta_timer = QTimer()
+        self.eta_timer.setInterval(ETA_REFRESH_INTERVAL)
+        self.eta_timer.timeout.connect(self.action_update_eta)
 
     def restore_defaults(self, if_empty=False):
         """Restore to default config."""
@@ -158,10 +160,6 @@ class Script(QObject):
             QImage.Format_RGBA8888,
         ).rgbSwapped()
 
-    def update_config(self):
-        """Update certain config/state from the backend."""
-        return self.client.get_config()
-
     def img_inserter(self, x, y, width, height):
         """Return frozen image inserter to insert images as new layer."""
         # Selection may change before callback, so freeze selection region
@@ -228,6 +226,8 @@ class Script(QObject):
         mask_trigger = self.transparency_mask_inserter()
 
         def cb(response):
+            if len(self.client.long_reqs) == 0:
+                self.eta_timer.stop()
             assert response is not None, "Backend Error, check terminal"
             outputs = response["outputs"]
             layers = [
@@ -235,8 +235,8 @@ class Script(QObject):
             ]
             self.doc.refreshProjection()
             mask_trigger(layers)
-            self.status_changed.emit(STATE_TXT2IMG)
 
+        self.eta_timer.start(ETA_REFRESH_INTERVAL)
         self.client.post_txt2img(
             cb, self.width, self.height, self.selection is not None
         )
@@ -262,6 +262,8 @@ class Script(QObject):
             save_img(sel_image, path)
 
         def cb(response):
+            if len(self.client.long_reqs) == 0:
+                self.eta_timer.stop()
             assert response is not None, "Backend Error, check terminal"
 
             outputs = response["outputs"]
@@ -273,13 +275,12 @@ class Script(QObject):
                 for i, output in enumerate(outputs)
             ]
             self.doc.refreshProjection()
+            # dont need transparency mask for inpaint mode
             if mode == 0:
                 mask_trigger(layers)
-                self.status_changed.emit(STATE_IMG2IMG)
-            else:  # dont need transparency mask for inpaint mode
-                self.status_changed.emit(STATE_INPAINT)
 
         method = self.client.post_inpaint if mode == 1 else self.client.post_img2img
+        self.eta_timer.start()
         method(
             cb,
             sel_image,
@@ -300,7 +301,6 @@ class Script(QObject):
             output = response["output"]
             insert(f"upscale", output)
             self.doc.refreshProjection()
-            self.status_changed.emit(STATE_UPSCALE)
 
         self.client.post_upscale(cb, sel_image)
 
@@ -364,11 +364,32 @@ class Script(QObject):
             return
         self.apply_simple_upscale()
 
+    def action_update_config(self):
+        """Update certain config/state from the backend."""
+        self.client.get_config()
+
     def action_interrupt(self):
-        def cb(response=None):
+        def cb(resp=None):
             self.status_changed.emit(STATE_INTERRUPT)
 
         self.client.post_interrupt(cb)
+
+    def action_update_eta(self):
+        def cb(resp=None):
+            # print(resp)
+            # NOTE: progress & eta_relative is bugged upstream when there is multiple jobs
+            # so we use a substitute that seems to work
+            state = resp["state"]
+            cur_step = state["sampling_step"]
+            total_steps = state["sampling_steps"]
+            # doesnt take into account batch count
+            num_jobs = len(self.client.long_reqs) - 1
+
+            self.status_changed.emit(
+                f"Step {cur_step}/{total_steps} ({num_jobs} in queue)"
+            )
+
+        self.client.get_progress(cb)
 
 
 script = Script()

@@ -11,10 +11,11 @@ from .config import Config
 from .defaults import (
     ERR_BAD_URL,
     ERR_NO_CONNECTION,
-    GET_CONFIG_TIMEOUT,
+    LONG_TIMEOUT,
     OFFICIAL_ROUTE_PREFIX,
-    POST_TIMEOUT,
     ROUTE_PREFIX,
+    SHORT_TIMEOUT,
+    STATE_DONE,
     STATE_READY,
     STATE_URLERROR,
     THREADED,
@@ -23,6 +24,8 @@ from .utils import bytewise_xor, fix_prompt, get_ext_args, get_ext_key, img_to_b
 
 # NOTE: backend queues up responses, so no explicit need to block multiple requests
 # except to prevent user from spamming themselves
+
+# TODO: tab showing all queued up requests (local plugin instance only)
 
 
 def get_url(cfg: Config, route: str = ..., prefix: str = ROUTE_PREFIX):
@@ -129,14 +132,15 @@ class AsyncRequest(QObject):
 
 class Client(QObject):
     status = pyqtSignal(str)
-    """error message, Exception object"""
+    config_updated = pyqtSignal()
 
     def __init__(self, cfg: Config, ext_cfg: Config):
         """It is highly dependent on config's structure to the point it writes directly to it. :/"""
         super(Client, self).__init__()
         self.cfg = cfg
         self.ext_cfg = ext_cfg
-        self.reqs = []
+        self.short_reqs = []
+        self.long_reqs = []
         # NOTE: this is a hacky workaround for detecting if backend is reachable
         self.is_connected = False
 
@@ -164,8 +168,10 @@ class Client(QObject):
             # self.status.emit(str(e))
             assert False, e
 
-    def post(self, route, body, cb, base_url=...):
-        if not self.is_connected:
+    def post(
+        self, route, body, cb, base_url=..., is_long=True, ignore_no_connection=False
+    ):
+        if not ignore_no_connection and not self.is_connected:
             self.status.emit(ERR_NO_CONNECTION)
             return
         url = get_url(self.cfg, route) if base_url is ... else urljoin(base_url, route)
@@ -174,15 +180,39 @@ class Client(QObject):
             return
         # TODO: how to cancel this? destroy the thread after sending API interrupt request?
         req, start = AsyncRequest.request(
-            url, body, POST_TIMEOUT, key=self.cfg("encryption_key")
+            url,
+            body,
+            LONG_TIMEOUT if is_long else SHORT_TIMEOUT,
+            key=self.cfg("encryption_key"),
         )
-        self.reqs.append(req)
-        req.finished.connect(lambda: self.reqs.remove(req))
-        req.result.connect(cb)
+
+        if is_long:
+            self.long_reqs.append(req)
+        else:
+            self.short_reqs.append(req)
+
+        def wrap(resp=None):
+            arr = self.long_reqs if is_long else self.short_reqs
+            arr.remove(req)
+            cb(resp)
+            if is_long and len(self.long_reqs) == 0:
+                self.status.emit(STATE_DONE)
+
+        req.result.connect(wrap)
         req.error.connect(self.handle_api_error)
         start()
 
-    def get_common_params(self, has_selection):
+    def get(self, route, cb, base_url=..., is_long=False, ignore_no_connection=False):
+        self.post(
+            route,
+            None,
+            cb,
+            base_url=base_url,
+            is_long=is_long,
+            ignore_no_connection=ignore_no_connection,
+        )
+
+    def common_params(self, has_selection):
         """Parameters nearly all the post routes share."""
         tiling = self.cfg("sd_tiling", bool) and not (
             self.cfg("only_full_img_tiling", bool) and has_selection
@@ -207,7 +237,7 @@ class Client(QObject):
         )
         return params
 
-    def get_config(self) -> bool:
+    def get_config(self):
         def cb(obj):
             try:
                 assert "sample_path" in obj
@@ -254,19 +284,9 @@ class Client(QObject):
 
             self.is_connected = True
             self.status.emit(STATE_READY)
+            self.config_updated.emit()
 
-        url = get_url(self.cfg, "config")
-        if not url:
-            self.status.emit(ERR_BAD_URL)
-            return
-        req, start = AsyncRequest.request(
-            url, None, GET_CONFIG_TIMEOUT, key=self.cfg("encryption_key")
-        )
-        self.reqs.append(req)
-        req.finished.connect(lambda: self.reqs.remove(req))
-        req.result.connect(cb)
-        req.error.connect(self.handle_api_error)
-        start()
+        self.get("config", cb, ignore_no_connection=True)
 
     def post_txt2img(self, cb, width, height, has_selection):
         params = dict(orig_width=width, orig_height=height)
@@ -278,7 +298,7 @@ class Client(QObject):
             )
             ext_name = self.cfg("txt2img_script", str)
             ext_args = get_ext_args(self.ext_cfg, "scripts_txt2img", ext_name)
-            params.update(self.get_common_params(has_selection))
+            params.update(self.common_params(has_selection))
             params.update(
                 prompt=fix_prompt(self.cfg("txt2img_prompt", str)),
                 negative_prompt=fix_prompt(self.cfg("txt2img_negative_prompt", str)),
@@ -304,7 +324,7 @@ class Client(QObject):
             )
             ext_name = self.cfg("img2img_script", str)
             ext_args = get_ext_args(self.ext_cfg, "scripts_img2img", ext_name)
-            params.update(self.get_common_params(has_selection))
+            params.update(self.common_params(has_selection))
             params.update(
                 prompt=fix_prompt(self.cfg("img2img_prompt", str)),
                 negative_prompt=fix_prompt(self.cfg("img2img_negative_prompt", str)),
@@ -336,7 +356,7 @@ class Client(QObject):
             )
             ext_name = self.cfg("inpaint_script", str)
             ext_args = get_ext_args(self.ext_cfg, "scripts_inpaint", ext_name)
-            params.update(self.get_common_params(has_selection))
+            params.update(self.common_params(has_selection))
             params.update(
                 prompt=fix_prompt(self.cfg("inpaint_prompt", str)),
                 negative_prompt=fix_prompt(self.cfg("inpaint_negative_prompt", str)),
@@ -375,3 +395,8 @@ class Client(QObject):
         # get official API url
         url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
         self.post("interrupt", {}, cb, base_url=url)
+
+    def get_progress(self, cb):
+        # get official API url
+        url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
+        self.get("progress", cb, base_url=url)
