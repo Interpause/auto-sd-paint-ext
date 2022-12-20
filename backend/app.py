@@ -12,7 +12,7 @@ from modules.call_queue import wrap_gradio_gpu_call
 from PIL import Image, ImageOps
 from starlette.concurrency import iterate_in_threadpool
 
-from .config import LOGGER_NAME
+from .config import LOGGER_NAME, NAME_SCRIPT_LOOPBACK, NAME_SCRIPT_UPSCALE
 from .script_hack import get_script_info, get_scripts_metadata, process_script_args
 from .structs import (
     ConfigResponse,
@@ -207,7 +207,7 @@ def f_img2img(req: Img2ImgRequest):
 
     orig_width, orig_height = image.size
 
-    if script and script.title() == "SD upscale":
+    if script and script.title() == NAME_SCRIPT_UPSCALE:
         # in SD upscale mode, width & height determines tile size
         width = height = req.base_size
     else:
@@ -271,7 +271,7 @@ def f_img2img(req: Img2ImgRequest):
         if not req.include_grid and len(images) > 1 and script_ind == 0:
             images = images[1:]
         # This is a workaround.
-        if script and script.title() == "Loopback" and len(images) > 1:
+        if script and script.title() == NAME_SCRIPT_LOOPBACK and len(images) > 1:
             images = images[1:]
 
     # NOTE: this is a dumb assumption:
