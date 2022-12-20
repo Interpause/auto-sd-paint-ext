@@ -1,12 +1,22 @@
 # UI Changelog
 
+## 2022-12-20
+
+- **UI Overhaul**: A few miscellaneous changes with some big ones:
+  - All tabs are now their own dockers to allow more flexibility in arranging.
+    - "Restore Defaults" will make all dockers re-appear and arrange themselves.
+  - Progress & number of pending requests now shown.
+  - All dropdowns now support searching, useful if your model checkpoint list is really long.
+
+## 2022-12-04
+
+- Add Interrupt button.
+
 ## 2022-11-15
 
 - Scripts/features that increase the image size (Simple upscaling, SD upscaling, Outpaint Mk 2, etc) will now expand the canvas when image generation is complete **only if** _there is no active selection_.
   - If there is a selection, the image will be scaled to fit the selection region.
   - Using Ctrl+A to select the entire image is considered an active selection!
-- **UI Overhaul**: A few miscellaneous changes with some big ones:
-  - All tabs are now their own dockers to allow more flexibility in arranging.
 
 ## 2022-11-08
 
