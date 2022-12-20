@@ -16,7 +16,7 @@ class SDCommonWidget(QWidget):
 
         # Model list
         self.sd_model_layout = QComboBoxLayout(
-            script.cfg, "sd_model_list", "sd_model", label="SD model:", num_chars=20
+            script.cfg, "sd_model_list", "sd_model", label="SD model:"
         )
 
         # batch size & count

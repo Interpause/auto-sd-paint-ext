@@ -1,10 +1,26 @@
 from functools import partial
 from typing import Union
 
-from krita import QComboBox, QHBoxLayout
+from krita import QComboBox, QHBoxLayout, Qt, QValidator
 
 from ..config import Config
 from .misc import QLabel
+
+
+class QOptionValidator(QValidator):
+    def __init__(self, opts: set, *args, **kwargs):
+        super(QOptionValidator, self).__init__(*args, **kwargs)
+        self.opts = opts
+
+    def validate(self, input, pos):
+        if input in self.opts:
+            return QValidator.Acceptable, input, pos
+        elif any(o.find(input) == 0 for o in self.opts):
+            return QValidator.Intermediate, input, pos
+        return QValidator.Invalid, input, pos
+
+    def fixup(self, input):
+        return ""
 
 
 class QComboBoxLayout(QHBoxLayout):
@@ -14,7 +30,6 @@ class QComboBoxLayout(QHBoxLayout):
         options_cfg: Union[str, list],
         selected_cfg: str,
         label: str = None,
-        num_chars: int = None,
         *args,
         **kwargs
     ):
@@ -28,7 +43,6 @@ class QComboBoxLayout(QHBoxLayout):
             num_chars (int, optional): Max length of qcombo in chars. Defaults to None.
         """
         super(QComboBoxLayout, self).__init__(*args, **kwargs)
-        self.num_chars = num_chars
 
         # Used to connect to config stored in script
         self.cfg = cfg
@@ -38,13 +52,15 @@ class QComboBoxLayout(QHBoxLayout):
 
         self.qlabel = QLabel(self.selected_cfg if label is None else label)
         self.qcombo = QComboBox()
+        self.qcombo.view().setTextElideMode(Qt.ElideLeft)
+        self.qcombo.setEditable(True)
+        self.qcombo.setInsertPolicy(QComboBox.NoInsert)
+        self.qcombo.setMinimumWidth(10)
 
         self.addWidget(self.qlabel)
         self.addWidget(self.qcombo)
 
     def cfg_init(self):
-        # prevent value from getting wiped
-        val = self.cfg(self.selected_cfg, str)
         opts = sorted(
             set(
                 self.cfg(self.options_cfg, "QStringList")
@@ -60,17 +76,11 @@ class QComboBoxLayout(QHBoxLayout):
             opts.insert(0, "None")
 
         # prevent dropdown from closing when cfg_init is called by update
-        if opts != self._items:
-            self._items = opts
+        if set(opts) != self._items:
+            self._items = set(opts)
             self.qcombo.clear()
             self.qcombo.addItems(opts)
-
-        # doesn't throw error if val is not in options; good for us
-        self.qcombo.setCurrentText(val)
-        if self.num_chars is not None:
-            self.qcombo.setFixedWidth(
-                self.qcombo.fontMetrics().width("M" * self.num_chars)
-            )
+            self.qcombo.setValidator(QOptionValidator(self._items))
 
     def cfg_connect(self):
         self.qcombo.currentTextChanged.connect(partial(self.cfg.set, self.selected_cfg))
