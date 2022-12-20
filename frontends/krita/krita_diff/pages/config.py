@@ -4,6 +4,7 @@ from krita import QHBoxLayout, QLineEdit, QPushButton, QScrollArea, QVBoxLayout,
 
 from ..defaults import DEFAULTS
 from ..script import script
+from ..utils import reset_docker_layout
 from ..widgets import QCheckBox, QLabel, QLineEditLayout, StatusBar
 
 
@@ -159,6 +160,8 @@ class ConfigPage(QWidget):
 
         def restore_defaults():
             script.restore_defaults()
+            reset_docker_layout()
+            script.cfg.set("first_setup", False)
             # retrieve list of available stuff again
             script.action_update_config()
 

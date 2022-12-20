@@ -1,5 +1,13 @@
 from krita import DockWidgetFactory, DockWidgetFactoryBase, Krita
 
+from .defaults import (
+    TAB_CONFIG,
+    TAB_IMG2IMG,
+    TAB_INPAINT,
+    TAB_SDCOMMON,
+    TAB_TXT2IMG,
+    TAB_UPSCALE,
+)
 from .docker import create_docker
 from .extension import SDPluginExtension
 from .pages import (
@@ -10,48 +18,56 @@ from .pages import (
     Txt2ImgPage,
     UpscalePage,
 )
+from .script import script
+from .utils import reset_docker_layout
 
 instance = Krita.instance()
 instance.addExtension(SDPluginExtension(instance))
 instance.addDockWidgetFactory(
     DockWidgetFactory(
-        "krita_diff_sdcommon",
+        TAB_SDCOMMON,
         DockWidgetFactoryBase.DockLeft,
         create_docker(SDCommonPage),
     )
 )
 instance.addDockWidgetFactory(
     DockWidgetFactory(
-        "krita_diff_txt2img",
+        TAB_TXT2IMG,
         DockWidgetFactoryBase.DockLeft,
         create_docker(Txt2ImgPage),
     )
 )
 instance.addDockWidgetFactory(
     DockWidgetFactory(
-        "krita_diff_img2img",
+        TAB_IMG2IMG,
         DockWidgetFactoryBase.DockLeft,
         create_docker(Img2ImgPage),
     )
 )
 instance.addDockWidgetFactory(
     DockWidgetFactory(
-        "krita_diff_inpaint",
+        TAB_INPAINT,
         DockWidgetFactoryBase.DockLeft,
         create_docker(InpaintPage),
     )
 )
 instance.addDockWidgetFactory(
     DockWidgetFactory(
-        "krita_diff_upscale",
+        TAB_UPSCALE,
         DockWidgetFactoryBase.DockLeft,
         create_docker(UpscalePage),
     )
 )
 instance.addDockWidgetFactory(
     DockWidgetFactory(
-        "krita_diff_config",
+        TAB_CONFIG,
         DockWidgetFactoryBase.DockLeft,
         create_docker(ConfigPage),
     )
 )
+
+
+# dumb workaround to ensure its only created once
+if script.cfg("first_setup", bool):
+    instance.notifier().windowCreated.connect(reset_docker_layout)
+    script.cfg.set("first_setup", False)

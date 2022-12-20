@@ -35,6 +35,14 @@ ERR_NO_DOCUMENT = "No document open yet!"
 ERR_NO_CONNECTION = "Cannot reach backend!"
 ERR_BAD_URL = "Invalid backend URL!"
 
+# tab IDs
+TAB_SDCOMMON = "krita_diff_sdcommon"
+TAB_CONFIG = "krita_diff_config"
+TAB_TXT2IMG = "krita_diff_txt2img"
+TAB_IMG2IMG = "krita_diff_img2img"
+TAB_INPAINT = "krita_diff_inpaint"
+TAB_UPSCALE = "krita_diff_upscale"
+
 
 @dataclass(frozen=True)
 class Defaults:
@@ -49,6 +57,7 @@ class Defaults:
     do_exact_steps: bool = True
     sample_path: str = "."
     minimize_ui: bool = False
+    first_setup: bool = True  # only used for the initial docker layout
 
     sd_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
     sd_model: str = "model.ckpt"
