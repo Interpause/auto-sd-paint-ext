@@ -139,8 +139,8 @@ class Client(QObject):
         super(Client, self).__init__()
         self.cfg = cfg
         self.ext_cfg = ext_cfg
-        self.short_reqs = []
-        self.long_reqs = []
+        self.short_reqs = set()
+        self.long_reqs = set()
         # NOTE: this is a hacky workaround for detecting if backend is reachable
         self.is_connected = False
 
@@ -187,19 +187,19 @@ class Client(QObject):
         )
 
         if is_long:
-            self.long_reqs.append(req)
+            self.long_reqs.add(req)
         else:
-            self.short_reqs.append(req)
+            self.short_reqs.add(req)
 
-        def wrap(resp=None):
-            arr = self.long_reqs if is_long else self.short_reqs
-            arr.remove(req)
-            cb(resp)
+        def handler():
+            self.long_reqs.discard(req)
+            self.short_reqs.discard(req)
             if is_long and len(self.long_reqs) == 0:
                 self.status.emit(STATE_DONE)
 
-        req.result.connect(wrap)
+        req.result.connect(cb)
         req.error.connect(self.handle_api_error)
+        req.finished.connect(handler)
         start()
 
     def get(self, route, cb, base_url=..., is_long=False, ignore_no_connection=False):

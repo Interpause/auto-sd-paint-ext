@@ -226,7 +226,7 @@ class Script(QObject):
         mask_trigger = self.transparency_mask_inserter()
 
         def cb(response):
-            if len(self.client.long_reqs) == 0:
+            if len(self.client.long_reqs) == 1:  # last request
                 self.eta_timer.stop()
             assert response is not None, "Backend Error, check terminal"
             outputs = response["outputs"]
@@ -262,7 +262,7 @@ class Script(QObject):
             save_img(sel_image, path)
 
         def cb(response):
-            if len(self.client.long_reqs) == 0:
+            if len(self.client.long_reqs) == 1:  # last request
                 self.eta_timer.stop()
             assert response is not None, "Backend Error, check terminal"
 
