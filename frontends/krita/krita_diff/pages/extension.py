@@ -88,14 +88,13 @@ class ExtSectionLayout(QVBoxLayout):
             script.cfg,
             f"{cfg_prefix}_script_list",
             f"{cfg_prefix}_script",
-            label="(Experimental) Scripts:",
+            label="Scripts:",
         )
         self.addLayout(self.dropdown)
 
         self.ext_type = f"scripts_{cfg_prefix}"
         self.ext_names = partial(script.cfg, f"{cfg_prefix}_script_list", "QStringList")
         self.ext_widgets = {}
-        self.init_ui_once_if_ready()
 
     def init_ui_once_if_ready(self):
         """Init UI only once, and only when its ready (aka metadata is present)."""
@@ -127,7 +126,7 @@ class ExtSectionLayout(QVBoxLayout):
         for w in self.ext_widgets.values():
             w.setVisible(False)
         widget = self.ext_widgets.get(selected, None)
-        if widget:
+        if widget and selected != "None":
             widget.setVisible(True)
 
     def _cfg_connect(self):
