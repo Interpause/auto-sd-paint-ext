@@ -87,4 +87,4 @@ class SDImgPageBase(QWidget):
         self.cfg_scale_layout.cfg_connect()
         self.denoising_strength_layout.cfg_connect()
 
-        script.status_changed.connect(self.status_bar.set_status)
+        script.status_changed.connect(lambda s: self.status_bar.set_status(s))

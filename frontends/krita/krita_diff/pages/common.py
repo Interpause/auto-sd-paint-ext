@@ -120,4 +120,4 @@ class SDCommonPage(QWidget):
             self.face_restorer_layout.qcombo.currentText() == "CodeFormer"
         )
 
-        self.interrupt_btn.released.connect(script.action_interrupt)
+        self.interrupt_btn.released.connect(lambda: script.action_interrupt())

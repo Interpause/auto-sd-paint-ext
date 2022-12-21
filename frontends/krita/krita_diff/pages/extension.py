@@ -29,7 +29,7 @@ class ExtWidget(QWidget):
         super(ExtWidget, self).__init__(*args, **kwargs)
 
         get_key = partial(get_ext_key, ext_type, ext_name)
-        
+
         try:
             meta: List[dict] = json.loads(ext_cfg(get_key()))
         except json.JSONDecodeError:
@@ -121,7 +121,7 @@ class ExtSectionLayout(QVBoxLayout):
     def cfg_connect(self):
         self.dropdown.cfg_connect()
         self.init_ui_once_if_ready()
-        self.dropdown.qcombo.currentTextChanged.connect(self._update)
+        self.dropdown.qcombo.currentTextChanged.connect(lambda s: self._update(s))
 
     def _update(self, selected):
         for w in self.ext_widgets.values():

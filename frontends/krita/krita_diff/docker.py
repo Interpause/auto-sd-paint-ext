@@ -26,7 +26,7 @@ def create_docker(page):
 
         def connect_interface(self):
             self.page_widget.cfg_connect()
-            script.config_updated.connect(self.update_interface)
+            script.config_updated.connect(lambda: self.update_interface())
 
         def canvasChanged(self, canvas):
             pass

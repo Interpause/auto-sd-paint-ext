@@ -198,7 +198,7 @@ class Client(QObject):
                 self.status.emit(STATE_DONE)
 
         req.result.connect(cb)
-        req.error.connect(self.handle_api_error)
+        req.error.connect(lambda e: self.handle_api_error(e))
         req.finished.connect(handler)
         start()
 
