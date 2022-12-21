@@ -2,7 +2,7 @@ from functools import partial
 
 from krita import QHBoxLayout, QLineEdit, QPushButton, QScrollArea, QVBoxLayout, QWidget
 
-from ..defaults import DEFAULTS
+from ..defaults import PluginDefaults
 from ..script import script
 from ..utils import reset_docker_layout
 from ..widgets import QCheckBox, QLabel, QLineEditLayout, StatusBar
@@ -143,7 +143,7 @@ class ConfigPage(QWidget):
         # NOTE: this triggers on every keystroke; theres no focus lost signal...
         self.base_url.textChanged.connect(script.action_update_config)
         self.base_url_reset.released.connect(
-            lambda: self.base_url.setText(DEFAULTS.base_url)
+            lambda: self.base_url.setText(PluginDefaults.base_url)
         )
         self.enc_key.cfg_connect()
         self.just_use_yaml.cfg_connect()

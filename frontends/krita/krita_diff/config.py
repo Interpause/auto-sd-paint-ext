@@ -5,6 +5,14 @@ from krita import QObject, QReadWriteLock, QSettings
 
 from .defaults import CFG_FOLDER, CFG_NAME, DEFAULTS, ERR_MISSING_CONFIG
 
+# Generalize Config further
+# PresetConfig
+# - specify GlobalConfig datamodel
+# - specify which GlobalConfig key determines preset
+# - Load all available presets by globbing a folder
+# - Folder contains preset datamodel & webui config (which is dynamic)
+# - New class for webUI config that allows checking for valid keys based on list rather than datamodel
+
 
 class Config(QObject):
     def __init__(self, folder=CFG_FOLDER, name=CFG_NAME, model=DEFAULTS):

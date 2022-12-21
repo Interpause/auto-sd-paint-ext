@@ -178,7 +178,6 @@ class Client(QObject):
         if not url:
             self.status.emit(ERR_BAD_URL)
             return
-        # TODO: how to cancel this? destroy the thread after sending API interrupt request?
         req, start = AsyncRequest.request(
             url,
             body,

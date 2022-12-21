@@ -17,7 +17,7 @@ NAME_SCRIPT_UPSCALE = "SD upscale"
 
 
 class BaseOptions(BaseModel):
-    sample_path: str = "outputs/krita-out"
+    sample_path: str = "outputs/krita"
     """Where to save generated images to."""
     save_samples: bool = False
     """Whether to save temporary images (useful for debugging)."""
@@ -144,7 +144,7 @@ class UpscaleOptions(BaseOptions):
 
 
 class PluginOptions(BaseOptions):
-    sample_path: str = "outputs/krita-in"
+    sample_path: str = "outputs/krita"
 
 
 class MainConfig(BaseModel):
