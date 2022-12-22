@@ -73,7 +73,7 @@ class Script(QObject):
         self.client.config_updated.connect(self.config_updated.emit)
         self.eta_timer = QTimer()
         self.eta_timer.setInterval(ETA_REFRESH_INTERVAL)
-        self.eta_timer.timeout.connect(self.action_update_eta)
+        self.eta_timer.timeout.connect(lambda: self.action_update_eta())
 
     def restore_defaults(self, if_empty=False):
         """Restore to default config."""

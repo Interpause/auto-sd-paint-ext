@@ -57,4 +57,4 @@ NOTE:<br/>
         self.upscaler_layout.cfg_connect()
         self.downscale_first.cfg_connect()
         self.btn.released.connect(lambda: script.action_simple_upscale())
-        script.status_changed.connect(self.status_bar.set_status)
+        script.status_changed.connect(lambda s: self.status_bar.set_status(s))

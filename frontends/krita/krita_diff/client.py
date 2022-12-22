@@ -197,7 +197,7 @@ class Client(QObject):
                 self.status.emit(STATE_DONE)
 
         req.result.connect(cb)
-        req.error.connect(self.handle_api_error)
+        req.error.connect(lambda e: self.handle_api_error(e))
         req.finished.connect(handler)
         start()
 
@@ -271,10 +271,10 @@ class Client(QObject):
             obj["scripts_inpaint"] = obj["scripts_img2img"]
             for ext_type in {"scripts_txt2img", "scripts_img2img", "scripts_inpaint"}:
                 metadata: Dict[str, List[dict]] = obj[ext_type]
-                self.ext_cfg.set(f"{ext_type}_len", len(metadata))
                 for ext_name, ext_meta in metadata.items():
                     old_val = self.ext_cfg(get_ext_key(ext_type, ext_name))
                     new_val = json.dumps(ext_meta)
+                    # Don't overwrite saved script values unless script options changed
                     if new_val != old_val:
                         self.ext_cfg.set(get_ext_key(ext_type, ext_name), new_val)
                         for i, opt in enumerate(ext_meta):

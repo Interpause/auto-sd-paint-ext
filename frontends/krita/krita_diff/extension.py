@@ -10,7 +10,7 @@ class SDPluginExtension(Extension):
 
     def setup(self):
         self.update_timer = QTimer()
-        self.update_timer.timeout.connect(script.action_update_config)
+        self.update_timer.timeout.connect(lambda: script.action_update_config())
         self.update_timer.start(REFRESH_INTERVAL)
         script.action_update_config()
 

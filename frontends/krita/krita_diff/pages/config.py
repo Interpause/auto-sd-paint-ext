@@ -141,7 +141,7 @@ class ConfigPage(QWidget):
     def cfg_connect(self):
         self.base_url.textChanged.connect(partial(script.cfg.set, "base_url"))
         # NOTE: this triggers on every keystroke; theres no focus lost signal...
-        self.base_url.textChanged.connect(script.action_update_config)
+        self.base_url.textChanged.connect(lambda: script.action_update_config())
         self.base_url_reset.released.connect(
             lambda: self.base_url.setText(PluginDefaults.base_url)
         )
@@ -165,7 +165,7 @@ class ConfigPage(QWidget):
             # retrieve list of available stuff again
             script.action_update_config()
 
-        self.refresh_btn.released.connect(script.action_update_config)
+        self.refresh_btn.released.connect(lambda: script.action_update_config())
         self.restore_defaults.released.connect(restore_defaults)
         self.minimize_ui.toggled.connect(lambda _: script.config_updated.emit())
-        script.status_changed.connect(self.status_bar.set_status)
+        script.status_changed.connect(lambda s: self.status_bar.set_status(s))
