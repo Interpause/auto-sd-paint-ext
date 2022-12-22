@@ -16,7 +16,6 @@ from ..widgets import (
 )
 
 
-# TODO: dynamically adjust script options available without needing to restart plugin
 class ExtWidget(QWidget):
     def __init__(self, ext_cfg: Config, ext_type: str, ext_name: str, *args, **kwargs):
         """Dynamically create form for script based on metadata.
@@ -80,10 +79,6 @@ class ExtSectionLayout(QVBoxLayout):
     def __init__(self, cfg_prefix: str, *args, **kwargs):
         super(ExtSectionLayout, self).__init__(*args, **kwargs)
 
-        # NOTE: backend will send empty scripts followed by the real one, have to
-        # detect for that
-        self.is_init = False
-
         self.dropdown = QComboBoxLayout(
             script.cfg,
             f"{cfg_prefix}_script_list",
@@ -96,40 +91,40 @@ class ExtSectionLayout(QVBoxLayout):
         self.ext_names = partial(script.cfg, f"{cfg_prefix}_script_list", "QStringList")
         self.ext_widgets = {}
 
-    def init_ui_once_if_ready(self):
-        """Init UI only once, and only when its ready (aka metadata is present)."""
-        if self.is_init:
-            return
-        if len(self.ext_names()) != script.ext_cfg(f"{self.ext_type}_len", int):
-            return
+    def _clear_ext_widgets(self):
+        """Properly delete all existing extension widgets."""
+        while len(self.ext_widgets) > 0:
+            _, widget = self.ext_widgets.popitem()
+            self.removeWidget(widget)
+            widget.setParent(None)
+            widget.deleteLater()
 
-        self.is_init = True
+    def _init_ext_widgets(self):
+        """Inits the UI, can be called multiple times if the ext scripts available changed."""
+        self._clear_ext_widgets()
         for ext_name in self.ext_names():
-            ext_widget = ExtWidget(script.ext_cfg, self.ext_type, ext_name)
-            ext_widget.setVisible(False)
-            self.addWidget(ext_widget)
-            self.ext_widgets[ext_name] = ext_widget
-        self._cfg_connect()
+            widget = ExtWidget(script.ext_cfg, self.ext_type, ext_name)
+            widget.setVisible(False)
+            self.addWidget(widget)
+            self.ext_widgets[ext_name] = widget
+            widget.cfg_connect()
 
     def cfg_init(self):
         self.dropdown.cfg_init()
-        self.init_ui_once_if_ready()
+        if set(self.ext_names()) != set(self.ext_widgets.keys()):
+            self._init_ext_widgets()
         for widget in self.ext_widgets.values():
             widget.cfg_init()
 
     def cfg_connect(self):
         self.dropdown.cfg_connect()
-        self.init_ui_once_if_ready()
         self.dropdown.qcombo.currentTextChanged.connect(lambda s: self._update(s))
+        self._update(self.dropdown.qcombo.currentText())
 
     def _update(self, selected):
+        """Updates which extension widget is visible."""
         for w in self.ext_widgets.values():
             w.setVisible(False)
         widget = self.ext_widgets.get(selected, None)
         if widget and selected != "None":
             widget.setVisible(True)
-
-    def _cfg_connect(self):
-        for widget in self.ext_widgets.values():
-            widget.cfg_connect()
-        self._update(self.dropdown.qcombo.currentText())
