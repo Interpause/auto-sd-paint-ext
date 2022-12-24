@@ -4,7 +4,7 @@ from pathlib import Path
 from launch import git, run
 
 REPO_LOCATION = Path(__file__).parent
-auto_update = bool(os.environ.get("AUTO_UPDATE", "True"))
+auto_update = os.environ.get("AUTO_UPDATE", "True").lower() in {"true", "yes"}:
 
 if auto_update:
     print("[auto-sd-paint-ext] Attempting auto-update...")
