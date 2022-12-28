@@ -3,7 +3,7 @@ import re
 from itertools import cycle
 from math import ceil
 
-from krita import Document, Krita, QBuffer, QByteArray, QImage, QIODevice, Qt
+from krita import Krita, QBuffer, QByteArray, QImage, QIODevice, Qt
 
 from .config import Config
 from .defaults import (
@@ -149,14 +149,6 @@ def find_optimal_selection_region(
     return best_x, best_y, best_width, best_height
 
 
-def create_layer(doc: Document, name: str):
-    """Create new layer in document"""
-    root = doc.rootNode()
-    layer = doc.createNode(name, "paintLayer")
-    root.addChildNode(layer, None)
-    return layer
-
-
 def save_img(img: QImage, path: str):
     """Expects QImage"""
     # png is lossless; setting compression to max (0) won't affect quality
@@ -192,6 +184,26 @@ def b64_to_img(enc: str):
 def bytewise_xor(msg: bytes, key: bytes):
     """Used for decrypting/encrypting request/response bodies."""
     return bytes(v ^ k for v, k in zip(msg, cycle(key)))
+
+
+def get_desc_from_resp(resp: dict, type: str = ""):
+    """Get description of image generation from backend response."""
+    try:
+        info = json.loads(resp["info"])
+        seeds = info["all_seeds"]
+        glayer_desc = f"""[{type}]
+Prompt: {info['prompt']},
+Negative Prompt: {info['negative_prompt']},
+Model: {info['sd_model_hash']},
+Sampler: {info['sampler_name']},
+Scale: {info['cfg_scale']},
+Steps: {info['steps']}"""
+        layers_desc = []
+        for (seed,) in zip(seeds):
+            layers_desc.append(f"Seed: {seed}")
+        return glayer_desc, layers_desc
+    except:
+        return f"[{type}]", cycle([None])
 
 
 def reset_docker_layout():

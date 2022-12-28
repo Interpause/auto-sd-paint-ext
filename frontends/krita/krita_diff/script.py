@@ -1,3 +1,4 @@
+import itertools
 import os
 import time
 from typing import Union
@@ -27,8 +28,8 @@ from .defaults import (
 )
 from .utils import (
     b64_to_img,
-    create_layer,
     find_optimal_selection_region,
+    get_desc_from_resp,
     img_to_ba,
     save_img,
 )
@@ -160,10 +161,22 @@ class Script(QObject):
             QImage.Format_RGBA8888,
         ).rgbSwapped()
 
-    def img_inserter(self, x, y, width, height):
+    def img_inserter(self, x, y, width, height, group: str = None):
         """Return frozen image inserter to insert images as new layer."""
         # Selection may change before callback, so freeze selection region
         has_selection = self.selection is not None
+        glayer = self.doc.createGroupLayer(group) if group else None
+
+        def create_layer(name: str):
+            """Create new layer in document or group"""
+            layer = self.doc.createNode(name, "paintLayer")
+            parent = self.doc.rootNode()
+            if glayer:
+                glayer.addChildNode(layer, None)
+                parent.addChildNode(glayer, None)
+            else:
+                parent.addChildNode(layer, None)
+            return layer
 
         # TODO: Insert images inside a group layer for better organization
         # Group layer name can contain model name, prompt, etc
@@ -206,7 +219,7 @@ class Script(QObject):
                 self.doc.resizeImage(0, 0, new_width, new_height)
 
             ba = img_to_ba(image)
-            layer = create_layer(self.doc, layer_name)
+            layer = create_layer(layer_name)
             # layer.setColorSpace() doesn't pernamently convert layer depth etc...
 
             # Don't fail silently for setPixelData(); fails if bit depth or number of channels mismatch
@@ -218,11 +231,15 @@ class Script(QObject):
             layer.setPixelData(ba, x, y, width, height)
             return layer
 
+        if glayer:
+            return insert, glayer
         return insert
 
     def apply_txt2img(self):
         # freeze selection region
-        insert = self.img_inserter(self.x, self.y, self.width, self.height)
+        insert, glayer = self.img_inserter(
+            self.x, self.y, self.width, self.height, group="a"
+        )
         mask_trigger = self.transparency_mask_inserter()
 
         def cb(response):
@@ -230,11 +247,14 @@ class Script(QObject):
                 self.eta_timer.stop()
             assert response is not None, "Backend Error, check terminal"
             outputs = response["outputs"]
+            glayer_name, layer_names = get_desc_from_resp(response, "txt2img")
             layers = [
-                insert(f"txt2img {i + 1}", output) for i, output in enumerate(outputs)
+                insert(name if name else f"txt2img {i + 1}", output)
+                for output, name, i in zip(outputs, layer_names, itertools.count())
             ]
             for layer in layers[:-1]:
                 layer.setVisible(False)
+            glayer.setName(glayer_name)
             self.doc.refreshProjection()
             mask_trigger(layers)
 
@@ -244,7 +264,9 @@ class Script(QObject):
         )
 
     def apply_img2img(self, mode):
-        insert = self.img_inserter(self.x, self.y, self.width, self.height)
+        insert, glayer = self.img_inserter(
+            self.x, self.y, self.width, self.height, group="a"
+        )
         mask_trigger = self.transparency_mask_inserter()
         mask_image = self.get_mask_image()
 
@@ -272,12 +294,14 @@ class Script(QObject):
             layer_name_prefix = (
                 "inpaint" if mode == 1 else "sd upscale" if mode == 2 else "img2img"
             )
+            glayer_name, layer_names = get_desc_from_resp(response, layer_name_prefix)
             layers = [
-                insert(f"{layer_name_prefix} {i + 1}", output)
-                for i, output in enumerate(outputs)
+                insert(name if name else f"{layer_name_prefix} {i + 1}", output)
+                for output, name, i in zip(outputs, layer_names, itertools.count())
             ]
             for layer in layers[:-1]:
                 layer.setVisible(False)
+            glayer.setName(glayer_name)
             self.doc.refreshProjection()
             # dont need transparency mask for inpaint mode
             if mode == 0:
