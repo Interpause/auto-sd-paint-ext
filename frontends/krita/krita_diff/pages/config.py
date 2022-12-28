@@ -1,6 +1,6 @@
 from functools import partial
 
-from krita import QHBoxLayout, QLineEdit, QPushButton, QScrollArea, QVBoxLayout, QWidget
+from krita import QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from ..defaults import DEFAULTS
 from ..script import script
@@ -46,6 +46,9 @@ class ConfigPage(QWidget):
             script.cfg, "include_grid", "Include txt2img/img2img grid"
         )
         self.minimize_ui = QCheckBox(script.cfg, "minimize_ui", "Squeeze the UI")
+        self.alt_docker = QCheckBox(
+            script.cfg, "alt_dock_behavior", "Alt Docker Behaviour"
+        )
 
         # webUI/backend settings
         self.filter_nsfw = QCheckBox(script.cfg, "filter_nsfw", "Filter NSFW")
@@ -77,6 +80,7 @@ class ConfigPage(QWidget):
 
         layout_inner.addWidget(QLabel("<em>Plugin settings:</em>"))
         layout_inner.addWidget(self.minimize_ui)
+        layout_inner.addWidget(self.alt_docker)
         layout_inner.addWidget(self.create_mask_layer)
         layout_inner.addWidget(self.fix_aspect_ratio)
         layout_inner.addWidget(self.only_full_img_tiling)
@@ -125,6 +129,7 @@ class ConfigPage(QWidget):
         self.inpaint_color_correct.cfg_init()
         self.do_exact_steps.cfg_init()
         self.minimize_ui.cfg_init()
+        self.alt_docker.cfg_init()
 
         info_text = """
             <em>Tip:</em> Only a selected few backend/webUI settings are exposed above.<br/>
@@ -157,6 +162,7 @@ class ConfigPage(QWidget):
         self.inpaint_color_correct.cfg_connect()
         self.do_exact_steps.cfg_connect()
         self.minimize_ui.cfg_connect()
+        self.alt_docker.cfg_connect()
 
         def restore_defaults():
             script.restore_defaults()
@@ -168,4 +174,5 @@ class ConfigPage(QWidget):
         self.refresh_btn.released.connect(lambda: script.action_update_config())
         self.restore_defaults.released.connect(restore_defaults)
         self.minimize_ui.toggled.connect(lambda _: script.config_updated.emit())
+        self.alt_docker.toggled.connect(lambda _: script.config_updated.emit())
         script.status_changed.connect(lambda s: self.status_bar.set_status(s))

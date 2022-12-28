@@ -1,18 +1,44 @@
-from krita import Extension, QTimer
+from krita import Extension, QMainWindow, QTimer
 
 from .defaults import REFRESH_INTERVAL
 from .script import script
 
 
 class SDPluginExtension(Extension):
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, instance):
+        super().__init__(instance)
+
+        self.instance = instance
+        # store original window docker config
+        self.dock_opts = None
 
     def setup(self):
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(lambda: script.action_update_config())
         self.update_timer.start(REFRESH_INTERVAL)
+        script.config_updated.connect(lambda: self.update_global())
+        self.instance.notifier().windowCreated.connect(lambda: self.update_global())
         script.action_update_config()
+
+    def update_global(self):
+        window = self.instance.activeWindow()
+        if not window:
+            return
+        qwin = window.qwindow()
+        if not self.dock_opts:
+            self.dock_opts = qwin.dockOptions()
+
+        # NOTE: This changes the default behaviour of Krita for all dockers!
+        if script.cfg("alt_dock_behavior", bool):
+            qwin.setDockOptions(
+                QMainWindow.AnimatedDocks
+                | QMainWindow.AllowTabbedDocks
+                | QMainWindow.GroupedDragging
+                | QMainWindow.AllowNestedDocks
+                # | QMainWindow.VerticalTabs
+            )
+        else:
+            qwin.setDockOptions(self.dock_opts)
 
     def createActions(self, window):
         txt2img_action = window.createAction(
