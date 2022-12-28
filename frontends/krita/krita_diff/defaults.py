@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import List
 
@@ -18,9 +19,11 @@ SHORT_TIMEOUT = 10
 LONG_TIMEOUT = None  # requests that might take "forever", i.e., image generation with high batch count
 REFRESH_INTERVAL = 3000  # 3 seconds between auto-config refresh
 ETA_REFRESH_INTERVAL = 1000  # 1 second between eta refresh
-CFG_FOLDER = "krita"  # which folder in ~/.config to store config
-CFG_NAME = "krita_diff_plugin"  # name of config file
-EXT_CFG_NAME = "krita_diff_plugin_scripts"  # name of config file
+CFG_FOLDER = "krita/krita_diff"  # which folder in ~/.config to store config
+CFG_PRESET_KEY = "preset"
+PRESET_NAMESPACE = "preset"
+PRESET_DEFAULT = "Base"
+
 # selection mask can only be added after image is added, so timeout is needed
 ADD_MASK_TIMEOUT = 200
 THREADED = True
@@ -62,6 +65,7 @@ class PluginDefaults:
     """Whether to save images sent & received. Useful for debugging."""
     first_setup: bool = True
     """Used to arrange dockers & other misc tasks on first run."""
+    preset: str = PRESET_DEFAULT
 
 
 @dataclass(frozen=True)
@@ -147,4 +151,23 @@ class PresetDefaults:
     upscale_downscale_first: bool = False
 
 
-DEFAULTS = Defaults()
+# Map of config file name to config datamodel (if any)
+# OrderedDict determines order config files are checked
+# Config not subject to preset system
+CFG_GLOBAL = OrderedDict(
+    [
+        ("global_config", PluginDefaults),
+        ("backend_cache", BackendState),
+        ("backend_ext_cache", None),
+    ]
+)
+# Config subject to preset system
+CFG_PRESET = OrderedDict(
+    [
+        ("main_config", PresetDefaults),
+        ("backend_config", None),
+        ("ext_config", None),
+    ]
+)
+# TODO: since backend_config options are unknown, keys should be prefixed to prevent clash
+# TODO: could datamodel for config be changed dynamically after retrieval from backend?
