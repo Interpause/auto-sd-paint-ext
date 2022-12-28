@@ -233,6 +233,8 @@ class Script(QObject):
             layers = [
                 insert(f"txt2img {i + 1}", output) for i, output in enumerate(outputs)
             ]
+            for layer in layers[:-1]:
+                layer.setVisible(False)
             self.doc.refreshProjection()
             mask_trigger(layers)
 
@@ -274,6 +276,8 @@ class Script(QObject):
                 insert(f"{layer_name_prefix} {i + 1}", output)
                 for i, output in enumerate(outputs)
             ]
+            for layer in layers[:-1]:
+                layer.setVisible(False)
             self.doc.refreshProjection()
             # dont need transparency mask for inpaint mode
             if mode == 0:
