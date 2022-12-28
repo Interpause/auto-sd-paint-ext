@@ -1,5 +1,17 @@
 # UI Changelog
 
+## 2022-12-28
+
+- Added "Alt Dock Behaviour" under "SD Plugin Config".
+  - _Modifies default Krita dock behaviour!_
+    - Dragging title bar of docker now drags all stacked/tabbed dockers out instead of just one docker.
+    - Dragging the tab now drags the specific docker out instead of only re-arranging the tab.
+  - Enables floating stacked/tabbed dockers.
+  - Enables subdividing dock areas further.
+  - See: <https://doc.qt.io/qt-6/qmainwindow.html#DockOption-enum>
+- All generations are added to group layer per batch with generation info.
+  - For batches of generations, all but the last image generated is hidden by default.
+
 ## 2022-12-20
 
 - **UI Overhaul**: A few miscellaneous changes with some big ones:
