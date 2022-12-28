@@ -1,4 +1,10 @@
-from ..defaults import STATE_DONE, STATE_INIT, STATE_READY, STATE_URLERROR
+from ..defaults import (
+    STATE_DONE,
+    STATE_INIT,
+    STATE_INTERRUPT,
+    STATE_READY,
+    STATE_URLERROR,
+)
 from .misc import QLabel
 
 
@@ -8,6 +14,9 @@ class StatusBar(QLabel):
         self.set_status(STATE_INIT)
 
     def set_status(self, s):
-        if s in {STATE_READY, STATE_DONE} and STATE_URLERROR not in self.text():
+        if s == STATE_READY and STATE_URLERROR not in self.text():
             return
+        if s == STATE_DONE and STATE_INTERRUPT == self.text():
+            return
+
         self.setText(f"<b>Status:</b> {s}")
