@@ -121,7 +121,7 @@ def f_txt2img(req: Txt2ImgRequest):
         req.base_size, req.max_size, req.orig_width, req.orig_height
     )
 
-    images, info, html = wrap_gradio_gpu_call(modules.txt2img.txt2img)(
+    output = wrap_gradio_gpu_call(modules.txt2img.txt2img)(
         parse_prompt(req.prompt),  # prompt
         parse_prompt(req.negative_prompt),  # negative_prompt
         "None",  # prompt_style: saved prompt styles (unsupported)
@@ -147,6 +147,9 @@ def f_txt2img(req: Txt2ImgRequest):
         req.firstphase_height,  # firstphase_height (yes its inconsistently width/height first)
         *args,
     )
+    images = output[0]
+    info = output[1]
+
     if images is None or len(images) < 1:
         log.warning("Interrupted!")
         return {"outputs": [], "info": info}
@@ -223,7 +226,7 @@ def f_img2img(req: Img2ImgRequest):
     # - new color sketch functionality in webUI is irrelevant so None is used for their options.
     # - the internal code for img2img is confusing and duplicative...
 
-    images, info, html = wrap_gradio_gpu_call(modules.img2img.img2img)(
+    output = wrap_gradio_gpu_call(modules.img2img.img2img)(
         req.mode,  # mode
         parse_prompt(req.prompt),  # prompt
         parse_prompt(req.negative_prompt),  # negative_prompt
@@ -263,6 +266,9 @@ def f_img2img(req: Img2ImgRequest):
         "",  # img2img_batch_output_dir (unspported)
         *args,
     )
+    images = output[0]
+    info = output[1]
+
     if images is None or len(images) < 1:
         log.warning("Interrupted!")
         return {"outputs": [], "info": info}
