@@ -252,8 +252,9 @@ class Script(QObject):
                 insert(name if name else f"txt2img {i + 1}", output)
                 for output, name, i in zip(outputs, layer_names, itertools.count())
             ]
-            for layer in layers[:-1]:
-                layer.setVisible(False)
+            if self.cfg("hide_layers", bool):
+                for layer in layers[:-1]:
+                    layer.setVisible(False)
             glayer.setName(glayer_name)
             self.doc.refreshProjection()
             mask_trigger(layers)
@@ -299,8 +300,9 @@ class Script(QObject):
                 insert(name if name else f"{layer_name_prefix} {i + 1}", output)
                 for output, name, i in zip(outputs, layer_names, itertools.count())
             ]
-            for layer in layers[:-1]:
-                layer.setVisible(False)
+            if self.cfg("hide_layers", bool):
+                for layer in layers[:-1]:
+                    layer.setVisible(False)
             glayer.setName(glayer_name)
             self.doc.refreshProjection()
             # dont need transparency mask for inpaint mode

@@ -49,6 +49,7 @@ class ConfigPage(QWidget):
         self.alt_docker = QCheckBox(
             script.cfg, "alt_dock_behavior", "Alt Docker Behaviour"
         )
+        self.hide_layers = QCheckBox(script.cfg, "hide_layers", "Auto hide layers")
 
         # webUI/backend settings
         self.filter_nsfw = QCheckBox(script.cfg, "filter_nsfw", "Filter NSFW")
@@ -81,6 +82,7 @@ class ConfigPage(QWidget):
         layout_inner.addWidget(QLabel("<em>Plugin settings:</em>"))
         layout_inner.addWidget(self.minimize_ui)
         layout_inner.addWidget(self.alt_docker)
+        layout_inner.addWidget(self.hide_layers)
         layout_inner.addWidget(self.create_mask_layer)
         layout_inner.addWidget(self.fix_aspect_ratio)
         layout_inner.addWidget(self.only_full_img_tiling)
@@ -130,6 +132,7 @@ class ConfigPage(QWidget):
         self.do_exact_steps.cfg_init()
         self.minimize_ui.cfg_init()
         self.alt_docker.cfg_init()
+        self.hide_layers.cfg_init()
 
         info_text = """
             <em>Tip:</em> Only a selected few backend/webUI settings are exposed above.<br/>
@@ -163,6 +166,7 @@ class ConfigPage(QWidget):
         self.do_exact_steps.cfg_connect()
         self.minimize_ui.cfg_connect()
         self.alt_docker.cfg_connect()
+        self.hide_layers.cfg_connect()
 
         def restore_defaults():
             script.restore_defaults()

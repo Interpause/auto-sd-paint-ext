@@ -57,6 +57,7 @@ class Defaults:
     minimize_ui: bool = False
     first_setup: bool = True  # only used for the initial docker layout
     alt_dock_behavior: bool = False
+    hide_layers: bool = True
 
     sd_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
     sd_model: str = "model.ckpt"
