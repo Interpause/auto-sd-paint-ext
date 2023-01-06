@@ -143,14 +143,11 @@ def f_txt2img(req: Txt2ImgRequest):
         width,  # width
         req.highres_fix,  # enable_hr: high res fix
         req.denoising_strength,  # denoising_strength: only applicable if high res fix in use
-        max(
-            req.firstphase_height / req.orig_height,
-            req.firstphase_width / req.firstphase_width,
-        ),  # hr_scale
-        req.upscaler_name,  # hr_upscaler
-        0,  # hr_second_pass_steps
-        req.firstphase_width,  # hr_resize_x
-        req.firstphase_height,  # hr_resize_y
+        0,  # hr_scale (overrided by hr_resize_x/y)
+        req.upscaler_name,  # hr_upscaler: upscaler to use for highres fix
+        0,  # hr_second_pass_steps: 0 uses same num of steps as generation to refine details
+        req.orig_width,  # hr_resize_x
+        req.orig_height,  # hr_resize_y
         *args,
     )
     images = output[0]
