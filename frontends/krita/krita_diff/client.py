@@ -343,7 +343,7 @@ class Client(QObject):
     def post_inpaint(self, cb, src_img, mask_img, has_selection):
         assert mask_img, "Inpaint layer is needed for inpainting!"
         params = dict(
-            mode=1, src_img=img_to_b64(src_img), mask_img=img_to_b64(mask_img)
+            mode=4, src_img=img_to_b64(src_img), mask_img=img_to_b64(mask_img)
         )
         if not self.cfg("just_use_yaml", bool):
             seed = (

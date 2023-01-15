@@ -230,22 +230,22 @@ def f_img2img(req: Img2ImgRequest):
     # - the internal code for img2img is confusing and duplicative...
 
     output = wrap_gradio_gpu_call(modules.img2img.img2img)(
-        req.mode,  # mode
+        req.mode,  # mode (we use 0 (img2img with init_img) & 4 (inpaint uploaded mask))
         parse_prompt(req.prompt),  # prompt
         parse_prompt(req.negative_prompt),  # negative_prompt
         "None",  # prompt_style: saved prompt styles (unsupported)
         "None",  # prompt_style2: saved prompt styles (unsupported)
         image,  # init_img
-        {"image": image, "mask": mask},  # init_img_with_mask
-        None,  # init_img_with_mask_orig # only used by webUI color sketch if init_img_with_mask isn't dict
+        None,  # sketch (unused by us)
+        None,  # init_img_with_mask (unused by us)
+        None,  # inpaint_color_sketch (unused by us)
+        None,  # inpaint_color_sketch_orig (unused by us)
         image,  # init_img_inpaint
         mask,  # init_mask_inpaint
-        # using 1 for uploaded mask mode; processing done by prepare_mask to ensure its correct
-        1,  # mask_mode: internally checks if equal 0. 1 enables alpha mask (remove erased parts)
         req.steps,  # steps
         get_sampler_index(req.sampler_name),  # sampler_index
         0,  # req.mask_blur,  # mask_blur
-        None,  # mask_alpha # only used by webUI color sketch if init_img_with_mask isn't dict
+        None,  # mask_alpha (unused by us) # only used by webUI color sketch if init_img_with_mask isn't dict
         req.inpainting_fill,  # inpainting_fill
         req.restore_faces,  # restore_faces
         req.tiling,  # tiling
