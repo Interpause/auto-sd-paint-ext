@@ -1,3 +1,12 @@
+## Notice
+
+I am currently quite busy and will likely only be able to fix things a week from now.
+
+Last known working A1111 Commit: `9757c0b3b28bd6bebb577d170e93519612a75f35`
+Last plugin commit compatible with above: `024c0fa52b6bb665e831993f06b22e39279bc6f7`
+
+See this comment by deathcloset on how to revert to above: https://github.com/Interpause/auto-sd-paint-ext/issues/92#issuecomment-1383336817
+
 # auto-sd-paint-ext
 
 Formerly known as `auto-sd-krita`.
