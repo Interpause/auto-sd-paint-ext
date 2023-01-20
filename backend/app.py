@@ -122,10 +122,10 @@ def f_txt2img(req: Txt2ImgRequest):
     )
 
     output = wrap_gradio_gpu_call(modules.txt2img.txt2img)(
+        "",  # id_task (used by wrap_gradio_gpu_call for some sort of job id system)
         parse_prompt(req.prompt),  # prompt
         parse_prompt(req.negative_prompt),  # negative_prompt
-        "None",  # prompt_style: saved prompt styles (unsupported)
-        "None",  # prompt_style2: saved prompt styles (unsupported)
+        "None",  # prompt_styles: saved prompt styles (unsupported)
         req.steps,  # steps
         get_sampler_index(req.sampler_name),  # sampler_index
         req.restore_faces,  # restore_faces
@@ -207,7 +207,7 @@ def f_img2img(req: Img2ImgRequest):
     image = b64_to_img(req.src_img)
     mask = (
         prepare_mask(b64_to_img(req.mask_img))
-        if req.mode == 1 and req.mask_img is not None
+        if req.is_inpaint and req.mask_img is not None
         else None
     )
 
@@ -230,11 +230,13 @@ def f_img2img(req: Img2ImgRequest):
     # - the internal code for img2img is confusing and duplicative...
 
     output = wrap_gradio_gpu_call(modules.img2img.img2img)(
-        req.mode,  # mode (we use 0 (img2img with init_img) & 4 (inpaint uploaded mask))
+        "",  # id_task (used by wrap_gradio_gpu_call for some sort of job id system)
+        4
+        if req.is_inpaint
+        else 0,  # mode (we use 0 (img2img with init_img) & 4 (inpaint uploaded mask))
         parse_prompt(req.prompt),  # prompt
         parse_prompt(req.negative_prompt),  # negative_prompt
-        "None",  # prompt_style: saved prompt styles (unsupported)
-        "None",  # prompt_style2: saved prompt styles (unsupported)
+        "None",  # prompt_styles: saved prompt styles (unsupported)
         image,  # init_img
         None,  # sketch (unused by us)
         None,  # init_img_with_mask (unused by us)
@@ -295,7 +297,7 @@ def f_img2img(req: Img2ImgRequest):
             for image in images
         ]
 
-    if req.mode == 1:
+    if req.is_inpaint:
 
         def apply_mask(img):
             """Mask inpaint using original mask, including alpha."""

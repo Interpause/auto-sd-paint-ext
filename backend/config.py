@@ -123,8 +123,8 @@ class Txt2ImgOptions(BaseOptions, GenerationOptions, FaceRestorationOptions):
 class Img2ImgOptions(
     BaseOptions, GenerationOptions, InpaintingOptions, FaceRestorationOptions
 ):
-    mode: int = 0
-    """Img2Img mode; 0: img2img use init_img, 1: img2img use sketch, 2: inpaint, 3: inpaint with sketch, 4: inpaint uploaded mask, 5: batch"""
+    is_inpaint: bool = False
+    """Img2Img mode"""
     resize_mode: int = 1
     """Unused by Krita plugin since rescaling is done by us. 0 is stretch to fit, 1 is cover, 2 is contain."""
 

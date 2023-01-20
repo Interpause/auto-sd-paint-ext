@@ -264,7 +264,7 @@ class Script(QObject):
             cb, self.width, self.height, self.selection is not None
         )
 
-    def apply_img2img(self, mode):
+    def apply_img2img(self, is_inpaint):
         insert, glayer = self.img_inserter(
             self.x, self.y, self.width, self.height, group="a"
         )
@@ -275,7 +275,7 @@ class Script(QObject):
         mask_path = os.path.join(
             self.cfg("sample_path", str), f"{int(time.time())}_mask.png"
         )
-        if mode == 1 and mask_image is not None:
+        if is_inpaint and mask_image is not None:
             if self.cfg("save_temp_images", bool):
                 save_img(mask_image, mask_path)
             # auto-hide mask layer before getting selection image
@@ -292,9 +292,7 @@ class Script(QObject):
             assert response is not None, "Backend Error, check terminal"
 
             outputs = response["outputs"]
-            layer_name_prefix = (
-                "inpaint" if mode == 1 else "sd upscale" if mode == 2 else "img2img"
-            )
+            layer_name_prefix = "inpaint" if is_inpaint else "img2img"
             glayer_name, layer_names = get_desc_from_resp(response, layer_name_prefix)
             layers = [
                 insert(name if name else f"{layer_name_prefix} {i + 1}", output)
@@ -306,10 +304,10 @@ class Script(QObject):
             glayer.setName(glayer_name)
             self.doc.refreshProjection()
             # dont need transparency mask for inpaint mode
-            if mode == 0:
+            if not is_inpaint:
                 mask_trigger(layers)
 
-        method = self.client.post_inpaint if mode == 1 else self.client.post_img2img
+        method = self.client.post_inpaint if is_inpaint else self.client.post_img2img
         self.eta_timer.start()
         method(
             cb,
@@ -371,7 +369,7 @@ class Script(QObject):
         if not self.doc:
             return
         self.adjust_selection()
-        self.apply_img2img(mode=0)
+        self.apply_img2img(False)
 
     def action_sd_upscale(self):
         assert False, "disabled"
@@ -385,7 +383,7 @@ class Script(QObject):
         if not self.doc:
             return
         self.adjust_selection()
-        self.apply_img2img(mode=1)
+        self.apply_img2img(True)
 
     def action_simple_upscale(self):
         self.status_changed.emit(STATE_WAIT)
