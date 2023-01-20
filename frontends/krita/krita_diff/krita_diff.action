@@ -5,7 +5,7 @@
 
         <Action name="txt2img">
             <icon/>
-            <text>Apply txt2img transform</text>
+            <text>Apply txt2img</text>
             <whatsThis/>
             <toolTip/>
             <iconText/>
@@ -17,7 +17,7 @@
         </Action>
         <Action name="img2img">
             <icon/>
-            <text>Apply img2img transform</text>
+            <text>Apply img2img</text>
             <whatsThis/>
             <toolTip/>
             <iconText/>
@@ -43,7 +43,7 @@
         -->
         <Action name="img2img_inpaint">
             <icon/>
-            <text>Apply inpaint transform</text>
+            <text>Apply img2img inpaint</text>
             <whatsThis/>
             <toolTip/>
             <iconText/>
@@ -53,9 +53,21 @@
             <isCheckable>false</isCheckable>
             <statusTip/>
         </Action>
+        <Action name="paint_ext_interrupt">
+            <icon/>
+            <text>Interrupt image generation</text>
+            <whatsThis/>
+            <toolTip/>
+            <iconText/>
+            <activationFlags>10000</activationFlags>
+            <activationConditions>0</activationConditions>
+            <shortcut>ctrl+alt+i</shortcut>
+            <isCheckable>false</isCheckable>
+            <statusTip/>
+        </Action>
         <Action name="simple_upscale">
             <icon/>
-            <text>Apply ESRGAN upscaler</text>
+            <text>Apply simple upscaler</text>
             <whatsThis/>
             <toolTip/>
             <iconText/>

@@ -1,4 +1,4 @@
-from krita import QPixmap, QVBoxLayout, QWidget
+from krita import QPixmap, QPushButton, QVBoxLayout, QWidget
 
 from ..script import script
 from ..utils import b64_to_img
@@ -13,10 +13,12 @@ class PreviewPage(QWidget):
 
         self.status_bar = StatusBar()
         self.preview = QLabel()
+        self.interrupt_btn = QPushButton("Interrupt")
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.status_bar)
+        layout.addWidget(self.interrupt_btn)
         layout.addWidget(self.preview)
         layout.addStretch()
         self.setLayout(layout)
@@ -35,3 +37,4 @@ class PreviewPage(QWidget):
     def cfg_connect(self):
         script.status_changed.connect(lambda s: self.status_bar.set_status(s))
         script.progress_update.connect(lambda p: self._update_image(p))
+        self.interrupt_btn.released.connect(lambda: script.action_interrupt())

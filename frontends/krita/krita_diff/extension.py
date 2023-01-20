@@ -61,3 +61,7 @@ class SDPluginExtension(Extension):
             "simple_upscale", "Apply simple upscaler", "tools/scripts"
         )
         simple_upscale_action.triggered.connect(lambda: script.action_simple_upscale())
+        interrupt_action = window.createAction(
+            "paint_ext_interrupt", "Interrupt image generation", "tools/scripts"
+        )
+        interrupt_action.triggered.connect(lambda: script.action_interrupt())
