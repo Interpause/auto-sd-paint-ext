@@ -175,11 +175,11 @@ class Script(QObject):
             QImage.Format_RGBA8888,
         ).rgbSwapped()
 
-    def img_inserter(self, x, y, width, height, group: str = None):
+    def img_inserter(self, x, y, width, height, group=False):
         """Return frozen image inserter to insert images as new layer."""
         # Selection may change before callback, so freeze selection region
         has_selection = self.selection is not None
-        glayer = self.doc.createGroupLayer(group) if group else None
+        glayer = self.doc.createGroupLayer("Unnamed Group") if group else None
 
         def create_layer(name: str):
             """Create new layer in document or group"""
@@ -245,14 +245,12 @@ class Script(QObject):
             layer.setPixelData(ba, x, y, width, height)
             return layer
 
-        if glayer:
-            return insert, glayer
-        return insert
+        return insert, glayer
 
     def apply_txt2img(self):
         # freeze selection region
         insert, glayer = self.img_inserter(
-            self.x, self.y, self.width, self.height, group="a"
+            self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool)
         )
         mask_trigger = self.transparency_mask_inserter()
 
@@ -269,7 +267,8 @@ class Script(QObject):
             if self.cfg("hide_layers", bool):
                 for layer in layers[:-1]:
                     layer.setVisible(False)
-            glayer.setName(glayer_name)
+            if glayer:
+                glayer.setName(glayer_name)
             self.doc.refreshProjection()
             mask_trigger(layers)
 
@@ -280,7 +279,7 @@ class Script(QObject):
 
     def apply_img2img(self, is_inpaint):
         insert, glayer = self.img_inserter(
-            self.x, self.y, self.width, self.height, group="a"
+            self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool)
         )
         mask_trigger = self.transparency_mask_inserter()
         mask_image = self.get_mask_image()
@@ -315,7 +314,8 @@ class Script(QObject):
             if self.cfg("hide_layers", bool):
                 for layer in layers[:-1]:
                     layer.setVisible(False)
-            glayer.setName(glayer_name)
+            if glayer:
+                glayer.setName(glayer_name)
             self.doc.refreshProjection()
             # dont need transparency mask for inpaint mode
             if not is_inpaint:
@@ -331,7 +331,7 @@ class Script(QObject):
         )
 
     def apply_simple_upscale(self):
-        insert = self.img_inserter(self.x, self.y, self.width, self.height)
+        insert, _ = self.img_inserter(self.x, self.y, self.width, self.height)
         sel_image = self.get_selection_image()
 
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
