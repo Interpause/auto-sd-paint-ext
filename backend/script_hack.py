@@ -88,6 +88,7 @@ def get_scripts_metadata(is_img2img: bool):
     else:
         runner = modules.scripts.scripts_txt2img
     metadata = {"None": []}
+    # Check if cache is still valid
     if (
         is_img2img
         and img2img_script_meta
@@ -97,6 +98,7 @@ def get_scripts_metadata(is_img2img: bool):
     elif txt2img_script_meta and len(txt2img_script_meta) - 1 == len(runner.titles):
         return txt2img_script_meta
 
+    # NOTE: scripts are loaded before our extension is registered so metadata should be valid
     with gr.Blocks(visible=False, analytics_enabled=False):
         for name, script in zip(runner.titles, runner.selectable_scripts):
             metadata[name] = inspect_ui(script, is_img2img)
