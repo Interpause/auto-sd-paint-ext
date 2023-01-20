@@ -26,19 +26,7 @@ class BackendScript(scripts.Script):
         pass
 
 
-started = False
-
-
 def on_app_started(demo: gr.Blocks, app: FastAPI):
-    # NOTE: There is currently a glitch where the on_app_started() callback is called twice
-    # Surprisingly, it only breaks the encryption middleware and causes duplicate logs
-    # Below is a workaround to fix said issues
-    # Downside is that for now, restarting Gradio via the webUI will just break the extension
-    global started
-    if started:
-        return
-    started = True
-
     logger = logging.getLogger(LOGGER_NAME)
     logger.setLevel(logging.INFO)
     handler = logging.StreamHandler()
