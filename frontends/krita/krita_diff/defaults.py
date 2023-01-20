@@ -17,7 +17,7 @@ STATE_INTERRUPT = "Interrupted!"
 SHORT_TIMEOUT = 10
 LONG_TIMEOUT = None  # requests that might take "forever", i.e., image generation with high batch count
 REFRESH_INTERVAL = 3000  # 3 seconds between auto-config refresh
-ETA_REFRESH_INTERVAL = 1000  # 1 second between eta refresh
+ETA_REFRESH_INTERVAL = 250  # milliseconds between eta refresh
 CFG_FOLDER = "krita"  # which folder in ~/.config to store config
 CFG_NAME = "krita_diff_plugin"  # name of config file
 EXT_CFG_NAME = "krita_diff_plugin_scripts"  # name of config file
@@ -39,6 +39,7 @@ TAB_TXT2IMG = "krita_diff_txt2img"
 TAB_IMG2IMG = "krita_diff_img2img"
 TAB_INPAINT = "krita_diff_inpaint"
 TAB_UPSCALE = "krita_diff_upscale"
+TAB_PREVIEW = "krita_diff_preview"
 
 
 @dataclass(frozen=True)

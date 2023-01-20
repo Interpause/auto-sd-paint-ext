@@ -5,6 +5,7 @@
 - Removed "Use selection as mask" option; Using the selection to mask generated images is now default behaviour.
 - Added "Add transparency mask" option; Choose to mask generated images by adding transparency mask, or directly flatten/crop image.
 - Top paintlayer will now be set as active layer when generation is complete.
+- New docker that shows a live preview of image generation (if enabled in WebUI).
 
 ## 2022-12-28
 

@@ -10,6 +10,7 @@ from .defaults import (
     TAB_CONFIG,
     TAB_IMG2IMG,
     TAB_INPAINT,
+    TAB_PREVIEW,
     TAB_SDCOMMON,
     TAB_TXT2IMG,
     TAB_UPSCALE,
@@ -215,6 +216,7 @@ def reset_docker_layout():
         TAB_TXT2IMG,
         TAB_UPSCALE,
         TAB_INPAINT,
+        TAB_PREVIEW,
     }
     instance = Krita.instance()
     # Assumption that currently active window is the main window
@@ -230,6 +232,7 @@ def reset_docker_layout():
         qmainwindow.addDockWidget(Qt.LeftDockWidgetArea, d)
 
     qmainwindow.tabifyDockWidget(dockers[TAB_SDCOMMON], dockers[TAB_CONFIG])
+    qmainwindow.tabifyDockWidget(dockers[TAB_SDCOMMON], dockers[TAB_PREVIEW])
     qmainwindow.tabifyDockWidget(dockers[TAB_TXT2IMG], dockers[TAB_IMG2IMG])
     qmainwindow.tabifyDockWidget(dockers[TAB_TXT2IMG], dockers[TAB_INPAINT])
     qmainwindow.tabifyDockWidget(dockers[TAB_TXT2IMG], dockers[TAB_UPSCALE])

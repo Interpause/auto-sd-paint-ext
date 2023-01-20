@@ -4,6 +4,7 @@ from .defaults import (
     TAB_CONFIG,
     TAB_IMG2IMG,
     TAB_INPAINT,
+    TAB_PREVIEW,
     TAB_SDCOMMON,
     TAB_TXT2IMG,
     TAB_UPSCALE,
@@ -18,6 +19,7 @@ from .pages import (
     Txt2ImgPage,
     UpscalePage,
 )
+from .pages.preview import PreviewPage
 from .script import script
 from .utils import reset_docker_layout
 
@@ -63,6 +65,13 @@ instance.addDockWidgetFactory(
         TAB_CONFIG,
         DockWidgetFactoryBase.DockLeft,
         create_docker(ConfigPage),
+    )
+)
+instance.addDockWidgetFactory(
+    DockWidgetFactory(
+        TAB_PREVIEW,
+        DockWidgetFactoryBase.DockLeft,
+        create_docker(PreviewPage),
     )
 )
 

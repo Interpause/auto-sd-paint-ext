@@ -62,6 +62,7 @@ class Script(QObject):
     """Height of selection"""
     status_changed = pyqtSignal(str)
     config_updated = pyqtSignal()
+    progress_update = pyqtSignal(object)
 
     def __init__(self):
         super(Script, self).__init__()
@@ -75,6 +76,7 @@ class Script(QObject):
         self.eta_timer = QTimer()
         self.eta_timer.setInterval(ETA_REFRESH_INTERVAL)
         self.eta_timer.timeout.connect(lambda: self.action_update_eta())
+        self.progress_update.connect(lambda p: self.update_status_bar_eta(p))
 
     def restore_defaults(self, if_empty=False):
         """Restore to default config."""
@@ -83,6 +85,18 @@ class Script(QObject):
 
         if not if_empty:
             self.status_changed.emit(STATE_RESET_DEFAULT)
+
+    def update_status_bar_eta(self, progress):
+        # print(progress)
+        # NOTE: progress & eta_relative is bugged upstream when there is multiple jobs
+        # so we use a substitute that seems to work
+        state = progress["state"]
+        cur_step = state["sampling_step"]
+        total_steps = state["sampling_steps"]
+        # doesnt take into account batch count
+        num_jobs = len(self.client.long_reqs) - 1
+
+        self.status_changed.emit(f"Step {cur_step}/{total_steps} ({num_jobs} in queue)")
 
     def update_selection(self):
         """Update references to key Krita objects as well as selection information."""
@@ -435,21 +449,7 @@ class Script(QObject):
         self.client.post_interrupt(cb)
 
     def action_update_eta(self):
-        def cb(resp=None):
-            # print(resp)
-            # NOTE: progress & eta_relative is bugged upstream when there is multiple jobs
-            # so we use a substitute that seems to work
-            state = resp["state"]
-            cur_step = state["sampling_step"]
-            total_steps = state["sampling_steps"]
-            # doesnt take into account batch count
-            num_jobs = len(self.client.long_reqs) - 1
-
-            self.status_changed.emit(
-                f"Step {cur_step}/{total_steps} ({num_jobs} in queue)"
-            )
-
-        self.client.get_progress(cb)
+        self.client.get_progress(self.progress_update.emit)
 
 
 script = Script()
