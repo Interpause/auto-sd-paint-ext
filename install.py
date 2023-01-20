@@ -9,15 +9,17 @@ auto_update = os.environ.get("AUTO_SD_PAINT_EXT_AUTO_UPDATE", "False").lower() i
     "yes",
 }
 
+try:
+    commit_hash = run(f'{git} -C "{REPO_LOCATION}" rev-parse HEAD').strip()
+except Exception:
+    commit_hash = "<none>"
+
+print(f"[auto-sd-paint-ext] Commit hash: {commit_hash}")
+
 if auto_update:
     print("[auto-sd-paint-ext] Attempting auto-update...")
 
     try:
-        # current_hash = run(
-        #     f'"{git}" -C {REPO_LOCATION} rev-parse HEAD',
-        #     "[auto-sd-paint-ext] Get commit hash.",
-        # ).strip()
-
         run(
             f'"{git}" -C "{REPO_LOCATION}" fetch', "[auto-sd-paint-ext] Fetch upstream."
         )
