@@ -23,6 +23,8 @@ Currently stuck on two things with regards to further development:
   - Currently having issues figuring out how to implement it without needing to overhaul everything.
 - Switch to official API
 
+See <https://github.com/Interpause/auto-sd-paint-ext/issues/41> for planned developments.
+
 ## Quick Jump
 
 - Full Installation & Workflow Tutorial Video! (Coming Soon...)
