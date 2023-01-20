@@ -31,7 +31,7 @@ class ConfigPage(QWidget):
             script.cfg, "just_use_yaml", "(unrecommended) Ignore settings"
         )
         self.create_mask_layer = QCheckBox(
-            script.cfg, "create_mask_layer", "Use selection as mask"
+            script.cfg, "create_mask_layer", "Add transparency mask"
         )
         self.save_temp_images = QCheckBox(
             script.cfg, "save_temp_images", "Save images for debug"

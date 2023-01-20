@@ -1,5 +1,11 @@
 # UI Changelog
 
+## 2023-01-20
+
+- Removed "Use selection as mask" option; Using the selection to mask generated images is now default behaviour.
+- Added "Add transparency mask" option; Choose to mask generated images by adding transparency mask, or directly flatten/crop image.
+- Top paintlayer will now be set as active layer when generation is complete.
+
 ## 2022-12-28
 
 - Added "Alt Dock Behaviour" under "SD Plugin Config".

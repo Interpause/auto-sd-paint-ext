@@ -21,8 +21,7 @@ ETA_REFRESH_INTERVAL = 1000  # 1 second between eta refresh
 CFG_FOLDER = "krita"  # which folder in ~/.config to store config
 CFG_NAME = "krita_diff_plugin"  # name of config file
 EXT_CFG_NAME = "krita_diff_plugin_scripts"  # name of config file
-# selection mask can only be added after image is added, so timeout is needed
-ADD_MASK_TIMEOUT = 200
+ADD_MASK_TIMEOUT = 50
 THREADED = True
 ROUTE_PREFIX = "/sdapi/interpause/"
 OFFICIAL_ROUTE_PREFIX = "/sdapi/v1/"

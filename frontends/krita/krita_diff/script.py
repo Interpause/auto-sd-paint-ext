@@ -335,22 +335,54 @@ class Script(QObject):
     def transparency_mask_inserter(self):
         """Mask out extra regions due to adjust_selection()."""
         orig_selection = self.selection.duplicate() if self.selection else None
+        create_mask = self.cfg("create_mask_layer", bool)
 
-        def add_mask(layers):
-            self.doc.waitForDone()
-            cur_selection = self.selection
-            cur_layer = self.doc.activeNode()
-            for layer in layers:
-                self.doc.setActiveNode(layer)
-                self.doc.setSelection(orig_selection)
-                self.app.action("add_new_transparency_mask").trigger()
-            self.doc.setSelection(cur_selection)  # reset to current selection
-            self.doc.setActiveNode(cur_layer)  # reset to current layer
+        add_mask_action = self.app.action("add_new_transparency_mask")
+        merge_mask_action = self.app.action("flatten_layer")
 
-        def trigger_mask_adding(layers):
-            if self.cfg("create_mask_layer", bool):
-                # need timeout to ensure layer exists first else crash
-                QTimer.singleShot(ADD_MASK_TIMEOUT, lambda: add_mask(layers))
+        # This function is recursive to workaround race conditions when calling Krita's actions
+        def add_mask(layers: list, cur_selection):
+            if len(layers) < 1:
+                self.doc.setSelection(cur_selection)  # reset to current selection
+                return
+            layer = layers.pop()
+
+            orig_visible = layer.visible()
+            orig_name = layer.name()
+
+            def restore():
+                # assume newly flattened layer is active
+                result = self.doc.activeNode()
+                result.setVisible(orig_visible)
+                result.setName(orig_name)
+
+                add_mask(layers, cur_selection)
+
+            layer.setVisible(True)
+            self.doc.setActiveNode(layer)
+            self.doc.setSelection(orig_selection)
+            add_mask_action.trigger()
+
+            if create_mask:
+                # collapse transparency mask by default
+                layer.setCollapsed(True)
+                layer.setVisible(orig_visible)
+                QTimer.singleShot(
+                    ADD_MASK_TIMEOUT, lambda: add_mask(layers, cur_selection)
+                )
+            else:
+                # flatten transparency mask into layer
+                merge_mask_action.trigger()
+                QTimer.singleShot(ADD_MASK_TIMEOUT, lambda: restore())
+
+        def trigger_mask_adding(layers: list):
+            layers = layers[::-1]  # causes final active layer to be the top one
+
+            def handle_mask():
+                cur_selection = self.selection.duplicate() if self.selection else None
+                add_mask(layers, cur_selection)
+
+            QTimer.singleShot(ADD_MASK_TIMEOUT, lambda: handle_mask())
 
         return trigger_mask_adding
 
