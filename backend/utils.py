@@ -166,7 +166,7 @@ def b64_to_img(enc: str):
 
 
 def sddebz_highres_fix(
-    base_size: int, max_size: int, orig_width: int, orig_height: int
+    base_size: int, max_size: int, orig_width: int, orig_height: int, just_stride=False
 ):
     """Calculate an appropiate image resolution given the base input size of the
     model and max input size allowed.
@@ -204,8 +204,11 @@ def sddebz_highres_fix(
 
     ratio = orig_width / orig_height
 
+    # don't apply correction; just stride to 64
+    if just_stride:
+        width, height = ceil(width / 64) * 64, ceil(height / 64) * 64
     # height is smaller dimension
-    if orig_width > orig_height:
+    elif orig_width > orig_height:
         width, height = rnd(ratio, base_size), base_size
         if width > max_size:
             width, height = max_size, rnd(1 / ratio, max_size)

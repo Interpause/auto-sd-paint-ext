@@ -59,6 +59,7 @@ class Defaults:
     alt_dock_behavior: bool = False
     hide_layers: bool = True
     no_groups: bool = False
+    disable_sddebz_highres: bool = False
 
     sd_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
     sd_model: str = "model.ckpt"

@@ -224,6 +224,7 @@ class Client(QObject):
             batch_size=self.cfg("sd_batch_size", int),
             base_size=self.cfg("sd_base_size", int),
             max_size=self.cfg("sd_max_size", int),
+            disable_sddebz_highres=self.cfg("disable_sddebz_highres", bool),
             tiling=tiling,
             upscaler_name=self.cfg("upscaler_name", str),
             restore_faces=self.cfg("face_restorer_model", str) != "None",

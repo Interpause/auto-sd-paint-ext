@@ -64,6 +64,12 @@ class SDCommonPage(QWidget):
 
         # Tiling mode
         self.tiling = QCheckBox(script.cfg, "sd_tiling", "Tiling mode")
+        self.sddebz = QCheckBox(
+            script.cfg, "disable_sddebz_highres", "Disable base/max size"
+        )
+        checkboxes_layout = QHBoxLayout()
+        checkboxes_layout.addWidget(self.tiling)
+        checkboxes_layout.addWidget(self.sddebz)
 
         # Interrupt button
         self.interrupt_btn = QPushButton("Interrupt")
@@ -75,7 +81,7 @@ class SDCommonPage(QWidget):
         layout.addLayout(self.upscaler_layout)
         layout.addLayout(self.face_restorer_layout)
         layout.addLayout(self.codeformer_weight_layout)
-        layout.addWidget(self.tiling)
+        layout.addLayout(checkboxes_layout)
         layout.addLayout(self.sd_model_layout)
         layout.addLayout(batch_layout)
         layout.addLayout(size_layout)
@@ -94,6 +100,7 @@ class SDCommonPage(QWidget):
         self.face_restorer_layout.cfg_init()
         self.codeformer_weight_layout.cfg_init()
         self.tiling.cfg_init()
+        self.sddebz.cfg_init()
 
         self.title.setVisible(not script.cfg("minimize_ui", bool))
 
@@ -107,6 +114,7 @@ class SDCommonPage(QWidget):
         self.face_restorer_layout.cfg_connect()
         self.codeformer_weight_layout.cfg_connect()
         self.tiling.cfg_connect()
+        self.sddebz.cfg_connect()
 
         # Hide codeformer_weight when model isnt codeformer
         def toggle_codeformer_weights(visible):
@@ -119,5 +127,15 @@ class SDCommonPage(QWidget):
         toggle_codeformer_weights(
             self.face_restorer_layout.qcombo.currentText() == "CodeFormer"
         )
+
+        # hide base/max size when disabled
+        def toggle_sddebz_highres(visible):
+            self.base_size_layout.qspin.setVisible(visible)
+            self.base_size_layout.qlabel.setVisible(visible)
+            self.max_size_layout.qspin.setVisible(visible)
+            self.max_size_layout.qlabel.setVisible(visible)
+
+        self.sddebz.toggled.connect(lambda b: toggle_sddebz_highres(not b))
+        toggle_sddebz_highres(not script.cfg("disable_sddebz_highres", bool))
 
         self.interrupt_btn.released.connect(lambda: script.action_interrupt())

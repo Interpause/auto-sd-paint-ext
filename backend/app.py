@@ -118,7 +118,11 @@ def f_txt2img(req: Txt2ImgRequest):
     args = process_script_args(script_ind, script, meta, req.script_args)
 
     width, height = sddebz_highres_fix(
-        req.base_size, req.max_size, req.orig_width, req.orig_height
+        req.base_size,
+        req.max_size,
+        req.orig_width,
+        req.orig_height,
+        req.disable_sddebz_highres,
     )
 
     output = wrap_gradio_gpu_call(modules.txt2img.txt2img)(
@@ -218,7 +222,11 @@ def f_img2img(req: Img2ImgRequest):
         width = height = req.base_size
     else:
         width, height = sddebz_highres_fix(
-            req.base_size, req.max_size, orig_width, orig_height
+            req.base_size,
+            req.max_size,
+            orig_width,
+            orig_height,
+            req.disable_sddebz_highres,
         )
 
     # NOTE:
