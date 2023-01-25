@@ -1,9 +1,11 @@
 import os
 from pathlib import Path
 
+from launch import commit_hash as get_commit_hash
 from launch import git, run
 
 REPO_LOCATION = Path(__file__).parent
+LAST_BREAKING_COMMIT_TIME = 1674039585 # 26fd444811b6ce45845023a6d4a8bedcba53b60d
 auto_update = os.environ.get("AUTO_SD_PAINT_EXT_AUTO_UPDATE", "False").lower() in {
     "true",
     "yes",
@@ -16,14 +18,18 @@ except Exception:
 
 print(f"[auto-sd-paint-ext] Commit hash: {commit_hash}")
 
+auto_commit_hash = get_commit_hash()
+try:
+    cur_commit_time = run(f'{git} show -s --format=%ct {auto_commit_hash}')
+    if int(cur_commit_time) < LAST_BREAKING_COMMIT_TIME:
+        print(f"[auto-sd-paint-ext] Current A1111 commit is OLDER than the latest breaking changes! Extension might fail to function as expected!!!")
+except Exception:
+    pass
+
 if auto_update:
     print("[auto-sd-paint-ext] Attempting auto-update...")
 
     try:
-        run(
-            f'"{git}" -C "{REPO_LOCATION}" fetch', "[auto-sd-paint-ext] Fetch upstream."
-        )
-
         run(f'"{git}" -C "{REPO_LOCATION}" pull', "[auto-sd-paint-ext] Pull upstream.")
     except Exception as e:
         print("[auto-sd-paint-ext] Auto-update failed:")
@@ -31,13 +37,5 @@ if auto_update:
         print("[auto-sd-paint-ext] Ensure git was used to install extension.")
 else:
     print("[auto-sd-paint-ext] Auto-update disabled.")
-    print(
-        "[auto-sd-paint-ext] Enable auto-updates by setting environment variable `AUTO_SD_PAINT_EXT_AUTO_UPDATE` to `True`."
-    )
-    print("[auto-sd-paint-ext] Auto-update disabled by default for future versions.")
-    print("[auto-sd-paint-ext] Please update using the Extensions Tab in A1111 WebUI.")
-    print(
-        "[auto-sd-paint-ext] See https://github.com/Interpause/auto-sd-paint-ext/issues/89 for further details."
-    )
 
 # NOTE: if we ever get dependencies, we can install them here.
