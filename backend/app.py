@@ -277,6 +277,8 @@ def f_img2img(req: Img2ImgRequest):
         req.invert_mask,  # inpainting_mask_invert
         "",  # img2img_batch_input_dir (unspported)
         "",  # img2img_batch_output_dir (unspported)
+        "", # img2img_batch_inpaint_mask_dir (unsupported)
+        [], # override_settings_texts (unsupported)
         *args,
     )
     images = output[0]
