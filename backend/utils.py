@@ -166,7 +166,12 @@ def b64_to_img(enc: str):
 
 
 def sddebz_highres_fix(
-    base_size: int, max_size: int, orig_width: int, orig_height: int, just_stride=False
+    base_size: int,
+    max_size: int,
+    orig_width: int,
+    orig_height: int,
+    just_stride=False,
+    stride=1,
 ):
     """Calculate an appropiate image resolution given the base input size of the
     model and max input size allowed.
@@ -198,15 +203,18 @@ def sddebz_highres_fix(
         Tuple[int, int]: Appropiate (width, height) to use for the model.
     """
 
-    def rnd(r, x, z=64):
+    def rnd(r, x):
         """Scale dimension x with stride z while attempting to preserve aspect ratio r."""
-        return z * ceil(r * x / z)
+        return stride * ceil(r * x / stride)
 
     ratio = orig_width / orig_height
 
-    # don't apply correction; just stride to 64
+    # don't apply correction; just stride
     if just_stride:
-        width, height = ceil(orig_width / 64) * 64, ceil(orig_height / 64) * 64
+        width, height = (
+            ceil(orig_width / stride) * stride,
+            ceil(orig_height / stride) * stride,
+        )
     # height is smaller dimension
     elif orig_width > orig_height:
         width, height = rnd(ratio, base_size), base_size
