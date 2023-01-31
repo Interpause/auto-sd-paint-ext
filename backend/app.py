@@ -152,7 +152,7 @@ def f_txt2img(req: Txt2ImgRequest):
         0,  # hr_second_pass_steps: 0 uses same num of steps as generation to refine details
         req.orig_width,  # hr_resize_x
         req.orig_height,  # hr_resize_y
-        "",  # override_settings_texts (unsupported)
+        [],  # override_settings_texts (unsupported)
         *args,
     )
     images = output[0]
@@ -279,7 +279,7 @@ def f_img2img(req: Img2ImgRequest):
         "",  # img2img_batch_input_dir (unspported)
         "",  # img2img_batch_output_dir (unsupported)
         "",  # img2img_batch_inpaint_mask_dir (unsupported)
-        "",  # override_settings_texts (unsupported)
+        [],  # override_settings_texts (unsupported)
         *args,
     )
     images = output[0]
