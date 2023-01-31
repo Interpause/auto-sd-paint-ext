@@ -206,7 +206,7 @@ def sddebz_highres_fix(
 
     # don't apply correction; just stride to 64
     if just_stride:
-        width, height = ceil(width / 64) * 64, ceil(height / 64) * 64
+        width, height = ceil(orig_width / 64) * 64, ceil(orig_height / 64) * 64
     # height is smaller dimension
     elif orig_width > orig_height:
         width, height = rnd(ratio, base_size), base_size
