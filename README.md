@@ -15,6 +15,8 @@ Why use this?
 
 ## Notice
 
+Refer to <https://github.com/ClashSAN/sd-webui-extension-records> for current working extension & webUI commits and how to switch commits. This is useful when upstream webUI changes break the extension.
+
 Currently stuck on two things with regards to further development:
 
 - Config preset system: <https://github.com/Interpause/auto-sd-paint-ext/tree/feat-config-presets>
