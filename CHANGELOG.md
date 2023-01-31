@@ -1,5 +1,9 @@
 # UI Changelog
 
+## 2023-01-25
+
+- Add ability to disable base size/max size system; Image generated will be same size as selection.
+
 ## 2023-01-20
 
 - Removed "Use selection as mask" option; Using the selection to mask generated images is now default behaviour.

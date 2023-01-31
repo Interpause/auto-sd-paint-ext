@@ -8,10 +8,8 @@ Formerly known as `auto-sd-krita`.
 
 Why use this?
 
-- Optimized workflow (txt2img, img2img, inpaint, outpaint, upscale) & UI design.
+- Optimized workflow (txt2img, img2img, inpaint, upscale) & UI design.
 - Only drawing studio plugin that exposes the Script API.
-- Easily create/save profiles (prompts, samplers, model, etc used).
-- Some of the above isn't actually implemented yet.
 
 ## Notice
 
@@ -36,27 +34,12 @@ See <https://github.com/Interpause/auto-sd-paint-ext/issues/41> for planned deve
 - [TODO](https://github.com/Interpause/auto-sd-paint-ext/wiki/TODO)
 - [Contribution Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Contribution-Guide)
 
-(Outdated) Usage & Workflow Demo:
+## Community Videos
 
-[![Youtube Video](http://img.youtube.com/vi/nP8MuRwcDN8/0.jpg)](https://youtu.be/nP8MuRwcDN8 "Inpaint like a pro with Stable Diffusion! auto-sd-krita workflow guide")
+Thanks [@rexelbartolome](https://github.com/rexelbartolome) for making these videos:
 
-### Differences from Video
-
-- All webUI scripts have been tested to work!
-  - SD Upscale, Outpainting Mk 2, Img2Img Alt, etc
-- Inpainting experience is better
-  - Inpaint mask is auto-hidden
-  - Better mask blur & inpaint full resolution technique than webUI
-- UI no longer freezes during image update
-- UI has been improved, takes up less space
-- Error messages have been improved
-
-## Breaking Changes
-
-- The URL is different now, so reset "Backend URL" to default under the Config tab.
-- It is now an AUTOMATIC1111 extension.
-  - Do <https://github.com/Interpause/auto-sd-krita/wiki/Quick-Switch-Using-Existing-AUTOMATIC1111-Install> in reverse for a quick fix.
-- `krita_config.yaml` was renamed to `auto-sd-paint-ext-backend.yaml`.
+- Installation: <https://youtu.be/eCSIqJ5cmJs>
+- Rundown of plugin features: <https://youtu.be/h-BIC9iuPGc>
 
 ## FAQ
 
@@ -103,6 +86,10 @@ A: Unfortunately no, all plugins so far have different APIs. The official API is
 
 See [CHANGELOG.md](./CHANGELOG.md) for the full changelog.
 
+## 2023-01-25
+
+- Add ability to disable base size/max size system; Image generated will be same size as selection.
+
 ### 2023-01-20
 
 - Removed "Use selection as mask" option; Using the selection to mask generated images is now default behaviour.
@@ -129,22 +116,6 @@ See [CHANGELOG.md](./CHANGELOG.md) for the full changelog.
     - "Restore Defaults" will make all dockers re-appear and arrange themselves.
   - Progress & number of pending requests now shown.
   - All dropdowns now support searching, useful if your model checkpoint list is really long.
-
-### 2022-12-04
-
-- Add Interrupt button.
-
-### 2022-11-15
-
-- Scripts/features that increase the image size (Simple upscaling, SD upscaling, Outpaint Mk 2, etc) will now expand the canvas when image generation is complete **only if** _there is no active selection_.
-  - If there is a selection, the image will be scaled to fit the selection region.
-  - Using Ctrl+A to select the entire image is considered an active selection!
-
-### 2022-11-08
-
-- Inpainting is finally 100% fixed! No more weird borders. Blur works properly.
-- Inpainting Full Resolution and Mask Blur were deemed obsolete and removed.
-  - See <https://github.com/Interpause/auto-sd-paint-ext/wiki/Usage-Guide#inpainting> on better ways to do so.
 
 ## Credits
 
