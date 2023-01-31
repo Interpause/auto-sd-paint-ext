@@ -5,7 +5,9 @@ from launch import commit_hash as get_commit_hash
 from launch import git, run
 
 REPO_LOCATION = Path(__file__).parent
-LAST_BREAKING_COMMIT_TIME = 1674039585 # 26fd444811b6ce45845023a6d4a8bedcba53b60d
+# git show -s --format=%ct <commit_hash>
+LAST_BREAKING_COMMIT_TIME = 1675035626
+LAST_BREAKING_COMMIT = "c81b52ffbd6252842b3473a7aa8eb7ffc88ee7d1"
 auto_update = os.environ.get("AUTO_SD_PAINT_EXT_AUTO_UPDATE", "False").lower() in {
     "true",
     "yes",
@@ -20,9 +22,11 @@ print(f"[auto-sd-paint-ext] Commit hash: {commit_hash}")
 
 auto_commit_hash = get_commit_hash()
 try:
-    cur_commit_time = run(f'{git} show -s --format=%ct {auto_commit_hash}')
+    cur_commit_time = run(f"{git} show -s --format=%ct {auto_commit_hash}")
     if int(cur_commit_time) < LAST_BREAKING_COMMIT_TIME:
-        print(f"[auto-sd-paint-ext] Current A1111 commit is OLDER than the latest breaking changes! Extension might fail to function as expected!!!")
+        print(
+            f"[auto-sd-paint-ext] Current A1111 commit is OLDER than last breaking commit ({LAST_BREAKING_COMMIT})! Extension might fail to function as expected!!!"
+        )
 except Exception:
     pass
 
