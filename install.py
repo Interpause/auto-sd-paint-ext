@@ -6,8 +6,8 @@ from launch import git, run
 
 REPO_LOCATION = Path(__file__).parent
 # git show -s --format=%ct <commit_hash>
-LAST_BREAKING_COMMIT_TIME = 1675035626
-LAST_BREAKING_COMMIT = "c81b52ffbd6252842b3473a7aa8eb7ffc88ee7d1"
+LAST_BREAKING_COMMIT_TIME = 1675466396
+LAST_BREAKING_COMMIT = "6c6c6636bb123d664999c888cda47a1f8bad635b"
 auto_update = os.environ.get("AUTO_SD_PAINT_EXT_AUTO_UPDATE", "False").lower() in {
     "true",
     "yes",

@@ -263,6 +263,7 @@ def f_img2img(req: Img2ImgRequest):
         req.batch_count,  # n_iter
         req.batch_size,  # batch_size
         req.cfg_scale,  # cfg_scale
+        0, # img_cfg_scale (unsupported)
         req.denoising_strength,  # denoising_strength
         req.seed,  # seed
         req.subseed,  # subseed
