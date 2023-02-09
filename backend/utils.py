@@ -171,7 +171,7 @@ def sddebz_highres_fix(
     orig_width: int,
     orig_height: int,
     just_stride=False,
-    stride=1,
+    stride=8,
 ):
     """Calculate an appropiate image resolution given the base input size of the
     model and max input size allowed.
