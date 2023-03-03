@@ -221,6 +221,7 @@ class Client(QObject):
         params = dict(
             sd_model=self.cfg("sd_model", str),
             sd_vae=self.cfg("sd_vae", str),
+            clip_skip=self.cfg("clip_skip", int),
             batch_count=self.cfg("sd_batch_count", int),
             batch_size=self.cfg("sd_batch_size", int),
             base_size=self.cfg("sd_base_size", int),

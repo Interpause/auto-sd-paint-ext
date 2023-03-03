@@ -28,6 +28,10 @@ class GenerationOptions(BaseModel):
     """Model to use for generation."""
     sd_vae: str = "Automatic"
     """VAE to use for generation."""
+
+    clip_skip: int = 1
+    """CLIP layers to skip during generation."""
+
     script: str = "None"
     """Which script to use."""
     script_args: list = Field(default_factory=list)

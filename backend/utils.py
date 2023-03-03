@@ -89,6 +89,9 @@ def prepare_backend(opt: BaseModel):
         shared.opts.sd_vae = opt.sd_vae
         modules.sd_vae.reload_vae_weights()
 
+    if hasattr(opt, "clip_skip"):
+        shared.opts.CLIP_stop_at_last_layers = opt.clip_skip
+
     if hasattr(opt, "upscaler_name"):
         shared.opts.upscaler_for_img2img = opt.upscaler_name
 
