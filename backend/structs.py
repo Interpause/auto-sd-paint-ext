@@ -71,6 +71,8 @@ class ConfigResponse(PluginOptions):
     """List of available face restorers."""
     sd_models: List[str]
     """List of available models."""
+    sd_vaes: List[str]
+    """List of available VAEs."""
 
 
 class ImageResponse(BaseModel):

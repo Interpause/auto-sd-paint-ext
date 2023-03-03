@@ -95,6 +95,7 @@ async def get_state():
         "scripts_img2img": get_scripts_metadata(True),
         "face_restorers": [model.name() for model in shared.face_restorers],
         "sd_models": modules.sd_models.checkpoint_tiles(),  # yes internal API has spelling error
+        "sd_vaes": ["None", "Automatic" ] + (list(modules.sd_vae.vae_dict))
     }
 
 

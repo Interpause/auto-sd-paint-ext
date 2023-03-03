@@ -220,6 +220,7 @@ class Client(QObject):
         # its fine to stuff extra stuff here; pydantic will shave off irrelevant params
         params = dict(
             sd_model=self.cfg("sd_model", str),
+            sd_vae=self.cfg("sd_vae", str),
             batch_count=self.cfg("sd_batch_count", int),
             batch_size=self.cfg("sd_batch_size", int),
             base_size=self.cfg("sd_base_size", int),
@@ -246,6 +247,7 @@ class Client(QObject):
                 assert len(obj["samplers_img2img"]) > 0
                 assert len(obj["face_restorers"]) > 0
                 assert len(obj["sd_models"]) > 0
+                assert len(obj["sd_vaes"]) > 0
                 assert len(obj["scripts_txt2img"]) > 0
                 assert len(obj["scripts_img2img"]) > 0
             except:
@@ -267,6 +269,7 @@ class Client(QObject):
             self.cfg.set("inpaint_script_list", list(obj["scripts_img2img"].keys()))
             self.cfg.set("face_restorer_model_list", obj["face_restorers"])
             self.cfg.set("sd_model_list", obj["sd_models"])
+            self.cfg.set("sd_vae_list", ["Automatic", "None"] + obj["sd_vaes"])
 
             # extension script cfg
             obj["scripts_inpaint"] = obj["scripts_img2img"]

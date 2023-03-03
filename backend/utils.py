@@ -85,6 +85,10 @@ def prepare_backend(opt: BaseModel):
         shared.opts.sd_model_checkpoint = opt.sd_model
         modules.sd_models.reload_model_weights(shared.sd_model)
 
+    if hasattr(opt, "sd_vae"):
+        shared.opts.sd_vae = opt.sd_vae
+        modules.sd_vae.reload_vae_weights()
+
     if hasattr(opt, "upscaler_name"):
         shared.opts.upscaler_for_img2img = opt.upscaler_name
 

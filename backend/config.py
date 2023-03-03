@@ -26,6 +26,8 @@ class BaseOptions(BaseModel):
 class GenerationOptions(BaseModel):
     sd_model: str = "model.ckpt"
     """Model to use for generation."""
+    sd_vae: str = "Automatic"
+    """VAE to use for generation."""
     script: str = "None"
     """Which script to use."""
     script_args: list = Field(default_factory=list)
