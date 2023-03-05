@@ -54,7 +54,7 @@ def on_app_started(demo: gr.Blocks, app: FastAPI):
 
 def on_ui_settings():
     # hook to add our own settings to the settings tab
-    pass
+    shared.opts.add_option("hide_auto_sd_paint_ext_tab", shared.OptionInfo(False, 'Hide "auto-sd-paint-ext Guide/Panel" after restart.', gr.Checkbox, section=('ui', "User interface")))
 
 
 def krita_help(folder):
@@ -75,6 +75,8 @@ def krita_help(folder):
 
 
 def on_ui_tabs():
+    if shared.opts.hide_auto_sd_paint_ext_tab:
+        return
     # hook to create our own UI tab
     with gr.Blocks(analytics_enabled=False) as interface:
         gr.Markdown(
