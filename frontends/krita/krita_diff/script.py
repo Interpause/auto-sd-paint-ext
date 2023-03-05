@@ -77,6 +77,8 @@ class Script(QObject):
         self.eta_timer.setInterval(ETA_REFRESH_INTERVAL)
         self.eta_timer.timeout.connect(lambda: self.action_update_eta())
         self.progress_update.connect(lambda p: self.update_status_bar_eta(p))
+        # keep track of inserted layers to prevent accidental usage as inpaint mask
+        self._inserted_layers = []
 
     def restore_defaults(self, if_empty=False):
         """Restore to default config."""
@@ -166,7 +168,9 @@ class Script(QObject):
     def get_mask_image(self) -> Union[QImage, None]:
         """QImage of mask layer for inpainting"""
         if self.node.type() not in {"paintlayer", "filelayer"}:
-            return None
+            assert False, "Please select a valid layer to use as inpaint mask!"
+        elif self.node in self._inserted_layers:
+            assert False, "Selected layer was generated. Copy the layer if sure you want to use it as inpaint mask."
 
         return QImage(
             self.node.pixelData(self.x, self.y, self.width, self.height),
@@ -192,8 +196,6 @@ class Script(QObject):
                 parent.addChildNode(layer, None)
             return layer
 
-        # TODO: Insert images inside a group layer for better organization
-        # Group layer name can contain model name, prompt, etc
         def insert(layer_name, enc):
             nonlocal x, y, width, height, has_selection
             print(f"inserting layer {layer_name}")
@@ -243,6 +245,7 @@ class Script(QObject):
 
             print(f"inserting at x: {x}, y: {y}, w: {width}, h: {height}")
             layer.setPixelData(ba, x, y, width, height)
+            self._inserted_layers.append(layer)
             return layer
 
         return insert, glayer
