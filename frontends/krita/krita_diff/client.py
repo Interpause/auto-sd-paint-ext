@@ -254,7 +254,9 @@ class Client(QObject):
                 )
                 print("Invalid Response:\n", obj)
                 return
-
+            
+            if "None" not in obj["face_restorers"]:
+                obj["face_restorers"].append("None")
             # replace only after verifying
             self.cfg.set("sample_path", obj["sample_path"])
             # NOTE: sorting these lists is risky; ivent 100% verified that I removed all reliance on indexes
