@@ -72,7 +72,10 @@ class ExtWidget(QWidget):
 
     def cfg_connect(self):
         for w in self.widgets:
-            w.cfg_connect()
+            try:
+                w.cfg_connect()
+            except TypeError:
+                pass # Invalid config should resolves itself on next sync.
 
 
 class ExtSectionLayout(QVBoxLayout):
