@@ -21,6 +21,16 @@ class SDCommonPage(QWidget):
             script.cfg, "sd_model_list", "sd_model", label="SD model:"
         )
 
+        # VAE list
+        self.sd_vae_layout = QComboBoxLayout( 
+            script.cfg, "sd_vae_list", "sd_vae", label="VAE:"
+        )
+
+        # Clip skip
+        self.clip_skip_layout = QSpinBoxLayout(
+            script.cfg, "clip_skip", label="Clip skip:", min=1, max=12, step=1
+        )
+
         # batch size & count
         self.batch_count_layout = QSpinBoxLayout(
             script.cfg, "sd_batch_count", label="Batch count:", min=1, max=9999, step=1
@@ -83,6 +93,8 @@ class SDCommonPage(QWidget):
         layout.addLayout(self.codeformer_weight_layout)
         layout.addLayout(checkboxes_layout)
         layout.addLayout(self.sd_model_layout)
+        layout.addLayout(self.sd_vae_layout)
+        layout.addLayout(self.clip_skip_layout)
         layout.addLayout(batch_layout)
         layout.addLayout(size_layout)
         layout.addWidget(self.interrupt_btn)
@@ -92,6 +104,8 @@ class SDCommonPage(QWidget):
 
     def cfg_init(self):
         self.sd_model_layout.cfg_init()
+        self.sd_vae_layout.cfg_init()
+        self.clip_skip_layout.cfg_init()
         self.batch_count_layout.cfg_init()
         self.batch_size_layout.cfg_init()
         self.base_size_layout.cfg_init()
@@ -106,6 +120,8 @@ class SDCommonPage(QWidget):
 
     def cfg_connect(self):
         self.sd_model_layout.cfg_connect()
+        self.sd_vae_layout.cfg_connect()
+        self.clip_skip_layout.cfg_connect()
         self.batch_count_layout.cfg_connect()
         self.batch_size_layout.cfg_connect()
         self.base_size_layout.cfg_connect()
