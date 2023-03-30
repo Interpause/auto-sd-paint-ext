@@ -8,6 +8,7 @@ from .defaults import (
     TAB_SDCOMMON,
     TAB_TXT2IMG,
     TAB_UPSCALE,
+    TAB_CONTROLNET
 )
 from .docker import create_docker
 from .extension import SDPluginExtension
@@ -18,6 +19,7 @@ from .pages import (
     SDCommonPage,
     Txt2ImgPage,
     UpscalePage,
+    ControlNetPageBase
 )
 from .pages.preview import PreviewPage
 from .script import script
@@ -58,6 +60,13 @@ instance.addDockWidgetFactory(
         TAB_UPSCALE,
         DockWidgetFactoryBase.DockLeft,
         create_docker(UpscalePage),
+    )
+)
+instance.addDockWidgetFactory(
+    DockWidgetFactory(
+        TAB_CONTROLNET,
+        DockWidgetFactoryBase.DockLeft,
+        create_docker(ControlNetPageBase),
     )
 )
 instance.addDockWidgetFactory(
