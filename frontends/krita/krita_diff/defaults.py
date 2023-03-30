@@ -39,6 +39,7 @@ TAB_TXT2IMG = "krita_diff_txt2img"
 TAB_IMG2IMG = "krita_diff_img2img"
 TAB_INPAINT = "krita_diff_inpaint"
 TAB_UPSCALE = "krita_diff_upscale"
+TAB_CONTROLNET = "krita_diff_controlnet"
 TAB_PREVIEW = "krita_diff_preview"
 
 
@@ -128,5 +129,19 @@ class Defaults:
     upscale_upscaler_name: str = "None"
     upscale_downscale_first: bool = False
 
+    controlnet_units: int = 1
+    controlnet0_enable: bool = False
+    controlnet0_use_selection_as_input: bool = True
+    controlnet0_invert_input_color: bool = False
+    controlnet0_RGB_to_BGR: bool = False
+    controlnet0_low_vram: bool = False
+    controlnet0_guess_mode: bool = False
+    controlnet0_preprocessor_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
+    controlnet0_preprocessor: str = "None"
+    controlnet0_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
+    controlnet0_model: str = "None"
+    controlnet0_weight: float = 1.0
+    controlnet0_guidance_start: float = 0
+    controlnet0_guidance_end: float = 1
 
 DEFAULTS = Defaults()
