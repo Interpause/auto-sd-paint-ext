@@ -130,18 +130,157 @@ class Defaults:
     upscale_downscale_first: bool = False
 
     controlnet_units: int = 1
+    controlnet_preprocessor_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
+    controlnet_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
+
     controlnet0_enable: bool = False
     controlnet0_use_selection_as_input: bool = True
     controlnet0_invert_input_color: bool = False
     controlnet0_RGB_to_BGR: bool = False
     controlnet0_low_vram: bool = False
     controlnet0_guess_mode: bool = False
-    controlnet0_preprocessor_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
-    controlnet0_preprocessor: str = "None"
-    controlnet0_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
+    controlnet0_preprocessor: str = "None" 
     controlnet0_model: str = "None"
     controlnet0_weight: float = 1.0
     controlnet0_guidance_start: float = 0
     controlnet0_guidance_end: float = 1
+    controlnet0_preprocessor_resolution: int = 512
+    controlnet0_treshold_a: float = 0
+    controlnet0_treshold_b: float = 0
+
+    controlnet1_enable: bool = False
+    controlnet1_use_selection_as_input: bool = True
+    controlnet1_invert_input_color: bool = False
+    controlnet1_RGB_to_BGR: bool = False
+    controlnet1_low_vram: bool = False
+    controlnet1_guess_mode: bool = False
+    controlnet1_preprocessor: str = "None" 
+    controlnet1_model: str = "None"
+    controlnet1_weight: float = 1.0
+    controlnet1_guidance_start: float = 0
+    controlnet1_guidance_end: float = 1
+    controlnet1_preprocessor_resolution: int = 512
+    controlnet1_treshold_a: float = 0
+    controlnet1_treshold_b: float = 0
+
+    controlnet2_enable: bool = False
+    controlnet2_use_selection_as_input: bool = True
+    controlnet2_invert_input_color: bool = False
+    controlnet2_RGB_to_BGR: bool = False
+    controlnet2_low_vram: bool = False
+    controlnet2_guess_mode: bool = False
+    controlnet2_preprocessor: str = "None"
+    controlnet2_model: str = "None"
+    controlnet2_weight: float = 1.0
+    controlnet2_guidance_start: float = 0
+    controlnet2_guidance_end: float = 1
+    controlnet2_preprocessor_resolution: int = 512
+    controlnet2_treshold_a: float = 0
+    controlnet2_treshold_b: float = 0
+
+    controlnet3_enable: bool = False
+    controlnet3_use_selection_as_input: bool = True
+    controlnet3_invert_input_color: bool = False
+    controlnet3_RGB_to_BGR: bool = False
+    controlnet3_low_vram: bool = False
+    controlnet3_guess_mode: bool = False
+    controlnet3_preprocessor: str = "None"
+    controlnet3_model: str = "None"
+    controlnet3_weight: float = 1.0
+    controlnet3_guidance_start: float = 0
+    controlnet3_guidance_end: float = 1
+    controlnet3_preprocessor_resolution: int = 512
+    controlnet3_treshold_a: float = 0
+    controlnet3_treshold_b: float = 0
+
+    controlnet4_enable: bool = False
+    controlnet4_use_selection_as_input: bool = True
+    controlnet4_invert_input_color: bool = False
+    controlnet4_RGB_to_BGR: bool = False
+    controlnet4_low_vram: bool = False
+    controlnet4_guess_mode: bool = False
+    controlnet4_preprocessor: str = "None"
+    controlnet4_model: str = "None"
+    controlnet4_weight: float = 1.0
+    controlnet4_guidance_start: float = 0
+    controlnet4_guidance_end: float = 1
+    controlnet4_preprocessor_resolution: int = 512
+    controlnet4_treshold_a: float = 0
+    controlnet4_treshold_b: float = 0
+
+    controlnet5_enable: bool = False
+    controlnet5_use_selection_as_input: bool = True
+    controlnet5_invert_input_color: bool = False
+    controlnet5_RGB_to_BGR: bool = False
+    controlnet5_low_vram: bool = False
+    controlnet5_guess_mode: bool = False
+    controlnet5_preprocessor: str = "None"
+    controlnet5_model: str = "None"
+    controlnet5_weight: float = 1.0
+    controlnet5_guidance_start: float = 0
+    controlnet5_guidance_end: float = 1
+    controlnet5_preprocessor_resolution: int = 512
+    controlnet5_treshold_a: float = 0
+    controlnet5_treshold_b: float = 0
+
+    controlnet6_enable: bool = False
+    controlnet6_use_selection_as_input: bool = True
+    controlnet6_invert_input_color: bool = False
+    controlnet6_RGB_to_BGR: bool = False
+    controlnet6_low_vram: bool = False
+    controlnet6_guess_mode: bool = False
+    controlnet6_preprocessor: str = "None"
+    controlnet6_model: str = "None"
+    controlnet6_weight: float = 1.0
+    controlnet6_guidance_start: float = 0
+    controlnet6_guidance_end: float = 1
+    controlnet6_preprocessor_resolution: int = 512
+    controlnet6_treshold_a: float = 0
+    controlnet6_treshold_b: float = 0
+
+    controlnet7_enable: bool = False
+    controlnet7_use_selection_as_input: bool = True
+    controlnet7_invert_input_color: bool = False
+    controlnet7_RGB_to_BGR: bool = False
+    controlnet7_low_vram: bool = False
+    controlnet7_guess_mode: bool = False
+    controlnet7_preprocessor: str = "None"
+    controlnet7_model: str = "None"
+    controlnet7_weight: float = 1.0
+    controlnet7_guidance_start: float = 0
+    controlnet7_guidance_end: float = 1
+    controlnet7_preprocessor_resolution: int = 512
+    controlnet7_treshold_a: float = 0
+    controlnet7_treshold_b: float = 0
+
+    controlnet8_enable: bool = False
+    controlnet8_use_selection_as_input: bool = True
+    controlnet8_invert_input_color: bool = False
+    controlnet8_RGB_to_BGR: bool = False
+    controlnet8_low_vram: bool = False
+    controlnet8_guess_mode: bool = False
+    controlnet8_preprocessor: str = "None"
+    controlnet8_model: str = "None"
+    controlnet8_weight: float = 1.0
+    controlnet8_guidance_start: float = 0
+    controlnet8_guidance_end: float = 1
+    controlnet8_preprocessor_resolution: int = 512
+    controlnet8_treshold_a: float = 0
+    controlnet8_treshold_b: float = 0
+
+    controlnet9_enable: bool = False
+    controlnet9_use_selection_as_input: bool = True
+    controlnet9_invert_input_color: bool = False
+    controlnet9_RGB_to_BGR: bool = False
+    controlnet9_low_vram: bool = False
+    controlnet9_guess_mode: bool = False
+    controlnet9_preprocessor: str = "None"
+    controlnet9_model: str = "None"
+    controlnet9_weight: float = 1.0
+    controlnet9_guidance_start: float = 0
+    controlnet9_guidance_end: float = 1
+    controlnet9_preprocessor_resolution: int = 512
+    controlnet9_treshold_a: float = 0
+    controlnet9_treshold_b: float = 0
 
 DEFAULTS = Defaults()
