@@ -6,4 +6,4 @@ from .prompt import QPromptLayout
 from .spin_box import QSpinBoxLayout
 from .status_bar import StatusBar
 from .tips import TipsLayout
-from .image_loader import ImageLoader
+from .image_loader import ImageLoaderLayout
