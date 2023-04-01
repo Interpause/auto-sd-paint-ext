@@ -1,18 +1,57 @@
-from krita import QWidget, QVBoxLayout, QHBoxLayout
+from krita import QWidget, QVBoxLayout, QHBoxLayout, QStackedLayout
 
 from ..script import script
 from ..widgets import StatusBar, ImageLoaderLayout, QCheckBox, TipsLayout, QComboBoxLayout, QSpinBoxLayout
 
-class ControlNetPageBase(QWidget):
+class ControlNetPage(QWidget):                                                      
     name = "ControlNet"
 
-    def __init__(self, cfg_unit_number: int = 0, *args, **kwargs):
-        super(ControlNetPageBase, self).__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(ControlNetPage, self).__init__(*args, **kwargs)
         self.status_bar = StatusBar()
+        self.controlnet_unit = QComboBoxLayout(
+            script.cfg, "controlnet_unit_list", "controlnet_unit", label="Unit:"
+        )
+        self.controlnet_unit.qcombo.setEditable(False)
+        self.controlnet_unit_layout_list = list(ControlNetUnitSettings(i) 
+                                                for i in range(0, len(script.cfg("controlnet_unit_list"))))
+
+        self.units_stacked_layout = QStackedLayout()
+        
+        for unit_layout in self.controlnet_unit_layout_list:
+            self.units_stacked_layout.addWidget(unit_layout)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.status_bar)
+        layout.addLayout(self.controlnet_unit)
+        layout.addLayout(self.units_stacked_layout)
+        self.setLayout(layout)
+
+    def controlnet_unit_changed(self, selected: str):
+        self.units_stacked_layout.setCurrentIndex(int(selected)-1)
+
+    def cfg_init(self):
+        self.controlnet_unit.cfg_init()
+        
+        for controlnet_unit_layout in self.controlnet_unit_layout_list:
+            controlnet_unit_layout.cfg_init()
+
+    def cfg_connect(self):
+        self.controlnet_unit.cfg_connect()
+
+        for controlnet_unit_layout in self.controlnet_unit_layout_list:
+            controlnet_unit_layout.cfg_connect()
+
+        self.controlnet_unit.qcombo.currentTextChanged.connect(self.controlnet_unit_changed)
+        script.status_changed.connect(lambda s: self.status_bar.set_status(s))
+
+class ControlNetUnitSettings(QWidget):    
+    def __init__(self, cfg_unit_number: int = 0, *args, **kwargs):
+        super(ControlNetUnitSettings, self).__init__(*args, **kwargs)
 
         #Top checkbox
         self.enable = QCheckBox(
-            script.cfg, f"controlnet{cfg_unit_number}_enable", "Enable ControlNet"
+            script.cfg, f"controlnet{cfg_unit_number}_enable", f"Enable ControlNet {cfg_unit_number}"
         )
         self.use_selection_as_input = QCheckBox(
             script.cfg, f"controlnet{cfg_unit_number}_use_selection_as_input", "Use selection as input"
@@ -41,13 +80,12 @@ class ControlNetPageBase(QWidget):
 
         #Preprocessor list
         self.preprocessor_layout = QComboBoxLayout(
-            script.cfg, 
-            f"controlnet_preprocessor_list", f"controlnet{cfg_unit_number}_preprocessor", label="Preprocessor:"
+            script.cfg, "controlnet_preprocessor_list", f"controlnet{cfg_unit_number}_preprocessor", label="Preprocessor:"
         )
 
         #Model list
         self.model_layout = QComboBoxLayout(
-            script.cfg, f"controlnet_model_list", f"controlnet{cfg_unit_number}_model", label="Model:"
+            script.cfg, "controlnet_model_list", f"controlnet{cfg_unit_number}_model", label="Model:"
         )
 
         self.weight_layout = QSpinBoxLayout(
@@ -110,7 +148,6 @@ class ControlNetPageBase(QWidget):
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.status_bar)
         layout.addLayout(top_checkbox_layout)
         layout.addLayout(self.image_loader)
         layout.addLayout(self.tips)
@@ -120,6 +157,7 @@ class ControlNetPageBase(QWidget):
         layout.addLayout(guidance_layout)
         layout.addLayout(preprocessor_settings_layout)
         layout.addStretch()
+
         self.setLayout(layout)
 
     def change_image_loader_state(self, state):
@@ -192,7 +230,6 @@ class ControlNetPageBase(QWidget):
         self.weight_layout.cfg_init()
         self.guidance_start_layout.cfg_init()
         self.guidance_end_layout.cfg_init()
-        self.tips.setVisible(not script.cfg("minimize_ui", bool))
         self.change_image_loader_state(self.use_selection_as_input.checkState())
         self.init_preprocessor_layouts(self.preprocessor_layout.qcombo.currentText())
 
@@ -210,7 +247,6 @@ class ControlNetPageBase(QWidget):
         self.guidance_end_layout.cfg_connect()
         self.use_selection_as_input.stateChanged.connect(self.change_image_loader_state)
         self.preprocessor_layout.qcombo.currentTextChanged.connect(self.preprocessor_changed)
-        script.status_changed.connect(lambda s: self.status_bar.set_status(s))
 
 preprocessor_settings = {
     "canny": {

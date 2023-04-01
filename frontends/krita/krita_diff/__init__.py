@@ -19,7 +19,7 @@ from .pages import (
     SDCommonPage,
     Txt2ImgPage,
     UpscalePage,
-    ControlNetPageBase
+    ControlNetPage
 )
 from .pages.preview import PreviewPage
 from .script import script
@@ -66,7 +66,7 @@ instance.addDockWidgetFactory(
     DockWidgetFactory(
         TAB_CONTROLNET,
         DockWidgetFactoryBase.DockLeft,
-        create_docker(ControlNetPageBase),
+        create_docker(ControlNetPage),
     )
 )
 instance.addDockWidgetFactory(
