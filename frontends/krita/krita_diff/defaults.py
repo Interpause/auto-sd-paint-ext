@@ -129,7 +129,8 @@ class Defaults:
     upscale_upscaler_name: str = "None"
     upscale_downscale_first: bool = False
 
-    controlnet_units: int = 1
+    controlnet_unit: int = 0
+    controlnet_unit_list: List[str] = field(default_factory=lambda: list(range(1, 11)))
     controlnet_preprocessor_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
     controlnet_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
 
