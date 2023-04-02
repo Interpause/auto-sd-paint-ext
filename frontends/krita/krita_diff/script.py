@@ -9,6 +9,7 @@ from krita import (
     Node,
     QImage,
     QObject,
+    QPixmap,
     Qt,
     QTimer,
     Selection,
@@ -333,6 +334,20 @@ class Script(QObject):
             self.selection is not None,
         )
 
+    def apply_controlnet_preview_annotator(self, image, preview_label, unit: int): 
+        image = self.get_selection_image() if image is None else image
+
+        def cb(response):
+            assert response is not None, "Backend Error, check terminal"
+            output = response["images"][0]
+            pixmap = QPixmap.fromImage(b64_to_img(output))
+
+            if pixmap.width() > preview_label.width():
+                pixmap = pixmap.scaledToWidth(preview_label.width(), Qt.SmoothTransformation)
+            preview_label.setPixmap(pixmap)
+
+        self.client.post_controlnet_preview(cb, image, unit)
+
     def apply_simple_upscale(self):
         insert, _ = self.img_inserter(self.x, self.y, self.width, self.height)
         sel_image = self.get_selection_image()
@@ -448,6 +463,14 @@ class Script(QObject):
     def action_update_controlnet_config(self):
         """Update controlnet config from the backend."""
         self.client.get_controlnet_config()
+
+    def action_preview_controlnet_annotator(self, image, label, unit: int):
+        self.status_changed.emit(STATE_WAIT)
+        self.update_selection()
+        if not self.doc:
+            return
+        self.adjust_selection()
+        self.apply_controlnet_preview_annotator(image, label, unit)
 
     def action_interrupt(self):
         def cb(resp=None):

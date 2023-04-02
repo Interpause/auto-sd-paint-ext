@@ -425,6 +425,19 @@ class Client(QObject):
         )
         self.post("upscale", params, cb)
 
+    def post_controlnet_preview(self, cb, src_img, unit):
+        params = (
+            {
+                "controlnet_module": self.cfg(f"controlnet{unit}_preprocessor"),
+                "controlnet_input_images": [img_to_b64(src_img)],
+                "controlnet_processor_res": self.cfg(f"controlnet{unit}_preprocessor_resolution"),
+                "controlnet_threshold_a": self.cfg(f"controlnet{unit}_threshold_a"),
+                "controlnet_threshold_b": self.cfg(f"controlnet{unit}_threshold_b")
+            } #Not sure if it's necessary to make the just_use_yaml validation here
+        )
+        url = get_url(self.cfg, prefix=CONTROLNET_ROUTE_PREFIX)
+        self.post("detect", params, cb, url)
+
     def post_interrupt(self, cb):
         # get official API url
         url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)

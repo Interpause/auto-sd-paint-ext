@@ -23,18 +23,6 @@ class ImageLoaderLayout(QVBoxLayout):
         self.paste_button.released.connect(self.paste_image)
         self.clear_button.released.connect(self.clear_image)
 
-    def disable(self):
-        self.preview.setEnabled(False)
-        self.import_button.setEnabled(False)
-        self.paste_button.setEnabled(False)
-        self.clear_button.setEnabled(False)
-
-    def enable(self):
-        self.preview.setEnabled(True)
-        self.import_button.setEnabled(True)
-        self.paste_button.setEnabled(True)
-        self.clear_button.setEnabled(True)
-
     def load_image(self):
         self.clear_image()
         file_name, _ = QFileDialog.getOpenFileName(self.import_button, 'Open File', '', 'Image Files (*.png *.jpg *.bmp)')
