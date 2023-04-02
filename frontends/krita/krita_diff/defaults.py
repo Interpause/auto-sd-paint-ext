@@ -47,48 +47,48 @@ TAB_PREVIEW = "krita_diff_preview"
 CONTROLNET_PREPROCESSOR_SETTINGS = {
     "canny": {
         "resolution_label": "Annotator resolution",
-        "treshold_a_label": "Canny low treshold",
-        "treshold_b_label": "Canny high treshold",
-        "treshold_a_value": 100,
-        "treshold_b_value": 200,
-        "treshold_a_min_value": 1,
-        "treshold_a_max_value": 255,
-        "treshold_b_min_value": 1,
-        "treshold_b_max_value": 255
+        "threshold_a_label": "Canny low threshold",
+        "threshold_b_label": "Canny high threshold",
+        "threshold_a_value": 100,
+        "threshold_b_value": 200,
+        "threshold_a_min_value": 1,
+        "threshold_a_max_value": 255,
+        "threshold_b_min_value": 1,
+        "threshold_b_max_value": 255
     },
     "depth": {
         "resolution_label": "Midas resolution",
     },
     "depth_leres": {
         "resolution_label": "LeReS resolution",
-        "treshold_a_label": "Remove near %",
-        "treshold_b_label": "Remove background %",
-        "treshold_a_min_value": 0,
-        "treshold_a_max_value": 100,
-        "treshold_b_min_value": 0,
-        "treshold_b_max_value": 100
+        "threshold_a_label": "Remove near %",
+        "threshold_b_label": "Remove background %",
+        "threshold_a_min_value": 0,
+        "threshold_a_max_value": 100,
+        "threshold_b_min_value": 0,
+        "threshold_b_max_value": 100
     },
     "hed": {
         "resolution_label": "HED resolution",
     },
     "mlsd": {
         "resolution_label": "Hough resolution",
-        "treshold_a_label": "Hough value threshold (MLSD)",
-        "treshold_b_label": "Hough distance threshold (MLSD)",
-        "treshold_a_value": 0.1,
-        "treshold_b_value": 0.1,
-        "treshold_a_min_value": 0.01,
-        "treshold_b_max_value": 2,
-        "treshold_a_min_value": 0.01,
-        "treshold_b_max_value": 20,
-        "treshold_step": 0.01
+        "threshold_a_label": "Hough value threshold (MLSD)",
+        "threshold_b_label": "Hough distance threshold (MLSD)",
+        "threshold_a_value": 0.1,
+        "threshold_b_value": 0.1,
+        "threshold_a_min_value": 0.01,
+        "threshold_b_max_value": 2,
+        "threshold_a_min_value": 0.01,
+        "threshold_b_max_value": 20,
+        "threshold_step": 0.01
     },
     "normal_map": {
-        "treshold_a_label": "Normal background threshold",
-        "treshold_a_value": 0.4,
-        "treshold_a_min_value": 0,
-        "treshold_a_max_value": 1,
-        "treshold_step": 0.01
+        "threshold_a_label": "Normal background threshold",
+        "threshold_a_value": 0.4,
+        "threshold_a_min_value": 0,
+        "threshold_a_max_value": 1,
+        "threshold_step": 0.01
     },
     "openpose": {},
     "openpose_hand": {},
@@ -101,9 +101,9 @@ CONTROLNET_PREPROCESSOR_SETTINGS = {
     },
     "segmentation": {},
     "binary": {
-        "treshold_a_label": "Binary threshold",
-        "treshold_a_min_value": 0,
-        "treshold_a_max_value": 255,
+        "threshold_a_label": "Binary threshold",
+        "threshold_a_min_value": 0,
+        "threshold_a_max_value": 255,
     }
 }
 
@@ -199,7 +199,6 @@ class Defaults:
     controlnet_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
 
     controlnet0_enable: bool = False
-    controlnet0_use_selection_as_input: bool = True
     controlnet0_invert_input_color: bool = False
     controlnet0_RGB_to_BGR: bool = False
     controlnet0_low_vram: bool = False
@@ -210,11 +209,10 @@ class Defaults:
     controlnet0_guidance_start: float = 0
     controlnet0_guidance_end: float = 1
     controlnet0_preprocessor_resolution: int = 512
-    controlnet0_treshold_a: float = 0
-    controlnet0_treshold_b: float = 0
+    controlnet0_threshold_a: float = 0
+    controlnet0_threshold_b: float = 0
 
     controlnet1_enable: bool = False
-    controlnet1_use_selection_as_input: bool = True
     controlnet1_invert_input_color: bool = False
     controlnet1_RGB_to_BGR: bool = False
     controlnet1_low_vram: bool = False
@@ -225,11 +223,10 @@ class Defaults:
     controlnet1_guidance_start: float = 0
     controlnet1_guidance_end: float = 1
     controlnet1_preprocessor_resolution: int = 512
-    controlnet1_treshold_a: float = 0
-    controlnet1_treshold_b: float = 0
+    controlnet1_threshold_a: float = 0
+    controlnet1_threshold_b: float = 0
 
     controlnet2_enable: bool = False
-    controlnet2_use_selection_as_input: bool = True
     controlnet2_invert_input_color: bool = False
     controlnet2_RGB_to_BGR: bool = False
     controlnet2_low_vram: bool = False
@@ -240,11 +237,10 @@ class Defaults:
     controlnet2_guidance_start: float = 0
     controlnet2_guidance_end: float = 1
     controlnet2_preprocessor_resolution: int = 512
-    controlnet2_treshold_a: float = 0
-    controlnet2_treshold_b: float = 0
+    controlnet2_threshold_a: float = 0
+    controlnet2_threshold_b: float = 0
 
     controlnet3_enable: bool = False
-    controlnet3_use_selection_as_input: bool = True
     controlnet3_invert_input_color: bool = False
     controlnet3_RGB_to_BGR: bool = False
     controlnet3_low_vram: bool = False
@@ -255,11 +251,10 @@ class Defaults:
     controlnet3_guidance_start: float = 0
     controlnet3_guidance_end: float = 1
     controlnet3_preprocessor_resolution: int = 512
-    controlnet3_treshold_a: float = 0
-    controlnet3_treshold_b: float = 0
+    controlnet3_threshold_a: float = 0
+    controlnet3_threshold_b: float = 0
 
     controlnet4_enable: bool = False
-    controlnet4_use_selection_as_input: bool = True
     controlnet4_invert_input_color: bool = False
     controlnet4_RGB_to_BGR: bool = False
     controlnet4_low_vram: bool = False
@@ -270,11 +265,10 @@ class Defaults:
     controlnet4_guidance_start: float = 0
     controlnet4_guidance_end: float = 1
     controlnet4_preprocessor_resolution: int = 512
-    controlnet4_treshold_a: float = 0
-    controlnet4_treshold_b: float = 0
+    controlnet4_threshold_a: float = 0
+    controlnet4_threshold_b: float = 0
 
     controlnet5_enable: bool = False
-    controlnet5_use_selection_as_input: bool = True
     controlnet5_invert_input_color: bool = False
     controlnet5_RGB_to_BGR: bool = False
     controlnet5_low_vram: bool = False
@@ -285,11 +279,10 @@ class Defaults:
     controlnet5_guidance_start: float = 0
     controlnet5_guidance_end: float = 1
     controlnet5_preprocessor_resolution: int = 512
-    controlnet5_treshold_a: float = 0
-    controlnet5_treshold_b: float = 0
+    controlnet5_threshold_a: float = 0
+    controlnet5_threshold_b: float = 0
 
     controlnet6_enable: bool = False
-    controlnet6_use_selection_as_input: bool = True
     controlnet6_invert_input_color: bool = False
     controlnet6_RGB_to_BGR: bool = False
     controlnet6_low_vram: bool = False
@@ -300,11 +293,10 @@ class Defaults:
     controlnet6_guidance_start: float = 0
     controlnet6_guidance_end: float = 1
     controlnet6_preprocessor_resolution: int = 512
-    controlnet6_treshold_a: float = 0
-    controlnet6_treshold_b: float = 0
+    controlnet6_threshold_a: float = 0
+    controlnet6_threshold_b: float = 0
 
     controlnet7_enable: bool = False
-    controlnet7_use_selection_as_input: bool = True
     controlnet7_invert_input_color: bool = False
     controlnet7_RGB_to_BGR: bool = False
     controlnet7_low_vram: bool = False
@@ -315,11 +307,10 @@ class Defaults:
     controlnet7_guidance_start: float = 0
     controlnet7_guidance_end: float = 1
     controlnet7_preprocessor_resolution: int = 512
-    controlnet7_treshold_a: float = 0
-    controlnet7_treshold_b: float = 0
+    controlnet7_threshold_a: float = 0
+    controlnet7_threshold_b: float = 0
 
     controlnet8_enable: bool = False
-    controlnet8_use_selection_as_input: bool = True
     controlnet8_invert_input_color: bool = False
     controlnet8_RGB_to_BGR: bool = False
     controlnet8_low_vram: bool = False
@@ -330,11 +321,10 @@ class Defaults:
     controlnet8_guidance_start: float = 0
     controlnet8_guidance_end: float = 1
     controlnet8_preprocessor_resolution: int = 512
-    controlnet8_treshold_a: float = 0
-    controlnet8_treshold_b: float = 0
+    controlnet8_threshold_a: float = 0
+    controlnet8_threshold_b: float = 0
 
     controlnet9_enable: bool = False
-    controlnet9_use_selection_as_input: bool = True
     controlnet9_invert_input_color: bool = False
     controlnet9_RGB_to_BGR: bool = False
     controlnet9_low_vram: bool = False
@@ -345,7 +335,7 @@ class Defaults:
     controlnet9_guidance_start: float = 0
     controlnet9_guidance_end: float = 1
     controlnet9_preprocessor_resolution: int = 512
-    controlnet9_treshold_a: float = 0
-    controlnet9_treshold_b: float = 0
+    controlnet9_threshold_a: float = 0
+    controlnet9_threshold_b: float = 0
 
 DEFAULTS = Defaults()
