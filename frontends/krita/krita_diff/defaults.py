@@ -25,6 +25,7 @@ ADD_MASK_TIMEOUT = 50
 THREADED = True
 ROUTE_PREFIX = "/sdapi/interpause/"
 OFFICIAL_ROUTE_PREFIX = "/sdapi/v1/"
+CONTROLNET_ROUTE_PREFIX = "/controlnet/"
 
 # error messages
 ERR_MISSING_CONFIG = "Report this bug, developer missed out a config key somewhere."
@@ -42,6 +43,69 @@ TAB_UPSCALE = "krita_diff_upscale"
 TAB_CONTROLNET = "krita_diff_controlnet"
 TAB_PREVIEW = "krita_diff_preview"
 
+# controlnet
+CONTROLNET_PREPROCESSOR_SETTINGS = {
+    "canny": {
+        "resolution_label": "Annotator resolution",
+        "treshold_a_label": "Canny low treshold",
+        "treshold_b_label": "Canny high treshold",
+        "treshold_a_value": 100,
+        "treshold_b_value": 200,
+        "treshold_a_min_value": 1,
+        "treshold_a_max_value": 255,
+        "treshold_b_min_value": 1,
+        "treshold_b_max_value": 255
+    },
+    "depth": {
+        "resolution_label": "Midas resolution",
+    },
+    "depth_leres": {
+        "resolution_label": "LeReS resolution",
+        "treshold_a_label": "Remove near %",
+        "treshold_b_label": "Remove background %",
+        "treshold_a_min_value": 0,
+        "treshold_a_max_value": 100,
+        "treshold_b_min_value": 0,
+        "treshold_b_max_value": 100
+    },
+    "hed": {
+        "resolution_label": "HED resolution",
+    },
+    "mlsd": {
+        "resolution_label": "Hough resolution",
+        "treshold_a_label": "Hough value threshold (MLSD)",
+        "treshold_b_label": "Hough distance threshold (MLSD)",
+        "treshold_a_value": 0.1,
+        "treshold_b_value": 0.1,
+        "treshold_a_min_value": 0.01,
+        "treshold_b_max_value": 2,
+        "treshold_a_min_value": 0.01,
+        "treshold_b_max_value": 20,
+        "treshold_step": 0.01
+    },
+    "normal_map": {
+        "treshold_a_label": "Normal background threshold",
+        "treshold_a_value": 0.4,
+        "treshold_a_min_value": 0,
+        "treshold_a_max_value": 1,
+        "treshold_step": 0.01
+    },
+    "openpose": {},
+    "openpose_hand": {},
+    "clip_vision": {},
+    "color": {},
+    "pidinet": {},
+    "scribble": {},
+    "fake_scribble": {
+        "resolution_label": "HED resolution",
+    },
+    "segmentation": {},
+    "binary": {
+        "treshold_a_label": "Binary threshold",
+        "treshold_a_min_value": 0,
+        "treshold_a_max_value": 255,
+    }
+}
 
 @dataclass(frozen=True)
 class Defaults:
@@ -130,7 +194,7 @@ class Defaults:
     upscale_downscale_first: bool = False
 
     controlnet_unit: int = 0
-    controlnet_unit_list: List[str] = field(default_factory=lambda: list(range(1, 11)))
+    controlnet_unit_list: List[str] = field(default_factory=lambda: list(range(10)))
     controlnet_preprocessor_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
     controlnet_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
 

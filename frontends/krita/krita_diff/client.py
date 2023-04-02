@@ -14,6 +14,7 @@ from .defaults import (
     LONG_TIMEOUT,
     OFFICIAL_ROUTE_PREFIX,
     ROUTE_PREFIX,
+    CONTROLNET_ROUTE_PREFIX,
     SHORT_TIMEOUT,
     STATE_DONE,
     STATE_READY,
@@ -293,6 +294,33 @@ class Client(QObject):
             self.config_updated.emit()
 
         self.get("config", cb, ignore_no_connection=True)
+
+    #Get config for controlnet
+    def get_controlnet_config(self):
+        def check_response(obj, key: str):
+            try:
+                assert key in obj
+            except:
+                self.status.emit(
+                    f"{STATE_URLERROR}: incompatible response, are you running the right API?"
+                )
+                print("Invalid Response:\n", obj)
+                return
+            
+        def set_model_list(obj):
+            key = "model_list"
+            check_response(obj, key)
+            self.cfg.set("controlnet_model_list", ["None"] + obj[key])
+
+        def set_preprocessor_list(obj):
+            key = "module_list"
+            check_response(obj, key)
+            self.cfg.set("controlnet_preprocessor_list", obj[key])
+
+        #Get controlnet API url
+        url = get_url(self.cfg, prefix=CONTROLNET_ROUTE_PREFIX)
+        self.get("model_list", set_model_list, base_url=url)
+        self.get("module_list", set_preprocessor_list, base_url=url)
 
     def post_txt2img(self, cb, width, height, has_selection):
         params = dict(orig_width=width, orig_height=height)

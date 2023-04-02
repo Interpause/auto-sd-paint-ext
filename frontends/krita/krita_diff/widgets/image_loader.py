@@ -7,37 +7,37 @@ class ImageLoaderLayout(QVBoxLayout):
 
         self.preview = QLabel()
         self.preview.setAlignment(Qt.AlignCenter)
-        self.importBtn = QPushButton('Import image')
-        self.pasteBtn = QPushButton('Paste image')
-        self.clearBtn = QPushButton('Clear')
+        self.import_button = QPushButton('Import image')
+        self.paste_button = QPushButton('Paste image')
+        self.clear_button = QPushButton('Clear')
 
-        btnLayout = QHBoxLayout()
-        btnLayout.addWidget(self.importBtn)
-        btnLayout.addWidget(self.pasteBtn)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.import_button)
+        button_layout.addWidget(self.paste_button)
 
-        self.addLayout(btnLayout)
-        self.addWidget(self.clearBtn)
+        self.addLayout(button_layout)
+        self.addWidget(self.clear_button)
         self.addWidget(self.preview)
 
-        self.importBtn.released.connect(self.load_image)
-        self.pasteBtn.released.connect(self.paste_image)
-        self.clearBtn.released.connect(self.clear_image)
+        self.import_button.released.connect(self.load_image)
+        self.paste_button.released.connect(self.paste_image)
+        self.clear_button.released.connect(self.clear_image)
 
     def disable(self):
         self.preview.setEnabled(False)
-        self.importBtn.setEnabled(False)
-        self.pasteBtn.setEnabled(False)
-        self.clearBtn.setEnabled(False)
+        self.import_button.setEnabled(False)
+        self.paste_button.setEnabled(False)
+        self.clear_button.setEnabled(False)
 
     def enable(self):
         self.preview.setEnabled(True)
-        self.importBtn.setEnabled(True)
-        self.pasteBtn.setEnabled(True)
-        self.clearBtn.setEnabled(True)
+        self.import_button.setEnabled(True)
+        self.paste_button.setEnabled(True)
+        self.clear_button.setEnabled(True)
 
     def load_image(self):
         self.clear_image()
-        file_name, _ = QFileDialog.getOpenFileName(self.importBtn, 'Open File', '', 'Image Files (*.png *.jpg *.bmp)')
+        file_name, _ = QFileDialog.getOpenFileName(self.import_button, 'Open File', '', 'Image Files (*.png *.jpg *.bmp)')
         if file_name:
             pixmap = QPixmap(file_name)
 
