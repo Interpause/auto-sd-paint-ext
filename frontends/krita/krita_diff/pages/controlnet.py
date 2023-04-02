@@ -1,5 +1,6 @@
-from krita import QWidget, QVBoxLayout, QHBoxLayout, QStackedLayout
+from krita import QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QStackedLayout
 
+from ..defaults import CONTROLNET_PREPROCESSOR_SETTINGS
 from ..script import script
 from ..widgets import StatusBar, ImageLoaderLayout, QCheckBox, TipsLayout, QComboBoxLayout, QSpinBoxLayout
 
@@ -14,7 +15,7 @@ class ControlNetPage(QWidget):
         )
         self.controlnet_unit.qcombo.setEditable(False)
         self.controlnet_unit_layout_list = list(ControlNetUnitSettings(i) 
-                                                for i in range(0, len(script.cfg("controlnet_unit_list"))))
+                                                for i in range(len(script.cfg("controlnet_unit_list"))))
 
         self.units_stacked_layout = QStackedLayout()
         
@@ -28,7 +29,7 @@ class ControlNetPage(QWidget):
         self.setLayout(layout)
 
     def controlnet_unit_changed(self, selected: str):
-        self.units_stacked_layout.setCurrentIndex(int(selected)-1)
+        self.units_stacked_layout.setCurrentIndex(int(selected))
 
     def cfg_init(self):
         self.controlnet_unit.cfg_init()
@@ -88,6 +89,9 @@ class ControlNetUnitSettings(QWidget):
             script.cfg, "controlnet_model_list", f"controlnet{cfg_unit_number}_model", label="Model:"
         )
 
+        #Refresh button
+        self.refresh_button = QPushButton("Refresh")
+
         self.weight_layout = QSpinBoxLayout(
             script.cfg, f"controlnet{cfg_unit_number}_weight", label="Weight:", min=0, max=2, step=0.05
         )
@@ -137,14 +141,12 @@ class ControlNetUnitSettings(QWidget):
         main_settings_layout.addWidget(self.guess_mode)
 
         guidance_layout = QHBoxLayout()
-        guidance_layout.addLayout(self.weight_layout)
         guidance_layout.addLayout(self.guidance_start_layout)
         guidance_layout.addLayout(self.guidance_end_layout)
 
-        preprocessor_settings_layout = QHBoxLayout()
-        preprocessor_settings_layout.addLayout(self.annotator_resolution)
-        preprocessor_settings_layout.addLayout(self.treshold_a)
-        preprocessor_settings_layout.addLayout(self.treshold_b)
+        treshold_layout = QHBoxLayout()
+        treshold_layout.addLayout(self.treshold_a)
+        treshold_layout.addLayout(self.treshold_b)
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -154,8 +156,11 @@ class ControlNetUnitSettings(QWidget):
         layout.addLayout(main_settings_layout)
         layout.addLayout(self.preprocessor_layout)
         layout.addLayout(self.model_layout)
+        layout.addWidget(self.refresh_button)
+        layout.addLayout(self.weight_layout)
         layout.addLayout(guidance_layout)
-        layout.addLayout(preprocessor_settings_layout)
+        layout.addLayout(self.annotator_resolution)
+        layout.addLayout(treshold_layout)
         layout.addStretch()
 
         self.setLayout(layout)
@@ -166,45 +171,51 @@ class ControlNetUnitSettings(QWidget):
         else:
             self.image_loader.enable()
 
-    def preprocessor_changed(self, selected: str):
-        self.init_preprocessor_layouts(selected)
-        if selected in preprocessor_settings:
-            self.annotator_resolution.label = preprocessor_settings[selected]["resolution_label"] \
-                if "resolution_label" in preprocessor_settings[selected] else "Preprocessor resolution:"
-            
-            if "treshold_a_label" in preprocessor_settings[selected]:
-                self.treshold_a.label = preprocessor_settings[selected]["treshold_a_label"]
-                self.treshold_a.min = preprocessor_settings[selected]["treshold_a_min_value"] \
-                    if "treshold_a_min_value" in preprocessor_settings[selected] else 0
-                self.treshold_a.max = preprocessor_settings[selected]["treshold_a_max_value"] \
-                    if "treshold_a_max_value" in preprocessor_settings[selected] else 0
-                self.treshold_a.value = preprocessor_settings[selected]["treshold_a_value"] \
-                    if "treshold_a_value" in preprocessor_settings[selected] else 0
-                self.treshold_a.step = preprocessor_settings[selected]["treshold_step"] \
-                    if "treshold_step" in preprocessor_settings[selected] else 1
-            else:
-                self.treshold_a.hide()
-            
-            if "treshold_b_label" in preprocessor_settings[selected]:
-                self.treshold_b.label = preprocessor_settings[selected]["treshold_b_label"]
-                self.treshold_b.min = preprocessor_settings[selected]["treshold_b_min_value"] \
-                    if "treshold_b_min_value" in preprocessor_settings[selected] else 0
-                self.treshold_b.max = preprocessor_settings[selected]["treshold_b_max_value"] \
-                    if "treshold_b_max_value" in preprocessor_settings[selected] else 0
-                self.treshold_b.value = preprocessor_settings[selected]["treshold_b_value"] \
-                    if "treshold_b_value" in preprocessor_settings[selected] else 0
-                self.treshold_b.step = preprocessor_settings[selected]["treshold_step"] \
-                    if "treshold_step" in preprocessor_settings[selected] else 1
-    
-    def init_preprocessor_layouts(self, selected: str):
-        if selected in preprocessor_settings:
+    def set_preprocessor_options(self, selected: str):
+        if selected in CONTROLNET_PREPROCESSOR_SETTINGS:
             self.show_preprocessor_options()
+            self.annotator_resolution.qlabel.setText(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["resolution_label"] \
+                if "resolution_label" in CONTROLNET_PREPROCESSOR_SETTINGS[selected] else "Preprocessor resolution:")
+            
+            if "treshold_a_label" in CONTROLNET_PREPROCESSOR_SETTINGS[selected]:
+                self.treshold_a.qlabel.show()
+                self.treshold_a.qspin.show()
+                self.treshold_a.qlabel.setText(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["treshold_a_label"])
+                self.treshold_a.qspin.setMinimum(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["treshold_a_min_value"] \
+                    if "treshold_a_min_value" in CONTROLNET_PREPROCESSOR_SETTINGS[selected] else 0)
+                self.treshold_a.qspin.setMaximum(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["treshold_a_max_value"] \
+                    if "treshold_a_max_value" in CONTROLNET_PREPROCESSOR_SETTINGS[selected] else 0)
+                self.treshold_a.qspin.setValue(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["treshold_a_value"] \
+                    if "treshold_a_value" in CONTROLNET_PREPROCESSOR_SETTINGS[selected] else self.treshold_a.qspin.minimum())
+                self.treshold_a.qspin.setSingleStep(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["treshold_step"] \
+                    if "treshold_step" in CONTROLNET_PREPROCESSOR_SETTINGS[selected] else 1)
+            else:
+                self.treshold_a.qlabel.hide()
+                self.treshold_a.qspin.hide()
+            
+            if "treshold_b_label" in CONTROLNET_PREPROCESSOR_SETTINGS[selected]:
+                self.treshold_b.qlabel.show()
+                self.treshold_b.qspin.show()
+                self.treshold_b.qlabel.setText(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["treshold_b_label"])
+                self.treshold_b.qspin.setMinimum(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["treshold_b_min_value"] \
+                    if "treshold_b_min_value" in CONTROLNET_PREPROCESSOR_SETTINGS[selected] else 0)
+                self.treshold_b.qspin.setMaximum(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["treshold_b_max_value"] \
+                    if "treshold_b_max_value" in CONTROLNET_PREPROCESSOR_SETTINGS[selected] else 0)
+                self.treshold_b.qspin.setValue(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["treshold_b_value"] \
+                    if "treshold_b_value" in CONTROLNET_PREPROCESSOR_SETTINGS[selected] else self.treshold_b.qspin.minimum())
+                self.treshold_b.qspin.setSingleStep(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["treshold_b_step"] \
+                    if "treshold_b_step" in CONTROLNET_PREPROCESSOR_SETTINGS[selected] else 1)
+            else:
+                self.treshold_b.qlabel.hide()
+                self.treshold_b.qspin.hide()
         else:
-            self.hide_preprocessor_options()
+            self.hide_preprocessor_options(selected)
     
-    def hide_preprocessor_options(self):
-        self.annotator_resolution.qlabel.hide()
-        self.annotator_resolution.qspin.hide()
+    def hide_preprocessor_options(self, selected: str):
+        if selected == "none":
+            self.annotator_resolution.qlabel.hide()
+            self.annotator_resolution.qspin.hide()
+
         self.treshold_a.qlabel.hide()
         self.treshold_a.qspin.hide()
         self.treshold_b.qlabel.hide()
@@ -218,6 +229,10 @@ class ControlNetUnitSettings(QWidget):
         self.treshold_b.qlabel.show()
         self.treshold_b.qspin.show()
 
+    def enabled_changed(self, state):
+        if state == 1 or state == 2:
+            script.action_update_controlnet_config()
+
     def cfg_init(self):  
         self.enable.cfg_init()
         self.use_selection_as_input.cfg_init()
@@ -230,8 +245,11 @@ class ControlNetUnitSettings(QWidget):
         self.weight_layout.cfg_init()
         self.guidance_start_layout.cfg_init()
         self.guidance_end_layout.cfg_init()
+        self.annotator_resolution.cfg_init()
+        self.treshold_a.cfg_init()
+        self.treshold_b.cfg_init()
         self.change_image_loader_state(self.use_selection_as_input.checkState())
-        self.init_preprocessor_layouts(self.preprocessor_layout.qcombo.currentText())
+        self.set_preprocessor_options(self.preprocessor_layout.qcombo.currentText())
 
     def cfg_connect(self):
         self.enable.cfg_connect()
@@ -245,72 +263,10 @@ class ControlNetUnitSettings(QWidget):
         self.weight_layout.cfg_connect()
         self.guidance_start_layout.cfg_connect()
         self.guidance_end_layout.cfg_connect()
+        self.annotator_resolution.cfg_connect()
+        self.treshold_a.cfg_connect()
+        self.treshold_b.cfg_connect()
+        self.enable.stateChanged.connect(self.enabled_changed)
         self.use_selection_as_input.stateChanged.connect(self.change_image_loader_state)
-        self.preprocessor_layout.qcombo.currentTextChanged.connect(self.preprocessor_changed)
-
-preprocessor_settings = {
-    "canny": {
-        "resolution_label": "Annotator resolution",
-        "treshold_a_label": "Canny low treshold",
-        "treshold_b_label": "Canny high treshold",
-        "treshold_a_value": 100,
-        "treshold_b_value": 200,
-        "treshold_a_min_value": 1,
-        "treshold_a_max_value": 255,
-        "treshold_b_min_value": 1,
-        "treshold_b_max_value": 255
-    },
-    "depth": {
-        "resolution_label": "Midas resolution",
-    },
-    "depth_leres": {
-        "resolution_label": "LeReS resolution",
-        "treshold_a_label": "Remove near %",
-        "treshold_b_label": "Remove background %",
-        "treshold_a_min_value": 0,
-        "treshold_a_max_value": 100,
-        "treshold_b_min_value": 0,
-        "treshold_b_max_value": 100
-    },
-    "hed": {
-        "resolution_label": "HED resolution",
-    },
-    "mlsd": {
-        "resolution_label": "Hough resolution",
-        "treshold_a_label": "Hough value threshold (MLSD)",
-        "treshold_b_label": "Hough distance threshold (MLSD)",
-        "treshold_a_value": 0.1,
-        "treshold_b_value": 0.1,
-        "treshold_a_min_value": 0.01,
-        "treshold_b_max_value": 2,
-        "treshold_a_min_value": 0.01,
-        "treshold_b_max_value": 20,
-        "treshold_step": 0.01
-    },
-    "normal_map": {
-        "treshold_a_label": "Normal background threshold",
-        "treshold_a_value": 0.4,
-        "treshold_a_min_value": 0,
-        "treshold_a_max_value": 1,
-        "treshold_b_min_value": 0,
-        "treshold_b_max_value": 1,
-        "treshold_step": 0.01
-    },
-    "openpose": {},
-    "openpose_hand": {},
-    "clip_vision": {},
-    "color": {},
-    "pidinet": {},
-    "scribble": {},
-    "fake_scribble": {
-        "resolution_label": "HED resolution",
-    },
-    "segmentation": {},
-    "binary": {
-        "treshold_a_label": "Binary threshold",
-        "treshold_a_min_value": 0,
-        "treshold_a_max_value": 255,
-        "treshold_b_min_value": 0,
-        "treshold_b_max_value": 255,
-    }
-}
+        self.preprocessor_layout.qcombo.currentTextChanged.connect(self.set_preprocessor_options)
+        self.refresh_button.released.connect(lambda: script.action_update_controlnet_config())

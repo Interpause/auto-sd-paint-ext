@@ -444,6 +444,10 @@ class Script(QObject):
     def action_update_config(self):
         """Update certain config/state from the backend."""
         self.client.get_config()
+            
+    def action_update_controlnet_config(self):
+        """Update controlnet config from the backend."""
+        self.client.get_controlnet_config()
 
     def action_interrupt(self):
         def cb(resp=None):
