@@ -29,6 +29,7 @@ from .defaults import (
 )
 from .utils import (
     b64_to_img,
+    img_to_b64,
     find_optimal_selection_region,
     get_desc_from_resp,
     img_to_ba,
@@ -250,6 +251,29 @@ class Script(QObject):
             return layer
 
         return insert, glayer
+    
+    def check_controlnet_enabled(self):
+        for i in range(len(self.cfg("controlnet_unit_list", "QStringList"))):
+            if self.cfg(f"controlnet{i}_enable", bool):
+                return True
+            
+    def get_controlnet_input_images(self, selected):
+        input_images = dict()
+
+        for i in range(len(self.cfg("controlnet_unit_list", "QStringList"))):    
+            if self.cfg(f"controlnet{i}_enable", bool):
+                input_image = b64_to_img(self.cfg(f"controlnet{i}_input_image", str))
+
+                if input_image:
+                    if self.cfg(f"controlnet{i}_invert_input_color", bool) or \
+                    self.cfg(f"controlnet{i}_RGB_to_BGR", bool):
+                        input_image.rgbSwapped()
+                    
+                    input_images.update({f"{i}": input_image})
+                else:
+                    input_images.update({f"{i}": selected})
+
+        return input_images
 
     def apply_txt2img(self):
         # freeze selection region
@@ -277,9 +301,17 @@ class Script(QObject):
             mask_trigger(layers)
 
         self.eta_timer.start(ETA_REFRESH_INTERVAL)
-        self.client.post_txt2img(
-            cb, self.width, self.height, self.selection is not None
-        )
+
+        if (self.check_controlnet_enabled()):
+            sel_image = self.get_selection_image()
+            self.client.post_controlnet_txt2image(
+                cb, self.width, self.height, self.selection is not None, 
+                self.get_controlnet_input_images(sel_image)
+            )
+        else:
+            self.client.post_txt2img(
+                cb, self.width, self.height, self.selection is not None
+            )
 
     def apply_img2img(self, is_inpaint):
         insert, glayer = self.img_inserter(
@@ -334,8 +366,18 @@ class Script(QObject):
             self.selection is not None,
         )
 
-    def apply_controlnet_preview_annotator(self, image, preview_label, unit: int): 
-        image = self.get_selection_image() if image is None else image
+    def apply_controlnet_preview_annotator(self, preview_label): 
+        unit = self.cfg("controlnet_unit")
+        if self.cfg(f"controlnet{unit}_input_image"):
+            image = b64_to_img(self.cfg(f"controlnet{unit}_input_image"))
+
+            #self.get_selection_image() already performs a image.rgbSwapped()
+            #so, I have decided not to play with it.
+            if self.cfg(f"controlnet{unit}_invert_input_color", bool) or \
+            self.cfg(f"controlnet{unit}_RGB_to_BGR", bool):
+                image.rgbSwapped()
+        else:
+            image = self.get_selection_image()
 
         def cb(response):
             assert response is not None, "Backend Error, check terminal"
@@ -346,7 +388,7 @@ class Script(QObject):
                 pixmap = pixmap.scaledToWidth(preview_label.width(), Qt.SmoothTransformation)
             preview_label.setPixmap(pixmap)
 
-        self.client.post_controlnet_preview(cb, image, unit)
+        self.client.post_controlnet_preview(cb, image)
 
     def apply_simple_upscale(self):
         insert, _ = self.img_inserter(self.x, self.y, self.width, self.height)
@@ -464,13 +506,13 @@ class Script(QObject):
         """Update controlnet config from the backend."""
         self.client.get_controlnet_config()
 
-    def action_preview_controlnet_annotator(self, image, label, unit: int):
+    def action_preview_controlnet_annotator(self, preview_label):
         self.status_changed.emit(STATE_WAIT)
         self.update_selection()
         if not self.doc:
             return
         self.adjust_selection()
-        self.apply_controlnet_preview_annotator(image, label, unit)
+        self.apply_controlnet_preview_annotator(preview_label)
 
     def action_interrupt(self):
         def cb(resp=None):

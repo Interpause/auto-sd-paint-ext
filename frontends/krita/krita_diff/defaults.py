@@ -211,6 +211,7 @@ class Defaults:
     controlnet0_preprocessor_resolution: int = 512
     controlnet0_threshold_a: float = 0
     controlnet0_threshold_b: float = 0
+    controlnet0_input_image: str = ""
 
     controlnet1_enable: bool = False
     controlnet1_invert_input_color: bool = False
@@ -225,6 +226,7 @@ class Defaults:
     controlnet1_preprocessor_resolution: int = 512
     controlnet1_threshold_a: float = 0
     controlnet1_threshold_b: float = 0
+    controlnet1_input_image: str = ""
 
     controlnet2_enable: bool = False
     controlnet2_invert_input_color: bool = False
@@ -239,6 +241,7 @@ class Defaults:
     controlnet2_preprocessor_resolution: int = 512
     controlnet2_threshold_a: float = 0
     controlnet2_threshold_b: float = 0
+    controlnet2_input_image: str = ""
 
     controlnet3_enable: bool = False
     controlnet3_invert_input_color: bool = False
@@ -253,6 +256,7 @@ class Defaults:
     controlnet3_preprocessor_resolution: int = 512
     controlnet3_threshold_a: float = 0
     controlnet3_threshold_b: float = 0
+    controlnet3_input_image: str = ""
 
     controlnet4_enable: bool = False
     controlnet4_invert_input_color: bool = False
@@ -267,6 +271,7 @@ class Defaults:
     controlnet4_preprocessor_resolution: int = 512
     controlnet4_threshold_a: float = 0
     controlnet4_threshold_b: float = 0
+    controlnet4_input_image: str = ""
 
     controlnet5_enable: bool = False
     controlnet5_invert_input_color: bool = False
@@ -281,6 +286,7 @@ class Defaults:
     controlnet5_preprocessor_resolution: int = 512
     controlnet5_threshold_a: float = 0
     controlnet5_threshold_b: float = 0
+    controlnet5_input_image: str = ""
 
     controlnet6_enable: bool = False
     controlnet6_invert_input_color: bool = False
@@ -295,6 +301,7 @@ class Defaults:
     controlnet6_preprocessor_resolution: int = 512
     controlnet6_threshold_a: float = 0
     controlnet6_threshold_b: float = 0
+    controlnet6_input_image: str = ""
 
     controlnet7_enable: bool = False
     controlnet7_invert_input_color: bool = False
@@ -309,6 +316,7 @@ class Defaults:
     controlnet7_preprocessor_resolution: int = 512
     controlnet7_threshold_a: float = 0
     controlnet7_threshold_b: float = 0
+    controlnet7_input_image: str = ""
 
     controlnet8_enable: bool = False
     controlnet8_invert_input_color: bool = False
@@ -323,6 +331,7 @@ class Defaults:
     controlnet8_preprocessor_resolution: int = 512
     controlnet8_threshold_a: float = 0
     controlnet8_threshold_b: float = 0
+    controlnet8_input_image: str = ""
 
     controlnet9_enable: bool = False
     controlnet9_invert_input_color: bool = False
@@ -337,5 +346,6 @@ class Defaults:
     controlnet9_preprocessor_resolution: int = 512
     controlnet9_threshold_a: float = 0
     controlnet9_threshold_b: float = 0
+    controlnet9_input_image: str = ""
 
 DEFAULTS = Defaults()

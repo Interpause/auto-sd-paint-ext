@@ -1,8 +1,10 @@
 from krita import QPixmap, QImage, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QStackedLayout, Qt
 
+from functools import partial
 from ..defaults import CONTROLNET_PREPROCESSOR_SETTINGS
 from ..script import script
 from ..widgets import QLabel, StatusBar, ImageLoaderLayout, QCheckBox, TipsLayout, QComboBoxLayout, QSpinBoxLayout
+from ..utils import img_to_b64, b64_to_img
 
 class ControlNetPage(QWidget):                                                      
     name = "ControlNet"
@@ -48,7 +50,7 @@ class ControlNetPage(QWidget):
 
 class ControlNetUnitSettings(QWidget):    
     def __init__(self, cfg_unit_number: int = 0, *args, **kwargs):
-        super(ControlNetUnitSettings, self).__init__(*args, **kwargs)
+        super(ControlNetUnitSettings, self).__init__(*args, **kwargs)           
         self.unit = cfg_unit_number
 
         #Top checkbox
@@ -57,6 +59,10 @@ class ControlNetUnitSettings(QWidget):
         )
 
         self.image_loader = ImageLoaderLayout()
+        input_image = script.cfg(f"controlnet{self.unit}_input_image", str)
+        self.image_loader.preview.setPixmap(
+            QPixmap.fromImage(b64_to_img(input_image) if input_image else QImage())
+        )
 
         #Main settings
         self.invert_input_color = QCheckBox(
@@ -229,10 +235,14 @@ class ControlNetUnitSettings(QWidget):
         self.threshold_b.qlabel.show()
         self.threshold_b.qspin.show()
 
-    def enabled_changed(self, state):
+    def enable_changed(self, state):
         if state == 1 or state == 2:
             script.action_update_controlnet_config()
 
+    def image_loaded(self):
+        image = self.image_loader.preview.pixmap().toImage().convertToFormat(QImage.Format_RGBA8888)
+        script.cfg.set(f"controlnet{self.unit}_input_image", img_to_b64(image))
+           
     def cfg_init(self):  
         self.enable.cfg_init()
         self.invert_input_color.cfg_init()
@@ -263,13 +273,15 @@ class ControlNetUnitSettings(QWidget):
         self.annotator_resolution.cfg_connect()
         self.threshold_a.cfg_connect()
         self.threshold_b.cfg_connect()
-        self.enable.stateChanged.connect(self.enabled_changed)
+        self.enable.stateChanged.connect(self.enable_changed)
+        self.image_loader.import_button.released.connect(self.image_loaded)
+        self.image_loader.paste_button.released.connect(self.image_loaded)
+        self.image_loader.clear_button.released.connect(
+            partial(script.cfg.set, f"controlnet{self.unit}_input_image", "")
+        )
         self.preprocessor_layout.qcombo.currentTextChanged.connect(self.set_preprocessor_options)
         self.refresh_button.released.connect(lambda: script.action_update_controlnet_config())
-        self.annotator_preview_button.released.connect(lambda: script.action_preview_controlnet_annotator(
-            self.image_loader.preview.pixmap().toImage().convertToFormat(QImage.Format_RGBA8888).rgbSwapped()
-              if self.image_loader.preview.pixmap() is not None else None,
-            self.annotator_preview,
-            self.unit
-        ))
+        self.annotator_preview_button.released.connect(
+            lambda: script.action_preview_controlnet_annotator(self.annotator_preview)
+        )
         self.annotator_clear_button.released.connect(lambda: self.annotator_preview.setPixmap(QPixmap()))
