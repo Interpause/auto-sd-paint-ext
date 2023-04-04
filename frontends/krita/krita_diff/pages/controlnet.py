@@ -81,7 +81,8 @@ class ControlNetUnitSettings(QWidget):
         #Tips
         self.tips = TipsLayout(
             ["Invert colors if your image has white background.",
-             "Selection will be used as input if no image has been uploaded or pasted."]
+             "Selection will be used as input if no image has been uploaded or pasted.",
+             "Remember to set multi-controlnet in the backend as well if you want to use more than one unit."]
         )
 
         #Preprocessor list
