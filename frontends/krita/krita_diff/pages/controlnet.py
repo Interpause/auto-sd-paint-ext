@@ -259,6 +259,11 @@ class ControlNetUnitSettings(QWidget):
         self.threshold_b.cfg_init()
         self.set_preprocessor_options(self.preprocessor_layout.qcombo.currentText())
 
+        if (self.preprocessor_layout.qcombo.currentText() == "none"):
+            self.annotator_preview_button.setEnabled(False)
+        else:
+            self.annotator_preview_button.setEnabled(True)
+
     def cfg_connect(self):
         self.enable.cfg_connect()
         self.invert_input_color.cfg_connect()
@@ -280,6 +285,10 @@ class ControlNetUnitSettings(QWidget):
             partial(script.cfg.set, f"controlnet{self.unit}_input_image", "")
         )
         self.preprocessor_layout.qcombo.currentTextChanged.connect(self.set_preprocessor_options)
+        self.preprocessor_layout.qcombo.currentTextChanged.connect(
+            lambda: self.annotator_preview_button.setEnabled(False) if 
+                self.preprocessor_layout.qcombo.currentText() == "none" else self.annotator_preview_button.setEnabled(True)
+        )
         self.refresh_button.released.connect(lambda: script.action_update_controlnet_config())
         self.annotator_preview_button.released.connect(
             lambda: script.action_preview_controlnet_annotator(self.annotator_preview)

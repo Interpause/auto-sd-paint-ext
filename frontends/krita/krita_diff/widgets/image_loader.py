@@ -24,7 +24,6 @@ class ImageLoaderLayout(QVBoxLayout):
         self.clear_button.released.connect(self.clear_image)
 
     def load_image(self):
-        self.clear_image()
         file_name, _ = QFileDialog.getOpenFileName(self.import_button, 'Open File', '', 'Image Files (*.png *.jpg *.bmp)')
         if file_name:
             pixmap = QPixmap(file_name)
@@ -36,7 +35,12 @@ class ImageLoaderLayout(QVBoxLayout):
 
     def paste_image(self):
         self.clear_image()
-        self.preview.setPixmap(QApplication.clipboard().pixmap())
+        pixmap = QPixmap(QApplication.clipboard().pixmap())
+
+        if pixmap.width() > self.preview.width():
+            pixmap = pixmap.scaledToWidth(self.preview.width(), Qt.SmoothTransformation)
+
+        self.preview.setPixmap(pixmap)
 
     def clear_image(self):
         self.preview.setPixmap(QPixmap())

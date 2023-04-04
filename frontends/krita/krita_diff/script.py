@@ -262,21 +262,21 @@ class Script(QObject):
 
         for i in range(len(self.cfg("controlnet_unit_list", "QStringList"))):    
             if self.cfg(f"controlnet{i}_enable", bool):
-                input_image = b64_to_img(self.cfg(f"controlnet{i}_input_image", str))
-
-                if input_image:
-                    if self.cfg(f"controlnet{i}_invert_input_color", bool) or \
-                    self.cfg(f"controlnet{i}_RGB_to_BGR", bool):
-                        input_image.rgbSwapped()
+                input_image = b64_to_img(self.cfg(f"controlnet{i}_input_image", str)) if \
+                    self.cfg(f"controlnet{i}_input_image", str) else selected
+                
+                if self.cfg(f"controlnet{i}_invert_input_color", bool) or \
+                self.cfg(f"controlnet{i}_RGB_to_BGR", bool):
+                    input_image.rgbSwapped()
                     
-                    input_images.update({f"{i}": input_image})
-                else:
-                    input_images.update({f"{i}": selected})
+                input_images.update({f"{i}": input_image})
 
         return input_images
 
     def apply_txt2img(self):
         # freeze selection region
+        controlnet_enabled = self.check_controlnet_enabled()
+
         insert, glayer = self.img_inserter(
             self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool)
         )
@@ -286,7 +286,8 @@ class Script(QObject):
             if len(self.client.long_reqs) == 1:  # last request
                 self.eta_timer.stop()
             assert response is not None, "Backend Error, check terminal"
-            outputs = response["outputs"]
+            #response key varies for official api used for controlnet
+            outputs = response["outputs"] if not controlnet_enabled else response["images"]
             glayer_name, layer_names = get_desc_from_resp(response, "txt2img")
             layers = [
                 insert(name if name else f"txt2img {i + 1}", output)
@@ -302,9 +303,9 @@ class Script(QObject):
 
         self.eta_timer.start(ETA_REFRESH_INTERVAL)
 
-        if (self.check_controlnet_enabled()):
+        if (controlnet_enabled):
             sel_image = self.get_selection_image()
-            self.client.post_controlnet_txt2image(
+            self.client.post_official_api_txt2img(
                 cb, self.width, self.height, self.selection is not None, 
                 self.get_controlnet_input_images(sel_image)
             )
@@ -371,8 +372,6 @@ class Script(QObject):
         if self.cfg(f"controlnet{unit}_input_image"):
             image = b64_to_img(self.cfg(f"controlnet{unit}_input_image"))
 
-            #self.get_selection_image() already performs a image.rgbSwapped()
-            #so, I have decided not to play with it.
             if self.cfg(f"controlnet{unit}_invert_input_color", bool) or \
             self.cfg(f"controlnet{unit}_RGB_to_BGR", bool):
                 image.rgbSwapped()
