@@ -5,7 +5,7 @@ from urllib.error import URLError
 from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
 
-from krita import QObject, QThread, pyqtSignal
+from krita import QObject, QThread, pyqtSignal, QMessageBox
 
 from .config import Config
 from .defaults import (
@@ -446,8 +446,12 @@ class Client(QObject):
             resized_width, resized_height = calculate_resized_image_dimensions(
                 self.cfg("sd_base_size", int), self.cfg("sd_max_size", int), width, height
             )
+            disable_base_and_max_size = self.cfg("disable_sddebz_highres", bool)
             params = self.official_api_common_params(
-                has_selection, resized_width, resized_height, controlnet_src_imgs
+                has_selection, 
+                resized_width if not disable_base_and_max_size else width, 
+                resized_height if not disable_base_and_max_size else height, 
+                controlnet_src_imgs
             )
             params.update(
                 prompt=fix_prompt(self.cfg("txt2img_prompt", str)),
@@ -461,16 +465,15 @@ class Client(QObject):
                 hr_resize_x=width,
                 hr_resize_y=height,
                 denoising_strength=self.cfg("txt2img_denoising_strength", float),
-                script=ext_name,
-                script_args=ext_args
+                script_name=ext_name if ext_name != "None" else None, #Prevent unrecognized "None" script from backend
+                script_args=ext_args if ext_name != "None" else []
             )
 
             url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
-            print(params)
             self.post("txt2img", params, cb, base_url=url)
 
     def post_img2img(self, cb, src_img, mask_img, has_selection):
-        params = dict(is_inpaint=False, src_img=img_to_b64(src_img))
+        params = dict(is_inpaint=False, src_img=img_to_b64(src_img))   
         if not self.cfg("just_use_yaml", bool):
             seed = (
                 int(self.cfg("img2img_seed", str))  # Qt casts int as 32-bit int
@@ -494,6 +497,43 @@ class Client(QObject):
             )
 
         self.post("img2img", params, cb)
+
+    def post_official_api_img2img(self, cb, src_img, width, height, has_selection, 
+                                controlnet_src_imgs: dict = {}):
+        """Uses official API. Leave controlnet_src_imgs empty to not use controlnet."""
+        params = dict(init_images=[img_to_b64(src_img)])
+        if not self.cfg("just_use_yaml", bool):
+            seed = (
+                int(self.cfg("img2img_seed", str))  # Qt casts int as 32-bit int
+                if not self.cfg("img2img_seed", str).strip() == ""
+                else -1
+            )
+            ext_name = self.cfg("img2img_script", str)
+            ext_args = get_ext_args(self.ext_cfg, "scripts_img2img", ext_name)
+            resized_width, resized_height = calculate_resized_image_dimensions(
+                self.cfg("sd_base_size", int), self.cfg("sd_max_size", int), width, height
+            )
+            disable_base_and_max_size = self.cfg("disable_sddebz_highres", bool)
+            params.update(self.official_api_common_params(
+                has_selection, 
+                resized_width if not disable_base_and_max_size else width, 
+                resized_height if not disable_base_and_max_size else height, 
+                controlnet_src_imgs
+            ))
+            params.update(
+                prompt=fix_prompt(self.cfg("img2img_prompt", str)),
+                negative_prompt=fix_prompt(self.cfg("img2img_negative_prompt", str)),
+                sampler_name=self.cfg("img2img_sampler", str),
+                steps=self.cfg("img2img_steps", int),
+                cfg_scale=self.cfg("img2img_cfg_scale", float),
+                seed=seed,
+                denoising_strength=self.cfg("img2img_denoising_strength", float),
+                script_name=ext_name if ext_name != "None" else None,
+                script_args=ext_args if ext_name != "None" else []
+            )
+
+        url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
+        self.post("img2img", params, cb, base_url=url)
 
     def post_inpaint(self, cb, src_img, mask_img, has_selection):
         assert mask_img, "Inpaint layer is needed for inpainting!"
@@ -533,6 +573,57 @@ class Client(QObject):
             )
 
         self.post("img2img", params, cb)
+
+    def post_official_api_inpaint(self, cb, src_img, mask_img, width, height, has_selection, 
+                                controlnet_src_imgs: dict = {}):
+        """Uses official API. Leave controlnet_src_imgs empty to not use controlnet."""
+        assert mask_img, "Inpaint layer is needed for inpainting!"
+        params = dict(
+            init_images=[img_to_b64(src_img)], mask=img_to_b64(mask_img)
+        )
+        if not self.cfg("just_use_yaml", bool):
+            seed = (
+                int(self.cfg("inpaint_seed", str))  # Qt casts int as 32-bit int
+                if not self.cfg("inpaint_seed", str).strip() == ""
+                else -1
+            )
+            fill = self.cfg("inpaint_fill_list", "QStringList").index(
+                self.cfg("inpaint_fill", str)
+            )
+            ext_name = self.cfg("inpaint_script", str)
+            ext_args = get_ext_args(self.ext_cfg, "scripts_inpaint", ext_name)
+            resized_width, resized_height = calculate_resized_image_dimensions(
+                self.cfg("sd_base_size", int), self.cfg("sd_max_size", int), width, height
+            )
+            invert_mask = self.cfg("inpaint_invert_mask", bool)
+            disable_base_and_max_size = self.cfg("disable_sddebz_highres", bool)
+            params.update(self.official_api_common_params(
+                has_selection, 
+                resized_width if not disable_base_and_max_size else width, 
+                resized_height if not disable_base_and_max_size else height, 
+                controlnet_src_imgs
+            ))
+            params.update(
+                prompt=fix_prompt(self.cfg("inpaint_prompt", str)),
+                negative_prompt=fix_prompt(self.cfg("inpaint_negative_prompt", str)),
+                sampler_name=self.cfg("inpaint_sampler", str),
+                steps=self.cfg("inpaint_steps", int),
+                cfg_scale=self.cfg("inpaint_cfg_scale", float),
+                seed=seed,
+                denoising_strength=self.cfg("inpaint_denoising_strength", float),
+                script_name=ext_name if ext_name != "None" else None,
+                script_args=ext_args if ext_name != "None" else [],
+                inpainting_mask_invert=0 if not invert_mask else 1,
+                inpainting_fill=fill,
+                mask_blur=0,
+                inpaint_full_res=False
+                #not sure what's the equivalent of mask weight for official API
+            )
+
+            params["override_settings"]["return_grid"] = False
+
+        url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
+        self.post("img2img", params, cb, base_url=url)
 
     def post_upscale(self, cb, src_img):
         params = (

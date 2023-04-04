@@ -34,7 +34,6 @@ class ImageLoaderLayout(QVBoxLayout):
             self.preview.setPixmap(pixmap)
 
     def paste_image(self):
-        self.clear_image()
         pixmap = QPixmap(QApplication.clipboard().pixmap())
 
         if pixmap.width() > self.preview.width():

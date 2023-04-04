@@ -8,12 +8,14 @@ from krita import (
     Krita,
     Node,
     QImage,
+    QColor,
+    QPainter,
     QObject,
     QPixmap,
     Qt,
     QTimer,
     Selection,
-    pyqtSignal,
+    pyqtSignal
 )
 
 from .client import Client
@@ -167,19 +169,34 @@ class Script(QObject):
             QImage.Format_RGBA8888,
         ).rgbSwapped()
 
-    def get_mask_image(self) -> Union[QImage, None]:
+    def get_mask_image(self, using_official_api) -> Union[QImage, None]:
         """QImage of mask layer for inpainting"""
         if self.node.type() not in {"paintlayer", "filelayer"}:
             assert False, "Please select a valid layer to use as inpaint mask!"
         elif self.node in self._inserted_layers:
             assert False, "Selected layer was generated. Copy the layer if sure you want to use it as inpaint mask."
 
-        return QImage(
+        mask = QImage(
             self.node.pixelData(self.x, self.y, self.width, self.height),
             self.width,
             self.height,
             QImage.Format_RGBA8888,
         ).rgbSwapped()
+
+        if using_official_api:
+            #replace mask's transparency with white color
+            new_mask = QImage(mask.size(), QImage.Format_RGB888)
+            new_mask.fill(QColor("white"))
+
+            painter = QPainter(new_mask)
+            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+            painter.drawImage(0, 0, mask)
+            painter.end()
+
+            new_mask.invertPixels()
+            mask = new_mask
+
+        return mask
 
     def img_inserter(self, x, y, width, height, group=False):
         """Return frozen image inserter to insert images as new layer."""
@@ -303,7 +320,7 @@ class Script(QObject):
 
         self.eta_timer.start(ETA_REFRESH_INTERVAL)
 
-        if (controlnet_enabled):
+        if controlnet_enabled:
             sel_image = self.get_selection_image()
             self.client.post_official_api_txt2img(
                 cb, self.width, self.height, self.selection is not None, 
@@ -315,11 +332,13 @@ class Script(QObject):
             )
 
     def apply_img2img(self, is_inpaint):
+        controlnet_enabled = self.check_controlnet_enabled()
+
         insert, glayer = self.img_inserter(
             self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool)
         )
         mask_trigger = self.transparency_mask_inserter()
-        mask_image = self.get_mask_image()
+        mask_image = self.get_mask_image(controlnet_enabled)
 
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
         mask_path = os.path.join(
@@ -341,7 +360,7 @@ class Script(QObject):
                 self.eta_timer.stop()
             assert response is not None, "Backend Error, check terminal"
 
-            outputs = response["outputs"]
+            outputs = response["outputs"] if not controlnet_enabled else response["images"]
             layer_name_prefix = "inpaint" if is_inpaint else "img2img"
             glayer_name, layer_names = get_desc_from_resp(response, layer_name_prefix)
             layers = [
@@ -358,14 +377,24 @@ class Script(QObject):
             if not is_inpaint:
                 mask_trigger(layers)
 
-        method = self.client.post_inpaint if is_inpaint else self.client.post_img2img
         self.eta_timer.start()
-        method(
-            cb,
-            sel_image,
-            mask_image,  # is unused by backend in img2img mode
-            self.selection is not None,
-        )
+        if controlnet_enabled:
+            if is_inpaint:
+                self.client.post_official_api_inpaint(
+                    cb, sel_image, mask_image, self.width, self.height, self.selection is not None,
+                    self.get_controlnet_input_images(sel_image))
+            else:
+                self.client.post_official_api_img2img(
+                    cb, sel_image, self.width, self.height, self.selection is not None,
+                    self.get_controlnet_input_images(sel_image))
+        else:
+            method = self.client.post_inpaint if is_inpaint else self.client.post_img2img
+            method(
+                cb,
+                sel_image,
+                mask_image,  # is unused by backend in img2img mode
+                self.selection is not None,
+            )
 
     def apply_controlnet_preview_annotator(self, preview_label): 
         unit = self.cfg("controlnet_unit")
