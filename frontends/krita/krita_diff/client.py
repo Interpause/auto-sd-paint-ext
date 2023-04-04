@@ -248,7 +248,8 @@ class Client(QObject):
         return params
     
     def options_params(self):
-        """Parameters that are specific for the official API options endpoint."""
+        """Parameters that are specific for the official API options endpoint
+        or overriding settings."""
         params = dict(
             sd_model_checkpoint=self.cfg("sd_model", str),
             sd_vae=self.cfg("sd_vae", str),
@@ -262,7 +263,8 @@ class Client(QObject):
         )
         return params
     
-    def official_api_common_params(self, has_selection, width, height):
+    def official_api_common_params(self, has_selection, width, height,
+                                   controlnet_src_imgs):
         """Parameters used by most official API endpoints."""
         tiling = self.cfg("sd_tiling", bool) and not (
             self.cfg("only_full_img_tiling", bool) and has_selection
@@ -275,22 +277,41 @@ class Client(QObject):
             tiling=tiling,
             restore_faces=self.cfg("face_restorer_model", str) != "None",
             save_images=self.cfg("save_temp_images", bool),
+            override_settings=self.options_params(),
+            override_settings_restore_afterwards=False,
+            alwayson_scripts={}
         )
+
+        if controlnet_src_imgs:
+            controlnet_units_param = list()
+
+            for i in range(len(self.cfg("controlnet_unit_list", "QStringList"))):
+                if self.cfg(f"controlnet{i}_enable", bool):
+                    controlnet_units_param.append(
+                        self.controlnet_unit_params(img_to_b64(controlnet_src_imgs[str(i)]), i)
+                    )
+                
+            params["alwayson_scripts"].update({
+                "controlnet": {
+                    "args": controlnet_units_param
+                }
+            })
+        
         return params
     
     def controlnet_unit_params(self, image: str, unit: int):
         params = dict(
             input_image=image,
-            module=self.cfg(f"controlnet{unit}_preprocessor"),
-            model=self.cfg(f"controlnet{unit}_model"),
-            weight=self.cfg(f"controlnet{unit}_weight"),
-            lowvram=self.cfg(f"controlnet{unit}_low_vram"),
-            processor_res=self.cfg(f"controlnet{unit}_preprocessor_resolution"),
-            threshold_a=self.cfg(f"controlnet{unit}_threshold_a"),
-            threshold_b=self.cfg(f"controlnet{unit}_threshold_b"),
-            guidance_start=self.cfg(f"controlnet{unit}_guidance_start"),
-            guidance_end=self.cfg(f"controlnet{unit}_guidance_end"),
-            guessmode=self.cfg(f"controlnet{unit}_guess_mode")
+            module=self.cfg(f"controlnet{unit}_preprocessor", str),
+            model=self.cfg(f"controlnet{unit}_model", str),
+            weight=self.cfg(f"controlnet{unit}_weight", float),
+            lowvram=self.cfg(f"controlnet{unit}_low_vram", bool),
+            processor_res=self.cfg(f"controlnet{unit}_preprocessor_resolution", int),
+            threshold_a=self.cfg(f"controlnet{unit}_threshold_a", float),
+            threshold_b=self.cfg(f"controlnet{unit}_threshold_b", float),
+            guidance_start=self.cfg(f"controlnet{unit}_guidance_start", float),
+            guidance_end=self.cfg(f"controlnet{unit}_guidance_end", float),
+            guessmode=self.cfg(f"controlnet{unit}_guess_mode", bool)
         )
         return params
 
@@ -376,14 +397,14 @@ class Client(QObject):
         self.get("model_list", set_model_list, base_url=url)
         self.get("module_list", set_preprocessor_list, base_url=url)
 
-    def post_options(self):
-        """Sets the options for the backend, using the official API"""
-        def cb(response):
-            assert response is not None, "Backend Error, check terminal"
+    # def post_options(self):
+    #     """Sets the options for the backend, using the official API"""
+    #     def cb(response):
+    #         assert response is not None, "Backend Error, check terminal"
 
-        params = self.options_params()
-        url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
-        self.post("options", params, cb, base_url=url)   
+    #     params = self.options_params()
+    #     url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
+    #     self.post("options", params, cb, base_url=url)   
 
     def post_txt2img(self, cb, width, height, has_selection):
         params = dict(orig_width=width, orig_height=height)
@@ -411,8 +432,9 @@ class Client(QObject):
 
         self.post("txt2img", params, cb)
 
-    def post_controlnet_txt2image(self, cb, width, height, has_selection, src_imgs: dict):
-        """Uses official API"""
+    def post_official_api_txt2img(self, cb, width, height, has_selection, 
+                                    controlnet_src_imgs: dict = {}):
+        """Uses official API. Leave controlnet_src_imgs empty to not use controlnet."""
         if not self.cfg("just_use_yaml", bool):
             seed = (
                 int(self.cfg("txt2img_seed", str))  # Qt casts int as 32-bit int
@@ -425,7 +447,7 @@ class Client(QObject):
                 self.cfg("sd_base_size", int), self.cfg("sd_max_size", int), width, height
             )
             params = self.official_api_common_params(
-                has_selection, resized_width, resized_height
+                has_selection, resized_width, resized_height, controlnet_src_imgs
             )
             params.update(
                 prompt=fix_prompt(self.cfg("txt2img_prompt", str)),
@@ -440,21 +462,11 @@ class Client(QObject):
                 hr_resize_y=height,
                 denoising_strength=self.cfg("txt2img_denoising_strength", float),
                 script=ext_name,
-                script_args=ext_args,
+                script_args=ext_args
             )
 
-            controlnet_units_param = list()
-
-            for i in range(len(self.cfg("controlnet_unit_list", "QStringList"))):
-                if self.cfg(f"controlnet{i}_enable", bool):
-                    controlnet_units_param.append(
-                        self.controlnet_unit_params(img_to_b64(src_imgs[str(i)]), i)
-                    )
-            
-            params.update(controlnet_units=controlnet_units_param)
-
-            self.post_options()
-            url = get_url(self.cfg, prefix=CONTROLNET_ROUTE_PREFIX)
+            url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
+            print(params)
             self.post("txt2img", params, cb, base_url=url)
 
     def post_img2img(self, cb, src_img, mask_img, has_selection):
