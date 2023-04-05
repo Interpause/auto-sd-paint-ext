@@ -5,7 +5,7 @@ from urllib.error import URLError
 from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
 
-from krita import QObject, QThread, pyqtSignal, QMessageBox
+from krita import QObject, QThread, pyqtSignal
 
 from .config import Config
 from .defaults import (
@@ -540,9 +540,7 @@ class Client(QObject):
         params = dict(
             is_inpaint=True, src_img=img_to_b64(src_img), mask_img=img_to_b64(mask_img)
         )
-        msg = QMessageBox()
-        msg.setText(params["mask_img"])
-        msg.exec()
+
         if not self.cfg("just_use_yaml", bool):
             seed = (
                 int(self.cfg("inpaint_seed", str))  # Qt casts int as 32-bit int
