@@ -259,6 +259,7 @@ class Client(QObject):
             code_former_weight=self.cfg("codeformer_weight", float),
             #Couldn't find filter_nsfw option for official API.
             img2img_fix_steps=self.cfg("do_exact_steps", bool), #Not sure if this is matched correctly.
+            img2img_color_correction=self.cfg("img2img_color_correct", bool),
             return_grid=self.cfg("include_grid", bool)
         )
         return params
@@ -276,7 +277,6 @@ class Client(QObject):
             height=height,
             tiling=tiling,
             restore_faces=self.cfg("face_restorer_model", str) != "None",
-            save_images=self.cfg("save_temp_images", bool),
             override_settings=self.options_params(),
             override_settings_restore_afterwards=False,
             alwayson_scripts={}
@@ -540,6 +540,9 @@ class Client(QObject):
         params = dict(
             is_inpaint=True, src_img=img_to_b64(src_img), mask_img=img_to_b64(mask_img)
         )
+        msg = QMessageBox()
+        msg.setText(params["mask_img"])
+        msg.exec()
         if not self.cfg("just_use_yaml", bool):
             seed = (
                 int(self.cfg("inpaint_seed", str))  # Qt casts int as 32-bit int

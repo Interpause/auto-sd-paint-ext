@@ -31,8 +31,8 @@ from .defaults import (
 )
 from .utils import (
     b64_to_img,
-    img_to_b64,
     find_optimal_selection_region,
+    remove_unmasked_content_for_inpaint,
     get_desc_from_resp,
     img_to_ba,
     save_img,
@@ -181,11 +181,13 @@ class Script(QObject):
             self.width,
             self.height,
             QImage.Format_RGBA8888,
-        ).rgbSwapped()
+        )
 
         if using_official_api:
-            #replace mask's transparency with white color
-            new_mask = QImage(mask.size(), QImage.Format_RGB888)
+            #replace mask's transparency with white color, since official API
+            #doesn't seem to work with transparency. Assuming masked content
+            #is black.
+            new_mask = QImage(mask.size(), QImage.Format_RGBA8888)
             new_mask.fill(QColor("white"))
 
             painter = QPainter(new_mask)
@@ -193,12 +195,14 @@ class Script(QObject):
             painter.drawImage(0, 0, mask)
             painter.end()
 
+            #Invert colors so white corresponds to masked area.
             new_mask.invertPixels()
             mask = new_mask
 
-        return mask
+        return mask.rgbSwapped()
 
-    def img_inserter(self, x, y, width, height, group=False):
+    def img_inserter(self, x, y, width, height, group=False, 
+                     is_official_api_inpaint=False, mask_img=None):
         """Return frozen image inserter to insert images as new layer."""
         # Selection may change before callback, so freeze selection region
         has_selection = self.selection is not None
@@ -238,6 +242,9 @@ class Script(QObject):
                 image = image.scaled(
                     width, height, transformMode=Qt.SmoothTransformation
                 )
+
+            if is_official_api_inpaint:
+                image = remove_unmasked_content_for_inpaint(image, mask_img)
 
             # Resize (not scale!) canvas if image is larger (i.e. outpainting or Upscale was used)
             if image.width() > self.doc.width() or image.height() > self.doc.height():
@@ -282,9 +289,11 @@ class Script(QObject):
                 input_image = b64_to_img(self.cfg(f"controlnet{i}_input_image", str)) if \
                     self.cfg(f"controlnet{i}_input_image", str) else selected
                 
-                if self.cfg(f"controlnet{i}_invert_input_color", bool) or \
-                self.cfg(f"controlnet{i}_RGB_to_BGR", bool):
-                    input_image.rgbSwapped()
+                if self.cfg(f"controlnet{i}_invert_input_color", bool):
+                    input_image.invertPixels()
+
+                if self.cfg(f"controlnet{i}_RGB_to_BGR", bool):
+                    input_image = input_image.rgbSwapped()
                     
                 input_images.update({f"{i}": input_image})
 
@@ -334,11 +343,13 @@ class Script(QObject):
     def apply_img2img(self, is_inpaint):
         controlnet_enabled = self.check_controlnet_enabled()
 
-        insert, glayer = self.img_inserter(
-            self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool)
-        )
         mask_trigger = self.transparency_mask_inserter()
-        mask_image = self.get_mask_image(controlnet_enabled)
+        mask_image = self.get_mask_image(controlnet_enabled) if is_inpaint else None
+
+        insert, glayer = self.img_inserter(
+            self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool),
+            is_inpaint and controlnet_enabled, mask_image
+        )
 
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
         mask_path = os.path.join(
@@ -400,12 +411,14 @@ class Script(QObject):
         unit = self.cfg("controlnet_unit")
         if self.cfg(f"controlnet{unit}_input_image"):
             image = b64_to_img(self.cfg(f"controlnet{unit}_input_image"))
-
-            if self.cfg(f"controlnet{unit}_invert_input_color", bool) or \
-            self.cfg(f"controlnet{unit}_RGB_to_BGR", bool):
-                image.rgbSwapped()
         else:
             image = self.get_selection_image()
+
+        if self.cfg(f"controlnet{unit}_invert_input_color", bool):
+            image.invertPixels()
+
+        if self.cfg(f"controlnet{unit}_RGB_to_BGR", bool):
+            image = image.rgbSwapped()       
 
         def cb(response):
             assert response is not None, "Backend Error, check terminal"
