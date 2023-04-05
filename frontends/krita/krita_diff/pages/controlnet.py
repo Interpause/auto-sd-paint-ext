@@ -25,6 +25,7 @@ class ControlNetPage(QWidget):
             self.units_stacked_layout.addWidget(unit_layout)
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.status_bar)
         layout.addLayout(self.controlnet_unit)
         layout.addLayout(self.units_stacked_layout)
@@ -143,8 +144,11 @@ class ControlNetUnitSettings(QWidget):
         main_settings_layout = QHBoxLayout()
         main_settings_layout.addWidget(self.invert_input_color)
         main_settings_layout.addWidget(self.RGB_to_BGR)
-        main_settings_layout.addWidget(self.low_vram)
-        main_settings_layout.addWidget(self.guess_mode)
+
+
+        main_settings_layout_2 = QHBoxLayout()
+        main_settings_layout_2.addWidget(self.low_vram)
+        main_settings_layout_2.addWidget(self.guess_mode)
 
         guidance_layout = QHBoxLayout()
         guidance_layout.addLayout(self.guidance_start_layout)
@@ -160,6 +164,7 @@ class ControlNetUnitSettings(QWidget):
         layout.addLayout(self.image_loader)
         layout.addLayout(self.tips)
         layout.addLayout(main_settings_layout)
+        layout.addLayout(main_settings_layout_2)
         layout.addLayout(self.preprocessor_layout)
         layout.addLayout(self.model_layout)
         layout.addWidget(self.refresh_button)
