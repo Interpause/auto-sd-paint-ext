@@ -290,6 +290,8 @@ class Client(QObject):
                     controlnet_units_param.append(
                         self.controlnet_unit_params(img_to_b64(controlnet_src_imgs[str(i)]), i)
                     )
+                else:
+                    controlnet_units_param.append({"enabled": False})
                 
             params["alwayson_scripts"].update({
                 "controlnet": {
