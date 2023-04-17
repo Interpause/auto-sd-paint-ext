@@ -180,15 +180,13 @@ class ControlNetUnitSettings(QWidget):
         self.setLayout(layout)
 
     def set_preprocessor_options(self, selected: str):
+        self.set_threshold_names(selected)
         if selected in CONTROLNET_PREPROCESSOR_SETTINGS:
             self.show_preprocessor_options()
-            self.annotator_resolution.qlabel.setText(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["resolution_label"] \
-                if "resolution_label" in CONTROLNET_PREPROCESSOR_SETTINGS[selected] else "Preprocessor resolution:")
             
             if "threshold_a_label" in CONTROLNET_PREPROCESSOR_SETTINGS[selected]:
                 self.threshold_a.qlabel.show()
                 self.threshold_a.qspin.show()
-                self.threshold_a.qlabel.setText(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["threshold_a_label"])
                 self.threshold_a.qspin.setMinimum(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["threshold_a_min_value"] \
                     if "threshold_a_min_value" in CONTROLNET_PREPROCESSOR_SETTINGS[selected] else 0)
                 self.threshold_a.qspin.setMaximum(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["threshold_a_max_value"] \
@@ -204,7 +202,6 @@ class ControlNetUnitSettings(QWidget):
             if "threshold_b_label" in CONTROLNET_PREPROCESSOR_SETTINGS[selected]:
                 self.threshold_b.qlabel.show()
                 self.threshold_b.qspin.show()
-                self.threshold_b.qlabel.setText(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["threshold_b_label"])
                 self.threshold_b.qspin.setMinimum(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["threshold_b_min_value"] \
                     if "threshold_b_min_value" in CONTROLNET_PREPROCESSOR_SETTINGS[selected] else 0)
                 self.threshold_b.qspin.setMaximum(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["threshold_b_max_value"] \
@@ -218,6 +215,17 @@ class ControlNetUnitSettings(QWidget):
                 self.threshold_b.qspin.hide()
         else:
             self.hide_preprocessor_options(selected)
+
+    def set_threshold_names(self, selected):
+        if selected in CONTROLNET_PREPROCESSOR_SETTINGS:
+            self.annotator_resolution.qlabel.setText(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["resolution_label"] \
+                if "resolution_label" in CONTROLNET_PREPROCESSOR_SETTINGS[selected] else "Preprocessor resolution:")
+            
+            if "threshold_a_label" in CONTROLNET_PREPROCESSOR_SETTINGS[selected]:
+                self.threshold_a.qlabel.setText(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["threshold_a_label"])
+                
+            if "threshold_b_label" in CONTROLNET_PREPROCESSOR_SETTINGS[selected]:
+                self.threshold_b.qlabel.setText(CONTROLNET_PREPROCESSOR_SETTINGS[selected]["threshold_b_label"])
     
     def hide_preprocessor_options(self, selected: str):
         #Hide all annotator settings if no annotator chosen.
@@ -263,7 +271,7 @@ class ControlNetUnitSettings(QWidget):
         self.annotator_resolution.cfg_init()
         self.threshold_a.cfg_init()
         self.threshold_b.cfg_init()
-        self.set_preprocessor_options(self.preprocessor_layout.qcombo.currentText())
+        self.set_threshold_names(self.preprocessor_layout.qcombo.currentText())
 
         if (self.preprocessor_layout.qcombo.currentText() == "none"):
             self.annotator_preview_button.setEnabled(False)
