@@ -15,7 +15,6 @@ class ControlNetPage(QWidget):
         self.controlnet_unit = QComboBoxLayout(
             script.cfg, "controlnet_unit_list", "controlnet_unit", label="Unit:"
         )
-        self.controlnet_unit.qcombo.setEditable(False)
         self.controlnet_unit_layout_list = list(ControlNetUnitSettings(i) 
                                                 for i in range(len(script.cfg("controlnet_unit_list"))))
 

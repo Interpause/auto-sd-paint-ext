@@ -641,7 +641,7 @@ class Client(QObject):
         self.post("upscale", params, cb)
 
     def post_controlnet_preview(self, cb, src_img):
-        unit = self.cfg("controlnet_unit")
+        unit = self.cfg("controlnet_unit", str)
         params = (
             {
                 "controlnet_module": self.cfg(f"controlnet{unit}_preprocessor"),
