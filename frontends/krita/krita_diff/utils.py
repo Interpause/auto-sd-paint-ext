@@ -249,31 +249,3 @@ def reset_docker_layout():
     dockers[TAB_SDCOMMON].raise_()
     dockers[TAB_INPAINT].raise_()
 
-def remove_unmasked_content_for_inpaint(img, mask):
-    """
-    Remove all content from an image that is not masked. 
-    It is recommended that img and mask share the same size.
-    """
-    # Create a new image with the same size as the original image
-    result = QImage(img.size(), QImage.Format_RGBA8888)
-
-    # Iterate over all pixels in the image
-    for y in range(img.height()):
-        for x in range(img.width()):
-            # Get the color of the pixel in the mask
-            mask_color = QColor(mask.pixel(x, y))
-
-            # Calculate the alpha value based on the brightness of the mask pixel
-            alpha = mask_color.lightness()
-
-            # Get the color of the pixel in the original image
-            img_color = QColor(img.pixel(x, y))
-
-            # Set the alpha value of the original pixel based on the mask pixel
-            img_color.setAlpha(alpha)
-
-            # Set the pixel in the result image
-            result.setPixelColor(x, y, img_color)
-
-    return result.rgbSwapped()
-
