@@ -408,7 +408,7 @@ class Script(QObject):
             )
 
     def apply_controlnet_preview_annotator(self, preview_label): 
-        unit = self.cfg("controlnet_unit")
+        unit = self.cfg("controlnet_unit", str)
         if self.cfg(f"controlnet{unit}_input_image"):
             image = b64_to_img(self.cfg(f"controlnet{unit}_input_image"))
         else:

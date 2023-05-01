@@ -187,7 +187,7 @@ def img_to_b64(img: QImage):
 def b64_to_img(enc: str):
     """Converts base64-encoded string to QImage"""
     ba = QByteArray.fromBase64(enc.encode("utf-8"))
-    return QImage.fromData(ba, "PNG")
+    return QImage.fromData(ba) #Removed explicit format to support other image formats.
 
 
 def bytewise_xor(msg: bytes, key: bytes):
