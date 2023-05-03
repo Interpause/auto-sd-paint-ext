@@ -272,8 +272,10 @@ def f_img2img(req: Img2ImgRequest):
         req.seed_resize_from_h,  # seed_resize_from_h
         req.seed_resize_from_w,  # seed_resize_from_w
         req.seed_enable_extras,  # seed_enable_extras
+        1,  # selected_scale_tab
         height,  # height
         width,  # width
+        1.0,  # scale_by
         req.resize_mode,  # resize_mode
         False,  # req.inpaint_full_res,  # inpaint_full_res
         0,  # req.inpaint_full_res_padding,  # inpaint_full_res_padding
