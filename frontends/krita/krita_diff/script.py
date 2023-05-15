@@ -35,7 +35,6 @@ from .defaults import (
 from .utils import (
     b64_to_img,
     find_optimal_selection_region,
-    remove_unmasked_content_for_inpaint,
     get_desc_from_resp,
     img_to_ba,
     save_img,
@@ -204,8 +203,7 @@ class Script(QObject):
 
         return mask.rgbSwapped()
 
-    def img_inserter(self, x, y, width, height, group=False, 
-                     is_official_api_inpaint=False, mask_img=None):
+    def img_inserter(self, x, y, width, height, group=False):
         """Return frozen image inserter to insert images as new layer."""
         # Selection may change before callback, so freeze selection region
         has_selection = self.selection is not None
@@ -245,9 +243,6 @@ class Script(QObject):
                 image = image.scaled(
                     width, height, transformMode=Qt.SmoothTransformation
                 )
-
-            if is_official_api_inpaint:
-                image = remove_unmasked_content_for_inpaint(image, mask_img)
 
             # Resize (not scale!) canvas if image is larger (i.e. outpainting or Upscale was used)
             if image.width() > self.doc.width() or image.height() > self.doc.height():
@@ -301,8 +296,6 @@ class Script(QObject):
         # freeze selection region
         controlnet_enabled = self.check_controlnet_enabled()
 
-        controlnet_enabled = self.check_controlnet_enabled()
-
         insert, glayer = self.img_inserter(
             self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool)
         )
@@ -347,8 +340,7 @@ class Script(QObject):
         mask_image = self.get_mask_image(controlnet_enabled) if is_inpaint else None
 
         insert, glayer = self.img_inserter(
-            self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool),
-            is_inpaint and controlnet_enabled, mask_image
+            self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool)
         )
 
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")

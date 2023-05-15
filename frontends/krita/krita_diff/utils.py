@@ -3,8 +3,7 @@ import re
 from itertools import cycle
 from math import ceil
 
-from krita import Krita, QBuffer, QByteArray, QImage, QColor, QIODevice, Qt
-from krita import Krita, QBuffer, QByteArray, QImage, QColor, QIODevice, Qt
+from krita import Krita, QBuffer, QByteArray, QImage, QIODevice, Qt
 
 from .config import Config
 from .defaults import (
@@ -54,8 +53,6 @@ def get_ext_args(ext_cfg: Config, ext_type: str, ext_name: str):
 
 def calculate_resized_image_dimensions(
         base_size: int, max_size: int, orig_width: int, orig_height: int
-def calculate_resized_image_dimensions(
-        base_size: int, max_size: int, orig_width: int, orig_height: int
 ):
     """Finds the dimensions of the resized images based on base_size and max_size.
     See https://github.com/Interpause/auto-sd-paint-ext#faq for more details."""
@@ -89,17 +86,6 @@ def find_fixed_aspect_ratio(
     width, height = calculate_resized_image_dimensions(base_size, max_size, orig_width, orig_height)
     
     return width, height
-        
-def find_fixed_aspect_ratio(
-    base_size: int, max_size: int, orig_width: int, orig_height: int
-):
-    """Copy of `krita_server.utils.sddebz_highres_fix()`.
-
-    This is used by `find_optimal_selection_region()` below to adjust the selected region.
-    """
-    width, height = calculate_resized_image_dimensions(base_size, max_size, orig_width, orig_height)
-    return width / height
-
 
 def find_optimal_selection_region(
     base_size: int,
