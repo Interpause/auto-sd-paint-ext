@@ -313,7 +313,7 @@ class Client(QObject):
             threshold_b=self.cfg(f"controlnet{unit}_threshold_b", float),
             guidance_start=self.cfg(f"controlnet{unit}_guidance_start", float),
             guidance_end=self.cfg(f"controlnet{unit}_guidance_end", float),
-            guessmode=self.cfg(f"controlnet{unit}_guess_mode", bool)
+            control_mode=self.cfg(f"controlnet{unit}_control_mode", str)
         )
         return params
 

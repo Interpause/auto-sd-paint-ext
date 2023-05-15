@@ -65,17 +65,8 @@ class ControlNetUnitSettings(QWidget):
         )
 
         #Main settings
-        self.invert_input_color = QCheckBox(
-            script.cfg, f"controlnet{self.unit}_invert_input_color", "Invert input color"
-        )
-        self.RGB_to_BGR = QCheckBox(
-            script.cfg, f"controlnet{self.unit}_RGB_to_BGR", "RGB to BGR"
-        )
         self.low_vram = QCheckBox(
             script.cfg, f"controlnet{self.unit}_low_vram", "Low VRAM"
-        )
-        self.guess_mode = QCheckBox(
-            script.cfg, f"controlnet{self.unit}_guess_mode", "Guess mode"
         )
 
         #Tips
@@ -106,6 +97,10 @@ class ControlNetUnitSettings(QWidget):
         )
         self.guidance_end_layout = QSpinBoxLayout(
             script.cfg, f"controlnet{self.unit}_guidance_end", label="Guidance end:", min=0, max=1, step=0.01
+        )
+
+        self.control_mode = QComboBoxLayout(
+            script.cfg, "controlnet_control_mode_list", f"controlnet{self.unit}_control_mode", label="Control mode:"
         )
 
         #Preprocessor settings
@@ -140,14 +135,8 @@ class ControlNetUnitSettings(QWidget):
         self.annotator_preview_button = QPushButton("Preview annotator")
         self.annotator_clear_button = QPushButton("Clear preview")
 
-        main_settings_layout = QHBoxLayout()
-        main_settings_layout.addWidget(self.invert_input_color)
-        main_settings_layout.addWidget(self.RGB_to_BGR)
-
-
         main_settings_layout_2 = QHBoxLayout()
         main_settings_layout_2.addWidget(self.low_vram)
-        main_settings_layout_2.addWidget(self.guess_mode)
 
         guidance_layout = QHBoxLayout()
         guidance_layout.addLayout(self.guidance_start_layout)
@@ -162,13 +151,13 @@ class ControlNetUnitSettings(QWidget):
         layout.addWidget(self.enable)
         layout.addLayout(self.image_loader)
         layout.addLayout(self.tips)
-        layout.addLayout(main_settings_layout)
         layout.addLayout(main_settings_layout_2)
         layout.addLayout(self.preprocessor_layout)
         layout.addLayout(self.model_layout)
         layout.addWidget(self.refresh_button)
         layout.addLayout(self.weight_layout)
         layout.addLayout(guidance_layout)
+        layout.addLayout(self.control_mode)
         layout.addLayout(self.annotator_resolution)
         layout.addLayout(threshold_layout)
         layout.addWidget(self.annotator_preview)
@@ -258,15 +247,13 @@ class ControlNetUnitSettings(QWidget):
            
     def cfg_init(self):  
         self.enable.cfg_init()
-        self.invert_input_color.cfg_init()
-        self.RGB_to_BGR.cfg_init()
         self.low_vram.cfg_init()
-        self.guess_mode.cfg_init()
         self.preprocessor_layout.cfg_init()
         self.model_layout.cfg_init()
         self.weight_layout.cfg_init()
         self.guidance_start_layout.cfg_init()
         self.guidance_end_layout.cfg_init()
+        self.control_mode.cfg_init()
         self.annotator_resolution.cfg_init()
         self.threshold_a.cfg_init()
         self.threshold_b.cfg_init()
@@ -279,15 +266,13 @@ class ControlNetUnitSettings(QWidget):
 
     def cfg_connect(self):
         self.enable.cfg_connect()
-        self.invert_input_color.cfg_connect()
-        self.RGB_to_BGR.cfg_connect()
         self.low_vram.cfg_connect()
-        self.guess_mode.cfg_connect()
         self.preprocessor_layout.cfg_connect()
         self.model_layout.cfg_connect()
         self.weight_layout.cfg_connect()
         self.guidance_start_layout.cfg_connect()
         self.guidance_end_layout.cfg_connect()
+        self.control_mode.cfg_connect()
         self.annotator_resolution.cfg_connect()
         self.threshold_a.cfg_connect()
         self.threshold_b.cfg_connect()

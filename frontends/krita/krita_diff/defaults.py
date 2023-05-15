@@ -56,9 +56,6 @@ CONTROLNET_PREPROCESSOR_SETTINGS = {
         "threshold_b_min_value": 1,
         "threshold_b_max_value": 255
     },
-    "depth": {
-        "resolution_label": "Midas resolution",
-    },
     "depth_leres": {
         "resolution_label": "LeReS resolution",
         "threshold_a_label": "Remove near %",
@@ -67,6 +64,71 @@ CONTROLNET_PREPROCESSOR_SETTINGS = {
         "threshold_a_max_value": 100,
         "threshold_b_min_value": 0,
         "threshold_b_max_value": 100
+    },
+    "depth_leres++": {
+        "resolution_label": "LeReS resolution",
+        "threshold_a_label": "Remove near %",
+        "threshold_b_label": "Remove background %",
+        "threshold_a_min_value": 0,
+        "threshold_a_max_value": 100,
+        "threshold_b_min_value": 0,
+        "threshold_b_max_value": 100
+    },
+    "mediapipe_face": {
+        "threshold_a_label": "Max Faces",
+        "threshold_b_label": "Min Face Confidence",
+        "threshold_a_min_value": 1,
+        "threshold_a_max_value": 10,
+        "threshold_b_min_value": 0.01,
+        "threshold_b_max_value": 1,
+        "threshold_b_step": 0.01
+    },
+    "normal_midas": {
+        "threshold_a_label": "Normal background threshold",
+        "threshold_a_value": 0.4,
+        "threshold_a_min_value": 0,
+        "threshold_a_max_value": 1,
+        "threshold_step": 0.01
+    },
+    "reference_adain": {
+        "threshold_a_label": "Style Fidelity (only for \"Balanced\" mode)",
+        "threshold_a_value": 0.5,
+        "threshold_a_min_value": 0,
+        "threshold_a_max_value": 1,
+        "threshold_step": 0.01
+    },
+    "reference_adain+attn": {
+        "threshold_a_label": "Style Fidelity (only for \"Balanced\" mode)",
+        "threshold_a_value": 0.5,
+        "threshold_a_min_value": 0,
+        "threshold_a_max_value": 1,
+        "threshold_step": 0.01
+    },
+    "reference_only": {
+        "threshold_a_label": "Style Fidelity (only for \"Balanced\" mode)",
+        "threshold_a_value": 0.5,
+        "threshold_a_min_value": 0,
+        "threshold_a_max_value": 1,
+        "threshold_step": 0.01
+    },
+    "scribble_xdog": {
+        "threshold_a_label": "XDoG Threshold",
+        "threshold_a_value": 32,
+        "threshold_a_min_value": 1,
+        "threshold_a_max_value": 64
+    },
+    "threshold": {
+        "threshold_a_label": "Binarization Threshold",
+        "threshold_a_value": 127,
+        "threshold_a_min_value": 0,
+        "threshold_a_max_value": 255
+    },
+    "tile_resample": {
+        "threshold_a_label": "Down Sampling Rate",
+        "threshold_a_value": 1,
+        "threshold_a_min_value": 1,
+        "threshold_a_max_value": 8,
+        "threshold_step": 0.01
     },
     "hed": {
         "resolution_label": "HED resolution",
@@ -197,12 +259,10 @@ class Defaults:
     controlnet_unit_list: List[str] = field(default_factory=lambda: list(str(i) for i in range(10)))
     controlnet_preprocessor_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
     controlnet_model_list: List[str] = field(default_factory=lambda: [ERROR_MSG])
+    controlnet_control_mode_list: List[str] = field(default_factory=lambda: ["Balanced", "My prompt is more important", "ControlNet is more important"])
 
     controlnet0_enable: bool = False
-    controlnet0_invert_input_color: bool = False
-    controlnet0_RGB_to_BGR: bool = False
     controlnet0_low_vram: bool = False
-    controlnet0_guess_mode: bool = False
     controlnet0_preprocessor: str = "None" 
     controlnet0_model: str = "None"
     controlnet0_weight: float = 1.0
@@ -212,12 +272,10 @@ class Defaults:
     controlnet0_threshold_a: float = 0
     controlnet0_threshold_b: float = 0
     controlnet0_input_image: str = ""
+    controlnet0_control_mode: str = "Balanced"
 
     controlnet1_enable: bool = False
-    controlnet1_invert_input_color: bool = False
-    controlnet1_RGB_to_BGR: bool = False
     controlnet1_low_vram: bool = False
-    controlnet1_guess_mode: bool = False
     controlnet1_preprocessor: str = "None" 
     controlnet1_model: str = "None"
     controlnet1_weight: float = 1.0
@@ -227,12 +285,10 @@ class Defaults:
     controlnet1_threshold_a: float = 0
     controlnet1_threshold_b: float = 0
     controlnet1_input_image: str = ""
+    controlnet1_control_mode: str = "Balanced"
 
     controlnet2_enable: bool = False
-    controlnet2_invert_input_color: bool = False
-    controlnet2_RGB_to_BGR: bool = False
     controlnet2_low_vram: bool = False
-    controlnet2_guess_mode: bool = False
     controlnet2_preprocessor: str = "None"
     controlnet2_model: str = "None"
     controlnet2_weight: float = 1.0
@@ -242,12 +298,10 @@ class Defaults:
     controlnet2_threshold_a: float = 0
     controlnet2_threshold_b: float = 0
     controlnet2_input_image: str = ""
+    controlnet2_control_mode: str = "Balanced"
 
     controlnet3_enable: bool = False
-    controlnet3_invert_input_color: bool = False
-    controlnet3_RGB_to_BGR: bool = False
     controlnet3_low_vram: bool = False
-    controlnet3_guess_mode: bool = False
     controlnet3_preprocessor: str = "None"
     controlnet3_model: str = "None"
     controlnet3_weight: float = 1.0
@@ -257,12 +311,10 @@ class Defaults:
     controlnet3_threshold_a: float = 0
     controlnet3_threshold_b: float = 0
     controlnet3_input_image: str = ""
+    controlnet3_control_mode: str = "Balanced"
 
     controlnet4_enable: bool = False
-    controlnet4_invert_input_color: bool = False
-    controlnet4_RGB_to_BGR: bool = False
     controlnet4_low_vram: bool = False
-    controlnet4_guess_mode: bool = False
     controlnet4_preprocessor: str = "None"
     controlnet4_model: str = "None"
     controlnet4_weight: float = 1.0
@@ -272,12 +324,10 @@ class Defaults:
     controlnet4_threshold_a: float = 0
     controlnet4_threshold_b: float = 0
     controlnet4_input_image: str = ""
+    controlnet4_control_mode: str = "Balanced"
 
     controlnet5_enable: bool = False
-    controlnet5_invert_input_color: bool = False
-    controlnet5_RGB_to_BGR: bool = False
     controlnet5_low_vram: bool = False
-    controlnet5_guess_mode: bool = False
     controlnet5_preprocessor: str = "None"
     controlnet5_model: str = "None"
     controlnet5_weight: float = 1.0
@@ -287,12 +337,10 @@ class Defaults:
     controlnet5_threshold_a: float = 0
     controlnet5_threshold_b: float = 0
     controlnet5_input_image: str = ""
+    controlnet5_control_mode: str = "Balanced"
 
     controlnet6_enable: bool = False
-    controlnet6_invert_input_color: bool = False
-    controlnet6_RGB_to_BGR: bool = False
     controlnet6_low_vram: bool = False
-    controlnet6_guess_mode: bool = False
     controlnet6_preprocessor: str = "None"
     controlnet6_model: str = "None"
     controlnet6_weight: float = 1.0
@@ -302,12 +350,10 @@ class Defaults:
     controlnet6_threshold_a: float = 0
     controlnet6_threshold_b: float = 0
     controlnet6_input_image: str = ""
+    controlnet6_control_mode: str = "Balanced"
 
     controlnet7_enable: bool = False
-    controlnet7_invert_input_color: bool = False
-    controlnet7_RGB_to_BGR: bool = False
     controlnet7_low_vram: bool = False
-    controlnet7_guess_mode: bool = False
     controlnet7_preprocessor: str = "None"
     controlnet7_model: str = "None"
     controlnet7_weight: float = 1.0
@@ -317,12 +363,10 @@ class Defaults:
     controlnet7_threshold_a: float = 0
     controlnet7_threshold_b: float = 0
     controlnet7_input_image: str = ""
+    controlnet7_control_mode: str = "Balanced"
 
     controlnet8_enable: bool = False
-    controlnet8_invert_input_color: bool = False
-    controlnet8_RGB_to_BGR: bool = False
     controlnet8_low_vram: bool = False
-    controlnet8_guess_mode: bool = False
     controlnet8_preprocessor: str = "None"
     controlnet8_model: str = "None"
     controlnet8_weight: float = 1.0
@@ -332,12 +376,10 @@ class Defaults:
     controlnet8_threshold_a: float = 0
     controlnet8_threshold_b: float = 0
     controlnet8_input_image: str = ""
+    controlnet8_control_mode: str = "Balanced"
 
     controlnet9_enable: bool = False
-    controlnet9_invert_input_color: bool = False
-    controlnet9_RGB_to_BGR: bool = False
     controlnet9_low_vram: bool = False
-    controlnet9_guess_mode: bool = False
     controlnet9_preprocessor: str = "None"
     controlnet9_model: str = "None"
     controlnet9_weight: float = 1.0
@@ -347,5 +389,6 @@ class Defaults:
     controlnet9_threshold_a: float = 0
     controlnet9_threshold_b: float = 0
     controlnet9_input_image: str = ""
+    controlnet9_control_mode: str = "Balanced"
 
 DEFAULTS = Defaults()

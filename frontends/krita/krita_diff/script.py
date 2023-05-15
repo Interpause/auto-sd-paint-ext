@@ -200,7 +200,7 @@ class Script(QObject):
 
         return mask.rgbSwapped()
 
-    def img_inserter(self, x, y, width, height, group=False, mask_img=None):
+    def img_inserter(self, x, y, width, height, group=False):
         """Return frozen image inserter to insert images as new layer."""
         # Selection may change before callback, so freeze selection region
         has_selection = self.selection is not None
@@ -216,12 +216,7 @@ class Script(QObject):
             else:
                 parent.addChildNode(layer, None)
             return layer
-        
-        def insert_transparency_layer_for_inpaint():
-            ba = img_to_ba(mask_img)
-            mask_layer = self.doc.createNode("Transparency Mask", "paintLayer")   
-            mask_layer.setPixelData(ba, x, y, width, height)
-
+            
         def insert(layer_name, enc):
             nonlocal x, y, width, height, has_selection
             print(f"inserting layer {layer_name}")
@@ -272,6 +267,7 @@ class Script(QObject):
             print(f"inserting at x: {x}, y: {y}, w: {width}, h: {height}")
             layer.setPixelData(ba, x, y, width, height)
             self._inserted_layers.append(layer)
+
             return layer
 
         return insert, glayer
@@ -288,12 +284,6 @@ class Script(QObject):
             if self.cfg(f"controlnet{i}_enable", bool):
                 input_image = b64_to_img(self.cfg(f"controlnet{i}_input_image", str)) if \
                     self.cfg(f"controlnet{i}_input_image", str) else selected
-                
-                if self.cfg(f"controlnet{i}_invert_input_color", bool):
-                    input_image.invertPixels()
-
-                if self.cfg(f"controlnet{i}_RGB_to_BGR", bool):
-                    input_image = input_image.rgbSwapped()
                     
                 input_images.update({f"{i}": input_image})
 
@@ -347,7 +337,7 @@ class Script(QObject):
         mask_image = self.get_mask_image(controlnet_enabled) if is_inpaint else None
 
         insert, glayer = self.img_inserter(
-            self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool), mask_image
+            self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool)
         )
 
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
@@ -411,13 +401,7 @@ class Script(QObject):
         if self.cfg(f"controlnet{unit}_input_image"):
             image = b64_to_img(self.cfg(f"controlnet{unit}_input_image"))
         else:
-            image = self.get_selection_image()
-
-        if self.cfg(f"controlnet{unit}_invert_input_color", bool):
-            image.invertPixels()
-
-        if self.cfg(f"controlnet{unit}_RGB_to_BGR", bool):
-            image = image.rgbSwapped()       
+            image = self.get_selection_image()    
 
         def cb(response):
             assert response is not None, "Backend Error, check terminal"
