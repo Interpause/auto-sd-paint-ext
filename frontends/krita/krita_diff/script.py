@@ -10,7 +10,10 @@ from krita import (
     QImage,
     QColor,
     QPainter,
+    QColor,
+    QPainter,
     QObject,
+    QPixmap,
     QPixmap,
     Qt,
     QTimer,
@@ -32,6 +35,7 @@ from .defaults import (
 from .utils import (
     b64_to_img,
     find_optimal_selection_region,
+    remove_unmasked_content_for_inpaint,
     get_desc_from_resp,
     img_to_ba,
     save_img,
@@ -200,7 +204,8 @@ class Script(QObject):
 
         return mask.rgbSwapped()
 
-    def img_inserter(self, x, y, width, height, group=False):
+    def img_inserter(self, x, y, width, height, group=False, 
+                     is_official_api_inpaint=False, mask_img=None):
         """Return frozen image inserter to insert images as new layer."""
         # Selection may change before callback, so freeze selection region
         has_selection = self.selection is not None
@@ -240,6 +245,9 @@ class Script(QObject):
                 image = image.scaled(
                     width, height, transformMode=Qt.SmoothTransformation
                 )
+
+            if is_official_api_inpaint:
+                image = remove_unmasked_content_for_inpaint(image, mask_img)
 
             # Resize (not scale!) canvas if image is larger (i.e. outpainting or Upscale was used)
             if image.width() > self.doc.width() or image.height() > self.doc.height():
@@ -293,6 +301,8 @@ class Script(QObject):
         # freeze selection region
         controlnet_enabled = self.check_controlnet_enabled()
 
+        controlnet_enabled = self.check_controlnet_enabled()
+
         insert, glayer = self.img_inserter(
             self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool)
         )
@@ -337,7 +347,8 @@ class Script(QObject):
         mask_image = self.get_mask_image(controlnet_enabled) if is_inpaint else None
 
         insert, glayer = self.img_inserter(
-            self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool)
+            self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool),
+            is_inpaint and controlnet_enabled, mask_image
         )
 
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
@@ -378,6 +389,23 @@ class Script(QObject):
                 mask_trigger(layers)
 
         self.eta_timer.start()
+        if controlnet_enabled:
+            if is_inpaint:
+                self.client.post_official_api_inpaint(
+                    cb, sel_image, mask_image, self.width, self.height, self.selection is not None,
+                    self.get_controlnet_input_images(sel_image))
+            else:
+                self.client.post_official_api_img2img(
+                    cb, sel_image, self.width, self.height, self.selection is not None,
+                    self.get_controlnet_input_images(sel_image))
+        else:
+            method = self.client.post_inpaint if is_inpaint else self.client.post_img2img
+            method(
+                cb,
+                sel_image,
+                mask_image,  # is unused by backend in img2img mode
+                self.selection is not None,
+            )
         if controlnet_enabled:
             if is_inpaint:
                 self.client.post_official_api_inpaint(
@@ -525,6 +553,19 @@ class Script(QObject):
     def action_update_config(self):
         """Update certain config/state from the backend."""
         self.client.get_config()
+            
+    def action_update_controlnet_config(self):
+        """Update controlnet config from the backend."""
+        self.client.get_controlnet_config()
+
+    def action_preview_controlnet_annotator(self, preview_label):
+        self.status_changed.emit(STATE_WAIT)
+        self.update_selection()
+        if not self.doc:
+            return
+        self.adjust_selection()
+        self.apply_controlnet_preview_annotator(preview_label)
+
             
     def action_update_controlnet_config(self):
         """Update controlnet config from the backend."""

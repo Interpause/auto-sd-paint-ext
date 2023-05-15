@@ -26,6 +26,7 @@ THREADED = True
 ROUTE_PREFIX = "/sdapi/interpause/"
 OFFICIAL_ROUTE_PREFIX = "/sdapi/v1/"
 CONTROLNET_ROUTE_PREFIX = "/controlnet/"
+CONTROLNET_ROUTE_PREFIX = "/controlnet/"
 
 # error messages
 ERR_MISSING_CONFIG = "Report this bug, developer missed out a config key somewhere."
@@ -40,6 +41,7 @@ TAB_TXT2IMG = "krita_diff_txt2img"
 TAB_IMG2IMG = "krita_diff_img2img"
 TAB_INPAINT = "krita_diff_inpaint"
 TAB_UPSCALE = "krita_diff_upscale"
+TAB_CONTROLNET = "krita_diff_controlnet"
 TAB_CONTROLNET = "krita_diff_controlnet"
 TAB_PREVIEW = "krita_diff_preview"
 
