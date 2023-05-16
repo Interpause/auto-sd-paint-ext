@@ -85,7 +85,7 @@ def find_fixed_aspect_ratio(
     """
     width, height = calculate_resized_image_dimensions(base_size, max_size, orig_width, orig_height)
     
-    return width, height
+    return width/height
 
 def find_optimal_selection_region(
     base_size: int,

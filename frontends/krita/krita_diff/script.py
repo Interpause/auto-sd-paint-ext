@@ -398,23 +398,6 @@ class Script(QObject):
                 mask_image,  # is unused by backend in img2img mode
                 self.selection is not None,
             )
-        if controlnet_enabled:
-            if is_inpaint:
-                self.client.post_official_api_inpaint(
-                    cb, sel_image, mask_image, self.width, self.height, self.selection is not None,
-                    self.get_controlnet_input_images(sel_image))
-            else:
-                self.client.post_official_api_img2img(
-                    cb, sel_image, self.width, self.height, self.selection is not None,
-                    self.get_controlnet_input_images(sel_image))
-        else:
-            method = self.client.post_inpaint if is_inpaint else self.client.post_img2img
-            method(
-                cb,
-                sel_image,
-                mask_image,  # is unused by backend in img2img mode
-                self.selection is not None,
-            )
 
     def apply_controlnet_preview_annotator(self, preview_label): 
         unit = self.cfg("controlnet_unit", str)
