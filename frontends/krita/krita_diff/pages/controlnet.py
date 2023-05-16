@@ -118,7 +118,8 @@ class ControlNetUnitSettings(QWidget):
             label="Threshold A:",
             min=1,
             max=255,
-            step=1
+            step=1,
+            always_float=True
         )
         self.threshold_b = QSpinBoxLayout(
             script.cfg,
@@ -126,7 +127,8 @@ class ControlNetUnitSettings(QWidget):
             label="Threshold B:",
             min=1,
             max=255,
-            step=1
+            step=1,
+            always_float=True
         )
 
         #Preview annotator
