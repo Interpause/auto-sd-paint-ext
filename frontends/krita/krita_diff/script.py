@@ -379,7 +379,7 @@ class Script(QObject):
                 mask_trigger(layers)
             # ...unless we're using the official API
             elif controlnet_enabled:
-                mask_trigger(layers, mask_image)
+                self.controlnet_transparency_mask_inserter(layers, mask_image)
 
         self.eta_timer.start()
         if controlnet_enabled:
@@ -399,6 +399,51 @@ class Script(QObject):
                 mask_image,  # is unused by backend in img2img mode
                 self.selection is not None,
             )
+    
+    def controlnet_transparency_mask_inserter(self, layers: list, mask_image):
+        orig_selection = self.selection.duplicate() if self.selection else None
+        create_mask = self.cfg("create_mask_layer", bool)
+        add_mask_action = self.app.action("add_new_transparency_mask")
+        merge_mask_action = self.app.action("flatten_layer")
+
+        sx = orig_selection.x()
+        sy = orig_selection.y()
+        sw = orig_selection.width()
+        sh = orig_selection.height()
+
+        # must convert mask to single channel format
+        gray_mask = mask_image.convertToFormat(QImage.Format_Grayscale8)
+        
+        w = gray_mask.width()
+        h = gray_mask.height()
+        
+        # int division should end up on the right side of rounding here
+        crop_rect = QRect((w - sw)/2,(h - sh)/2, sw, sh)
+        crop_mask = gray_mask.copy(crop_rect)
+
+        mask_ba = img_to_ba(crop_mask)
+
+        mask_selection = Selection()
+        mask_selection.setPixelData(mask_ba, sx, sy, sw, sh)
+
+        for layer in layers: 
+            layer.setVisible(True)
+            self.doc.setActiveNode(layer)
+            self.doc.setSelection(mask_selection)
+            add_mask_action.trigger()
+
+        self.doc.setSelection(orig_selection)
+
+        for layer in layers:
+            wait = 0 # wait for the mask to show up
+            while (len(layer.childNodes())==0) and (wait < 100):
+                time.sleep(0.1)
+                wait += 1
+            if create_mask:
+                layer.setCollapsed(True)
+            else:
+                self.doc.setActiveNode(layer)
+                merge_mask_action.trigger()
 
     def apply_controlnet_preview_annotator(self, preview_label): 
         unit = self.cfg("controlnet_unit", str)
@@ -443,7 +488,7 @@ class Script(QObject):
         merge_mask_action = self.app.action("flatten_layer")
 
         # This function is recursive to workaround race conditions when calling Krita's actions
-        def add_mask(layers: list, cur_selection, mask_image):
+        def add_mask(layers: list, cur_selection):
             if len(layers) < 1:
                 self.doc.setSelection(cur_selection)  # reset to current selection
                 return
@@ -452,56 +497,39 @@ class Script(QObject):
             orig_visible = layer.visible()
             orig_name = layer.name()
 
-            def restore(mask_image):
+            def restore():
                 # assume newly flattened layer is active
                 result = self.doc.activeNode()
                 result.setVisible(orig_visible)
                 result.setName(orig_name)
 
-                add_mask(layers, cur_selection, mask_image)
+                add_mask(layers, cur_selection)
 
             layer.setVisible(True)
             self.doc.setActiveNode(layer)
             self.doc.setSelection(orig_selection)
             add_mask_action.trigger()
-            if (mask_image):
-                gray_img = mask_image.convertToFormat(QImage.Format_Grayscale8)
                 
-                x = orig_selection.x()
-                y = orig_selection.y()
-                sel_w = orig_selection.width()
-                sel_h = orig_selection.height()
-                w = gray_img.width()
-                h = gray_img.height()
-                crop_rect = QRect((w - sel_w)/2,(h - sel_h)/2, sel_w, sel_h)
-
-                ba = img_to_ba(gray_img.copy(crop_rect))
-                wait = 0
-                while (len(layer.childNodes())==0) and (wait < 100):
-                    time.sleep(0.1)
-                    wait += 1
-                layer.childNodes()[0].setPixelData(ba, x, y, sel_w, sel_h)
-
             if create_mask:
                 # collapse transparency mask by default
                 layer.setCollapsed(True)
                 layer.setVisible(orig_visible)
                 QTimer.singleShot(
-                    ADD_MASK_TIMEOUT, lambda: add_mask(layers, cur_selection, mask_image)
+                    ADD_MASK_TIMEOUT, lambda: add_mask(layers, cur_selection)
                 )
             else:
                 # flatten transparency mask into layer
                 merge_mask_action.trigger()
-                QTimer.singleShot(ADD_MASK_TIMEOUT, lambda: restore(mask_image))
+                QTimer.singleShot(ADD_MASK_TIMEOUT, lambda: restore())
 
-        def trigger_mask_adding(layers: list, mask_image = None):
+        def trigger_mask_adding(layers: list):
             layers = layers[::-1]  # causes final active layer to be the top one
 
-            def handle_mask(mask_image):
+            def handle_mask():
                 cur_selection = self.selection.duplicate() if self.selection else None
-                add_mask(layers, cur_selection, mask_image)
+                add_mask(layers, cur_selection)
 
-            QTimer.singleShot(ADD_MASK_TIMEOUT, lambda: handle_mask(mask_image))
+            QTimer.singleShot(ADD_MASK_TIMEOUT, lambda: handle_mask())
 
         return trigger_mask_adding
 
