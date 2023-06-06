@@ -38,6 +38,8 @@ class ControlNetPage(QWidget):
         
         for controlnet_unit_layout in self.controlnet_unit_layout_list:
             controlnet_unit_layout.cfg_init()
+        
+        self.controlnet_unit_changed(self.controlnet_unit.qcombo.currentText())
 
     def cfg_connect(self):
         self.controlnet_unit.cfg_connect()
