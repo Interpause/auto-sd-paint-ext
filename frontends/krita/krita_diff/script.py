@@ -10,11 +10,9 @@ from krita import (
     QImage,
     QColor,
     QPainter,
-    QColor,
-    QPainter,
     QObject,
     QPixmap,
-    QPixmap,
+    QRect,
     Qt,
     QTimer,
     Selection,
@@ -379,6 +377,9 @@ class Script(QObject):
             # dont need transparency mask for inpaint mode
             if not is_inpaint:
                 mask_trigger(layers)
+            # ...unless we're using the official API
+            elif controlnet_enabled:
+                mask_trigger(layers, mask_image)
 
         self.eta_timer.start()
         if controlnet_enabled:
@@ -442,7 +443,7 @@ class Script(QObject):
         merge_mask_action = self.app.action("flatten_layer")
 
         # This function is recursive to workaround race conditions when calling Krita's actions
-        def add_mask(layers: list, cur_selection):
+        def add_mask(layers: list, cur_selection, mask_image):
             if len(layers) < 1:
                 self.doc.setSelection(cur_selection)  # reset to current selection
                 return
@@ -451,39 +452,56 @@ class Script(QObject):
             orig_visible = layer.visible()
             orig_name = layer.name()
 
-            def restore():
+            def restore(mask_image):
                 # assume newly flattened layer is active
                 result = self.doc.activeNode()
                 result.setVisible(orig_visible)
                 result.setName(orig_name)
 
-                add_mask(layers, cur_selection)
+                add_mask(layers, cur_selection, mask_image)
 
             layer.setVisible(True)
             self.doc.setActiveNode(layer)
             self.doc.setSelection(orig_selection)
             add_mask_action.trigger()
+            if (mask_image):
+                gray_img = mask_image.convertToFormat(QImage.Format_Grayscale8)
+                
+                x = orig_selection.x()
+                y = orig_selection.y()
+                sel_w = orig_selection.width()
+                sel_h = orig_selection.height()
+                w = gray_img.width()
+                h = gray_img.height()
+                crop_rect = QRect((w - sel_w)/2,(h - sel_h)/2, sel_w, sel_h)
+
+                ba = img_to_ba(gray_img.copy(crop_rect))
+                wait = 0
+                while (len(layer.childNodes())==0) and (wait < 100):
+                    time.sleep(0.1)
+                    wait += 1
+                layer.childNodes()[0].setPixelData(ba, x, y, sel_w, sel_h)
 
             if create_mask:
                 # collapse transparency mask by default
                 layer.setCollapsed(True)
                 layer.setVisible(orig_visible)
                 QTimer.singleShot(
-                    ADD_MASK_TIMEOUT, lambda: add_mask(layers, cur_selection)
+                    ADD_MASK_TIMEOUT, lambda: add_mask(layers, cur_selection, mask_image)
                 )
             else:
                 # flatten transparency mask into layer
                 merge_mask_action.trigger()
-                QTimer.singleShot(ADD_MASK_TIMEOUT, lambda: restore())
+                QTimer.singleShot(ADD_MASK_TIMEOUT, lambda: restore(mask_image))
 
-        def trigger_mask_adding(layers: list):
+        def trigger_mask_adding(layers: list, mask_image = None):
             layers = layers[::-1]  # causes final active layer to be the top one
 
-            def handle_mask():
+            def handle_mask(mask_image):
                 cur_selection = self.selection.duplicate() if self.selection else None
-                add_mask(layers, cur_selection)
+                add_mask(layers, cur_selection, mask_image)
 
-            QTimer.singleShot(ADD_MASK_TIMEOUT, lambda: handle_mask())
+            QTimer.singleShot(ADD_MASK_TIMEOUT, lambda: handle_mask(mask_image))
 
         return trigger_mask_adding
 
