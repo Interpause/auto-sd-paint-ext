@@ -430,20 +430,20 @@ class Script(QObject):
             layer.setVisible(True)
             self.doc.setActiveNode(layer)
             self.doc.setSelection(mask_selection)
+            self.doc.waitForDone() # deals with race condition?
             add_mask_action.trigger()
 
         self.doc.setSelection(orig_selection)
-
+        i = 0
         for layer in layers:
-            wait = 0 # wait for the mask to show up
-            while (len(layer.childNodes())==0) and (wait < 100):
-                time.sleep(0.1)
-                wait += 1
+            i += 1
+            self.doc.waitForDone() # deals with race condition
             if create_mask:
                 layer.setCollapsed(True)
             else:
                 self.doc.setActiveNode(layer)
                 merge_mask_action.trigger()
+            if i != len(layers): layer.setVisible(False)
 
     def apply_controlnet_preview_annotator(self, preview_label): 
         unit = self.cfg("controlnet_unit", str)
