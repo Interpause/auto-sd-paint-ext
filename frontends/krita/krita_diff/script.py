@@ -184,20 +184,12 @@ class Script(QObject):
         )
 
         if using_official_api:
-            #replace mask's transparency with white color, since official API
-            #doesn't seem to work with transparency. Assuming masked content
-            #is black.
-            new_mask = QImage(mask.size(), QImage.Format_RGBA8888)
-            new_mask.fill(QColor("white"))
-
-            painter = QPainter(new_mask)
-            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
-            painter.drawImage(0, 0, mask)
-            painter.end()
-
-            #Invert colors so white corresponds to masked area.
-            new_mask.invertPixels()
-            mask = new_mask
+            # Official API requires a black and white mask.
+            # Fastest way to do this: Convert to 1 channel alpha, tell it that
+            # it's grayscale, convert that to RGBA.
+            mask = mask.convertToFormat(QImage.Format_Alpha8)
+            mask.reinterpretAsFormat(QImage.Format_Grayscale8)
+            mask = mask.convertToFormat(QImage.Format_RGBA8888)
 
         return mask.rgbSwapped()
 
@@ -357,11 +349,37 @@ class Script(QObject):
             save_img(sel_image, path)
 
         def cb(response):
+            def cb_upscale(upscale_response):
+                if len(self.client.long_reqs) == 1:  # last request
+                    self.eta_timer.stop()
+                assert response is not None, "Backend Error, check terminal"
+
+                outputs = upscale_response["images"]
+                layer_name_prefix = "inpaint" if is_inpaint else "img2img"
+                glayer_name, layer_names = get_desc_from_resp(response, layer_name_prefix)
+                layers = [
+                    insert(name if name else f"{layer_name_prefix} {i + 1}", output)
+                    for output, name, i in zip(outputs, layer_names, itertools.count())
+                ]
+                if self.cfg("hide_layers", bool):
+                    for layer in layers[:-1]:
+                        layer.setVisible(False)
+                if glayer:
+                    glayer.setName(glayer_name)
+                self.doc.refreshProjection()
+                self.controlnet_transparency_mask_inserter(layers, mask_image)
+
             if len(self.client.long_reqs) == 1:  # last request
                 self.eta_timer.stop()
             assert response is not None, "Backend Error, check terminal"
 
             outputs = response["outputs"] if not controlnet_enabled else response["images"]
+
+            if controlnet_enabled: 
+                self.client.post_official_api_upscale_postprocess(
+                    cb_upscale, outputs, self.width, self.height)
+                return
+
             layer_name_prefix = "inpaint" if is_inpaint else "img2img"
             glayer_name, layer_names = get_desc_from_resp(response, layer_name_prefix)
             layers = [
@@ -377,9 +395,6 @@ class Script(QObject):
             # dont need transparency mask for inpaint mode
             if not is_inpaint:
                 mask_trigger(layers)
-            # ...unless we're using the official API
-            elif controlnet_enabled:
-                self.controlnet_transparency_mask_inserter(layers, mask_image)
 
         self.eta_timer.start()
         if controlnet_enabled:
