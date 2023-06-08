@@ -67,6 +67,7 @@ class Script(QObject):
     status_changed = pyqtSignal(str)
     config_updated = pyqtSignal()
     progress_update = pyqtSignal(object)
+    controlnet_preview_annotator_received = pyqtSignal(QPixmap)
 
     def __init__(self):
         super(Script, self).__init__()
@@ -445,7 +446,7 @@ class Script(QObject):
                 merge_mask_action.trigger()
             if i != len(layers): layer.setVisible(False)
 
-    def apply_controlnet_preview_annotator(self, preview_label): 
+    def apply_controlnet_preview_annotator(self): 
         unit = self.cfg("controlnet_unit", str)
         if self.cfg(f"controlnet{unit}_input_image"):
             image = b64_to_img(self.cfg(f"controlnet{unit}_input_image"))
@@ -456,10 +457,7 @@ class Script(QObject):
             assert response is not None, "Backend Error, check terminal"
             output = response["images"][0]
             pixmap = QPixmap.fromImage(b64_to_img(output))
-
-            if pixmap.width() > preview_label.width():
-                pixmap = pixmap.scaledToWidth(preview_label.width(), Qt.SmoothTransformation)
-            preview_label.setPixmap(pixmap)
+            self.controlnet_preview_annotator_received.emit(pixmap)
 
         self.client.post_controlnet_preview(cb, image)
 
@@ -579,26 +577,26 @@ class Script(QObject):
         """Update controlnet config from the backend."""
         self.client.get_controlnet_config()
 
-    def action_preview_controlnet_annotator(self, preview_label):
+    def action_preview_controlnet_annotator(self):
         self.status_changed.emit(STATE_WAIT)
         self.update_selection()
         if not self.doc:
             return
         self.adjust_selection()
-        self.apply_controlnet_preview_annotator(preview_label)
+        self.apply_controlnet_preview_annotator()
 
             
     def action_update_controlnet_config(self):
         """Update controlnet config from the backend."""
         self.client.get_controlnet_config()
 
-    def action_preview_controlnet_annotator(self, preview_label):
+    def action_preview_controlnet_annotator(self):
         self.status_changed.emit(STATE_WAIT)
         self.update_selection()
         if not self.doc:
             return
         self.adjust_selection()
-        self.apply_controlnet_preview_annotator(preview_label)
+        self.apply_controlnet_preview_annotator()
 
     def action_interrupt(self):
         def cb(resp=None):

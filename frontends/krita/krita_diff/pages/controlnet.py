@@ -1,9 +1,27 @@
-from krita import QPixmap, QImage, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QStackedLayout, Qt
+from krita import (
+    QApplication, 
+    QPixmap, 
+    QImage, 
+    QPushButton, 
+    QWidget, 
+    QVBoxLayout, 
+    QHBoxLayout, 
+    QStackedLayout, 
+    Qt
+)
 
 from functools import partial
 from ..defaults import CONTROLNET_PREPROCESSOR_SETTINGS
 from ..script import script
-from ..widgets import QLabel, StatusBar, ImageLoaderLayout, QCheckBox, TipsLayout, QComboBoxLayout, QSpinBoxLayout
+from ..widgets import (
+    QLabel, 
+    StatusBar, 
+    ImageLoaderLayout, 
+    QCheckBox, 
+    TipsLayout, 
+    QComboBoxLayout, 
+    QSpinBoxLayout
+)
 from ..utils import img_to_b64, b64_to_img
 
 class ControlNetPage(QWidget):                                                      
@@ -54,6 +72,7 @@ class ControlNetUnitSettings(QWidget):
     def __init__(self, cfg_unit_number: int = 0, *args, **kwargs):
         super(ControlNetUnitSettings, self).__init__(*args, **kwargs)           
         self.unit = cfg_unit_number
+        self.preview_result = QPixmap() #This will help us to copy to clipboard the image with original dimensions.
 
         #Top checkbox
         self.enable = QCheckBox(
@@ -138,6 +157,7 @@ class ControlNetUnitSettings(QWidget):
         self.annotator_preview.setAlignment(Qt.AlignCenter)
         self.annotator_preview_button = QPushButton("Preview annotator")
         self.annotator_clear_button = QPushButton("Clear preview")
+        self.copy_result_button = QPushButton("Copy result to clipboard")
 
         main_settings_layout_2 = QHBoxLayout()
         main_settings_layout_2.addWidget(self.low_vram)
@@ -166,6 +186,7 @@ class ControlNetUnitSettings(QWidget):
         layout.addLayout(threshold_layout)
         layout.addWidget(self.annotator_preview)
         layout.addWidget(self.annotator_preview_button)
+        layout.addWidget(self.copy_result_button)
         layout.addWidget(self.annotator_clear_button)
         layout.addStretch()
 
@@ -243,6 +264,21 @@ class ControlNetUnitSettings(QWidget):
     def image_loaded(self):
         image = self.image_loader.preview.pixmap().toImage().convertToFormat(QImage.Format_RGBA8888)
         script.cfg.set(f"controlnet{self.unit}_input_image", img_to_b64(image)) 
+
+    def annotator_preview_received(self, pixmap):
+        self.preview_result = pixmap
+        if pixmap.width() > self.annotator_preview.width():
+            pixmap = pixmap.scaledToWidth(self.annotator_preview.width(), Qt.SmoothTransformation)
+        self.annotator_preview.setPixmap(pixmap)
+    
+    def annotator_clear_button_released(self):
+        self.annotator_preview.setPixmap(QPixmap())
+        self.preview_result = QPixmap()
+
+    def copy_result_released(self):
+        if self.preview_result:
+            clipboard = QApplication.clipboard()
+            clipboard.setImage(self.preview_result.toImage())
            
     def cfg_init(self):  
         self.enable.cfg_init()
@@ -257,7 +293,7 @@ class ControlNetUnitSettings(QWidget):
         self.threshold_a.cfg_init()
         self.threshold_b.cfg_init()
 
-        if (self.preprocessor_layout.qcombo.currentText() == "none"):
+        if self.preprocessor_layout.qcombo.currentText() == "none":
             self.annotator_preview_button.setEnabled(False)
         else:
             self.annotator_preview_button.setEnabled(True)
@@ -287,6 +323,8 @@ class ControlNetUnitSettings(QWidget):
         )
         self.refresh_button.released.connect(lambda: script.action_update_controlnet_config())
         self.annotator_preview_button.released.connect(
-            lambda: script.action_preview_controlnet_annotator(self.annotator_preview)
+            lambda: script.action_preview_controlnet_annotator()
         )
+        self.copy_result_button.released.connect(self.copy_result_released)
         self.annotator_clear_button.released.connect(lambda: self.annotator_preview.setPixmap(QPixmap()))
+        script.controlnet_preview_annotator_received.connect(self.annotator_preview_received)
