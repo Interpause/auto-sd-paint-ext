@@ -171,6 +171,9 @@ class ControlNetUnitSettings(QWidget):
 
         self.setLayout(layout)
 
+        self.cfg_init()
+        self.set_preprocessor_options(self.preprocessor_layout.qcombo.currentText())
+
     def set_preprocessor_options(self, selected: str):
         if selected in CONTROLNET_PREPROCESSOR_SETTINGS:
             self.show_preprocessor_options()
@@ -239,7 +242,7 @@ class ControlNetUnitSettings(QWidget):
 
     def image_loaded(self):
         image = self.image_loader.preview.pixmap().toImage().convertToFormat(QImage.Format_RGBA8888)
-        script.cfg.set(f"controlnet{self.unit}_input_image", img_to_b64(image))
+        script.cfg.set(f"controlnet{self.unit}_input_image", img_to_b64(image)) 
            
     def cfg_init(self):  
         self.enable.cfg_init()
@@ -253,7 +256,6 @@ class ControlNetUnitSettings(QWidget):
         self.annotator_resolution.cfg_init()
         self.threshold_a.cfg_init()
         self.threshold_b.cfg_init()
-        self.set_preprocessor_options(self.preprocessor_layout.qcombo.currentText())
 
         if (self.preprocessor_layout.qcombo.currentText() == "none"):
             self.annotator_preview_button.setEnabled(False)
