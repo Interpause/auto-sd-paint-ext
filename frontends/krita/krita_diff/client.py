@@ -640,15 +640,27 @@ class Client(QObject):
         )
         self.post("upscale", params, cb)
 
-    def post_controlnet_preview(self, cb, src_img):
-        unit = self.cfg("controlnet_unit", str)
+    def post_controlnet_preview(self, cb, src_img, width, height):
+        def get_pixel_perfect_preprocessor_resolution():
+            if self.cfg("disable_sddebz_highres", bool):
+                return width if width <= height else height
+
+            resized_width, resized_height = calculate_resized_image_dimensions(
+                self.cfg("sd_base_size", int), self.cfg("sd_max_size", int), width, height
+            )
+            return resized_width if resized_width <= resized_height else resized_height
+        
+        unit = self.cfg("controlnet_unit", str)  
+        preprocessor_resolution = get_pixel_perfect_preprocessor_resolution() if self.cfg(f"controlnet{unit}_pixel_perfect", bool)  \
+            else self.cfg(f"controlnet{unit}_preprocessor_resolution", int)
+        
         params = (
             {
-                "controlnet_module": self.cfg(f"controlnet{unit}_preprocessor"),
+                "controlnet_module": self.cfg(f"controlnet{unit}_preprocessor", str),
                 "controlnet_input_images": [img_to_b64(src_img)],
-                "controlnet_processor_res": self.cfg(f"controlnet{unit}_preprocessor_resolution"),
-                "controlnet_threshold_a": self.cfg(f"controlnet{unit}_threshold_a"),
-                "controlnet_threshold_b": self.cfg(f"controlnet{unit}_threshold_b")
+                "controlnet_processor_res": preprocessor_resolution,
+                "controlnet_threshold_a": self.cfg(f"controlnet{unit}_threshold_a", float),
+                "controlnet_threshold_b": self.cfg(f"controlnet{unit}_threshold_b", float)
             } #Not sure if it's necessary to make the just_use_yaml validation here
         )
         url = get_url(self.cfg, prefix=CONTROLNET_ROUTE_PREFIX)

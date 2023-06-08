@@ -90,11 +90,16 @@ class ControlNetUnitSettings(QWidget):
             script.cfg, f"controlnet{self.unit}_low_vram", "Low VRAM"
         )
 
+        self.pixel_perfect = QCheckBox(
+            script.cfg, f"controlnet{self.unit}_pixel_perfect", "Pixel Perfect"
+        )
+
         #Tips
         self.tips = TipsLayout(
             ["Invert colors if your image has white background.",
              "Selection will be used as input if no image has been uploaded or pasted.",
-             "Remember to set multi-controlnet in the backend as well if you want to use more than one unit."]
+             "Remember to set multi-controlnet in the backend as well if you want to use more than one unit.",
+             "Enable pixel perfect if you want the preprocessor to automatically adjust to the selection size (respects base/max size)"]
         )
 
         #Preprocessor list
@@ -161,6 +166,7 @@ class ControlNetUnitSettings(QWidget):
 
         main_settings_layout_2 = QHBoxLayout()
         main_settings_layout_2.addWidget(self.low_vram)
+        main_settings_layout_2.addWidget(self.pixel_perfect)
 
         guidance_layout = QHBoxLayout()
         guidance_layout.addLayout(self.guidance_start_layout)
@@ -279,10 +285,19 @@ class ControlNetUnitSettings(QWidget):
         if self.preview_result:
             clipboard = QApplication.clipboard()
             clipboard.setImage(self.preview_result.toImage())
+
+    def hide_or_show_preprocessor_resolution(self, pixel_perfect):
+        if pixel_perfect:
+            self.annotator_resolution.qlabel.hide()
+            self.annotator_resolution.qspin.hide()
+        else:
+            self.annotator_resolution.qlabel.show()
+            self.annotator_resolution.qspin.show()
            
     def cfg_init(self):  
         self.enable.cfg_init()
         self.low_vram.cfg_init()
+        self.pixel_perfect.cfg_init()
         self.preprocessor_layout.cfg_init()
         self.model_layout.cfg_init()
         self.weight_layout.cfg_init()
@@ -293,6 +308,8 @@ class ControlNetUnitSettings(QWidget):
         self.threshold_a.cfg_init()
         self.threshold_b.cfg_init()
 
+        self.hide_or_show_preprocessor_resolution(self.pixel_perfect.isChecked())
+
         if self.preprocessor_layout.qcombo.currentText() == "none":
             self.annotator_preview_button.setEnabled(False)
         else:
@@ -301,6 +318,7 @@ class ControlNetUnitSettings(QWidget):
     def cfg_connect(self):
         self.enable.cfg_connect()
         self.low_vram.cfg_connect()
+        self.pixel_perfect.cfg_connect()
         self.preprocessor_layout.cfg_connect()
         self.model_layout.cfg_connect()
         self.weight_layout.cfg_connect()
@@ -315,6 +333,9 @@ class ControlNetUnitSettings(QWidget):
         self.image_loader.paste_button.released.connect(self.image_loaded)
         self.image_loader.clear_button.released.connect(
             partial(script.cfg.set, f"controlnet{self.unit}_input_image", "")
+        )
+        self.pixel_perfect.stateChanged.connect(
+            lambda: self.hide_or_show_preprocessor_resolution(self.pixel_perfect.isChecked())
         )
         self.preprocessor_layout.qcombo.currentTextChanged.connect(self.set_preprocessor_options)
         self.preprocessor_layout.qcombo.currentTextChanged.connect(

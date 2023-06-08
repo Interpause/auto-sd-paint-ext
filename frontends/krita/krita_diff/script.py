@@ -459,7 +459,7 @@ class Script(QObject):
             pixmap = QPixmap.fromImage(b64_to_img(output))
             self.controlnet_preview_annotator_received.emit(pixmap)
 
-        self.client.post_controlnet_preview(cb, image)
+        self.client.post_controlnet_preview(cb, image, self.width, self.height)
 
     def apply_simple_upscale(self):
         insert, _ = self.img_inserter(self.x, self.y, self.width, self.height)
