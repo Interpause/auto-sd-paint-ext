@@ -376,8 +376,14 @@ class Script(QObject):
             outputs = response["outputs"] if not controlnet_enabled else response["images"]
 
             if controlnet_enabled: 
-                self.client.post_official_api_upscale_postprocess(
-                    cb_upscale, outputs, self.width, self.height)
+                if min(self.width,self.height) > self.cfg("sd_base_size", int) \
+                    or max(self.width,self.height) > self.cfg("sd_max_size", int):
+                    # this only handles with base/max size enabled
+                    self.client.post_official_api_upscale_postprocess(
+                        cb_upscale, outputs, self.width, self.height)
+                else:
+                    # passing response directly to the callback works fine
+                    cb_upscale(response) 
                 return
 
             layer_name_prefix = "inpaint" if is_inpaint else "img2img"
