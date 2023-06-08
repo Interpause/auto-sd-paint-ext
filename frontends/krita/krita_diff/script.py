@@ -421,11 +421,16 @@ class Script(QObject):
         add_mask_action = self.app.action("add_new_transparency_mask")
         merge_mask_action = self.app.action("flatten_layer")
 
-        sx = orig_selection.x()
-        sy = orig_selection.y()
-        sw = orig_selection.width()
-        sh = orig_selection.height()
-
+        if orig_selection:
+            sx = orig_selection.x()
+            sy = orig_selection.y()
+            sw = orig_selection.width()
+            sh = orig_selection.height()
+        else:
+            sx = 0
+            sy = 0
+            sw = self.doc.width()
+            sh = self.doc.height()
         # must convert mask to single channel format
         gray_mask = mask_image.convertToFormat(QImage.Format_Grayscale8)
         
