@@ -455,7 +455,7 @@ class Script(QObject):
 
         self.doc.setActiveNode(glayer)
         self.doc.setSelection(mask_selection)
-        self.doc.waitForDone() # deals with race condition?
+        self.doc.refreshProjection() # deals with race condition?
         add_mask_action.trigger()
         self.doc.waitForDone()
         self.doc.setSelection(orig_selection)
