@@ -284,6 +284,7 @@ class Script(QObject):
         # freeze selection region
         controlnet_enabled = self.check_controlnet_enabled()
         glayer = self.doc.createGroupLayer("Unnamed Group")
+        self.doc.rootNode().addChildNode(glayer, None)
         insert = self.img_inserter(
             self.x, self.y, self.width, self.height, glayer
         )
@@ -327,8 +328,7 @@ class Script(QObject):
         mask_trigger = self.transparency_mask_inserter()
         mask_image = self.get_mask_image(controlnet_enabled) if is_inpaint else None
         glayer = self.doc.createGroupLayer("Unnamed Group")
-        parent = self.doc.rootNode()
-        parent.addChildNode(glayer, None)
+        self.doc.rootNode().addChildNode(glayer, None)
         insert = self.img_inserter(
             self.x, self.y, self.width, self.height, glayer
         )
