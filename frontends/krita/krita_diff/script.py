@@ -193,11 +193,10 @@ class Script(QObject):
 
         return mask.rgbSwapped()
 
-    def img_inserter(self, x, y, width, height, group=False):
+    def img_inserter(self, x, y, width, height, glayer=None):
         """Return frozen image inserter to insert images as new layer."""
         # Selection may change before callback, so freeze selection region
         has_selection = self.selection is not None
-        glayer = self.doc.createGroupLayer("Unnamed Group") if group else None
 
         def create_layer(name: str):
             """Create new layer in document or group"""
@@ -205,7 +204,6 @@ class Script(QObject):
             parent = self.doc.rootNode()
             if glayer:
                 glayer.addChildNode(layer, None)
-                parent.addChildNode(glayer, None)
             else:
                 parent.addChildNode(layer, None)
             return layer
@@ -263,7 +261,7 @@ class Script(QObject):
 
             return layer
 
-        return insert, glayer
+        return insert
     
     def check_controlnet_enabled(self):
         for i in range(len(self.cfg("controlnet_unit_list", "QStringList"))):
@@ -285,9 +283,9 @@ class Script(QObject):
     def apply_txt2img(self):
         # freeze selection region
         controlnet_enabled = self.check_controlnet_enabled()
-
-        insert, glayer = self.img_inserter(
-            self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool)
+        glayer = self.doc.createGroupLayer("Unnamed Group")
+        insert = self.img_inserter(
+            self.x, self.y, self.width, self.height, glayer
         )
         mask_trigger = self.transparency_mask_inserter()
 
@@ -328,9 +326,11 @@ class Script(QObject):
 
         mask_trigger = self.transparency_mask_inserter()
         mask_image = self.get_mask_image(controlnet_enabled) if is_inpaint else None
-
-        insert, glayer = self.img_inserter(
-            self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool)
+        glayer = self.doc.createGroupLayer("Unnamed Group")
+        parent = self.doc.rootNode()
+        parent.addChildNode(glayer, None)
+        insert = self.img_inserter(
+            self.x, self.y, self.width, self.height, glayer
         )
 
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
@@ -342,6 +342,7 @@ class Script(QObject):
                 save_img(mask_image, mask_path)
             # auto-hide mask layer before getting selection image
             self.node.setVisible(False)
+            self.controlnet_transparency_mask_inserter(glayer, mask_image)
             self.doc.refreshProjection()
 
         sel_image = self.get_selection_image()
@@ -367,7 +368,6 @@ class Script(QObject):
                 if glayer:
                     glayer.setName(glayer_name)
                 self.doc.refreshProjection()
-                self.controlnet_transparency_mask_inserter(layers, mask_image)
 
             if len(self.client.long_reqs) == 1:  # last request
                 self.eta_timer.stop()
@@ -421,7 +421,7 @@ class Script(QObject):
                 self.selection is not None,
             )
     
-    def controlnet_transparency_mask_inserter(self, layers: list, mask_image):
+    def controlnet_transparency_mask_inserter(self, glayer, mask_image):
         orig_selection = self.selection.duplicate() if self.selection else None
         create_mask = self.cfg("create_mask_layer", bool)
         add_mask_action = self.app.action("add_new_transparency_mask")
@@ -443,6 +443,7 @@ class Script(QObject):
         w = gray_mask.width()
         h = gray_mask.height()
         
+        # crop mask to the actual selection side
         # int division should end up on the right side of rounding here
         crop_rect = QRect((w - sw)/2,(h - sh)/2, sw, sh)
         crop_mask = gray_mask.copy(crop_rect)
@@ -452,24 +453,12 @@ class Script(QObject):
         mask_selection = Selection()
         mask_selection.setPixelData(mask_ba, sx, sy, sw, sh)
 
-        for layer in layers: 
-            layer.setVisible(True)
-            self.doc.setActiveNode(layer)
-            self.doc.setSelection(mask_selection)
-            self.doc.waitForDone() # deals with race condition?
-            add_mask_action.trigger()
-
+        self.doc.setActiveNode(glayer)
+        self.doc.setSelection(mask_selection)
+        self.doc.waitForDone() # deals with race condition?
+        add_mask_action.trigger()
+        self.doc.waitForDone()
         self.doc.setSelection(orig_selection)
-        i = 0
-        for layer in layers:
-            i += 1
-            self.doc.waitForDone() # deals with race condition
-            if create_mask:
-                layer.setCollapsed(True)
-            else:
-                self.doc.setActiveNode(layer)
-                merge_mask_action.trigger()
-            if i != len(layers): layer.setVisible(False)
 
     def apply_controlnet_preview_annotator(self, preview_label): 
         unit = self.cfg("controlnet_unit", str)
@@ -490,7 +479,7 @@ class Script(QObject):
         self.client.post_controlnet_preview(cb, image)
 
     def apply_simple_upscale(self):
-        insert, _ = self.img_inserter(self.x, self.y, self.width, self.height)
+        insert = self.img_inserter(self.x, self.y, self.width, self.height)
         sel_image = self.get_selection_image()
 
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
