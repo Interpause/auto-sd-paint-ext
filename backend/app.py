@@ -283,6 +283,9 @@ def f_img2img(req: Img2ImgRequest):
         "",  # img2img_batch_input_dir (unspported)
         "",  # img2img_batch_output_dir (unsupported)
         "",  # img2img_batch_inpaint_mask_dir (unsupported)
+        get_sampler_index(req.sampler_name), # hr_sampler_index
+        "", # hr_prompt
+        "", # hr_negative_prompt
         [],  # override_settings_texts (unsupported)
         *args,
     )
