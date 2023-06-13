@@ -437,21 +437,22 @@ class Script(QObject):
             sy = 0
             sw = self.doc.width()
             sh = self.doc.height()
+
         # must convert mask to single channel format
         gray_mask = mask_image.convertToFormat(QImage.Format_Grayscale8)
         
-        w = gray_mask.width()
-        h = gray_mask.height()
-        
-        # crop mask to the actual selection side
-        # int division should end up on the right side of rounding here
-        crop_rect = QRect((w - sw)/2,(h - sh)/2, sw, sh)
+        # crop mask to the actual selection size
+        crop_rect = QRect(0, 0, sw, sh)
         crop_mask = gray_mask.copy(crop_rect)
 
         mask_ba = img_to_ba(crop_mask)
 
+        # Why is sizeInBytes() different from width * height? Just... why?
+        w = crop_mask.bytesPerLine() 
+        h = crop_mask.sizeInBytes()/w
+
         mask_selection = Selection()
-        mask_selection.setPixelData(mask_ba, sx, sy, sw, sh)
+        mask_selection.setPixelData(mask_ba, sx, sy, w, h)
 
         def apply_mask_when_ready():
             # glayer will be selected when it is done being created
