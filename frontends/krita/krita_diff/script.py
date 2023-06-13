@@ -193,7 +193,7 @@ class Script(QObject):
 
         return mask.rgbSwapped()
 
-    def img_inserter(self, x, y, width, height, glayer=None):
+    def img_inserter(self, x, y, width, height, inpaint=False, glayer=None):
         """Return frozen image inserter to insert images as new layer."""
         # Selection may change before callback, so freeze selection region
         has_selection = self.selection is not None
@@ -222,11 +222,11 @@ class Script(QObject):
                 f"image created: {image}, {image.width()}x{image.height()}, depth: {image.depth()}, format: {image.format()}"
             )
 
-            # NOTE: Scaling is usually done by backend (although I am reconsidering this)
-            # The scaling here is for SD Upscale or Upscale on a selection region rather than whole image
+            # NOTE: Scaling must be done by the frontend when using the official API.
+            # The scaling here is for SD Upscale, Upscale on a selection region, or inpainting.
             # Image won't be scaled down ONLY if there is no selection; i.e. selecting whole image will scale down,
             # not selecting anything won't scale down, leading to the canvas being resized afterwards
-            if has_selection and (image.width() != width or image.height() != height):
+            if (has_selection or inpaint) and (image.width() != width or image.height() != height):
                 print(f"Rescaling image to selection: {width}x{height}")
                 image = image.scaled(
                     width, height, transformMode=Qt.SmoothTransformation
@@ -286,7 +286,7 @@ class Script(QObject):
         glayer = self.doc.createGroupLayer("Unnamed Group")
         self.doc.rootNode().addChildNode(glayer, None)
         insert = self.img_inserter(
-            self.x, self.y, self.width, self.height, glayer
+            self.x, self.y, self.width, self.height, False, glayer
         )
         mask_trigger = self.transparency_mask_inserter()
 
@@ -330,7 +330,7 @@ class Script(QObject):
         glayer = self.doc.createGroupLayer("Unnamed Group")
         self.doc.rootNode().addChildNode(glayer, None)
         insert = self.img_inserter(
-            self.x, self.y, self.width, self.height, glayer
+            self.x, self.y, self.width, self.height, is_inpaint, glayer
         )
 
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
