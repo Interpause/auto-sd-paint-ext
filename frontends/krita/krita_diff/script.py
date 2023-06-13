@@ -453,12 +453,17 @@ class Script(QObject):
         mask_selection = Selection()
         mask_selection.setPixelData(mask_ba, sx, sy, sw, sh)
 
-        self.doc.setActiveNode(glayer)
-        self.doc.setSelection(mask_selection)
-        self.doc.refreshProjection() # deals with race condition?
-        add_mask_action.trigger()
-        self.doc.waitForDone()
-        self.doc.setSelection(orig_selection)
+        def apply_mask_when_ready():
+            # glayer will be selected when it is done being created
+            if self.doc.activeNode() == glayer: 
+                self.doc.setSelection(mask_selection)
+                add_mask_action.trigger()
+                self.doc.setSelection(orig_selection)
+                timer.stop()
+
+        timer = QTimer()
+        timer.timeout.connect(apply_mask_when_ready)
+        timer.start(0.05)
 
     def apply_controlnet_preview_annotator(self, preview_label): 
         unit = self.cfg("controlnet_unit", str)
