@@ -288,7 +288,7 @@ class Client(QObject):
             for i in range(len(self.cfg("controlnet_unit_list", "QStringList"))):
                 if self.cfg(f"controlnet{i}_enable", bool):
                     controlnet_units_param.append(
-                        self.controlnet_unit_params(img_to_b64(controlnet_src_imgs[str(i)]), i)
+                        self.controlnet_unit_params(img_to_b64(controlnet_src_imgs[str(i)]), i, width, height)
                     )
                 else:
                     controlnet_units_param.append({"enabled": False})
@@ -301,14 +301,16 @@ class Client(QObject):
         
         return params
     
-    def controlnet_unit_params(self, image: str, unit: int):
+    def controlnet_unit_params(self, image: str, unit: int, width: int, height: int):
+        preprocessor_resolution = min(width, height) if self.cfg(f"controlnet{unit}_pixel_perfect", bool)  \
+            else self.cfg(f"controlnet{unit}_preprocessor_resolution", int)
         params = dict(
             input_image=image,
             module=self.cfg(f"controlnet{unit}_preprocessor", str),
             model=self.cfg(f"controlnet{unit}_model", str),
             weight=self.cfg(f"controlnet{unit}_weight", float),
             lowvram=self.cfg(f"controlnet{unit}_low_vram", bool),
-            processor_res=self.cfg(f"controlnet{unit}_preprocessor_resolution", int),
+            processor_res=preprocessor_resolution,
             threshold_a=self.cfg(f"controlnet{unit}_threshold_a", float),
             threshold_b=self.cfg(f"controlnet{unit}_threshold_b", float),
             guidance_start=self.cfg(f"controlnet{unit}_guidance_start", float),
