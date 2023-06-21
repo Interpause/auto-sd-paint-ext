@@ -441,8 +441,10 @@ class Script(QObject):
         # must convert mask to single channel format
         gray_mask = mask_image.convertToFormat(QImage.Format_Grayscale8)
         
+        mw = gray_mask.width()
+        mh = gray_mask.height()
         # crop mask to the actual selection size
-        crop_rect = QRect(0, 0, sw, sh)
+        crop_rect = QRect((mw - sw)/2,(mh - sh)/2, sw, sh)
         crop_mask = gray_mask.copy(crop_rect)
 
         mask_ba = img_to_ba(crop_mask)
