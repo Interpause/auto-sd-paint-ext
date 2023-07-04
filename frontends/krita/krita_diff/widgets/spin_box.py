@@ -17,6 +17,7 @@ class QSpinBoxLayout(QHBoxLayout):
         min: Union[int, float] = 0.0,
         max: Union[int, float] = 1.0,
         step: Union[int, float] = 0.1,
+        always_float: bool = False, #Workaround for controlnet threshold spin boxes
         *args,
         **kwargs
     ):
@@ -40,6 +41,7 @@ class QSpinBoxLayout(QHBoxLayout):
         self.qlabel = QLabel(field_cfg if label is None else label)
 
         is_integer = (
+            not always_float and
             float(step).is_integer()
             and float(min).is_integer()
             and float(max).is_integer()

@@ -8,11 +8,15 @@ from krita import (
     Krita,
     Node,
     QImage,
+    QColor,
+    QPainter,
     QObject,
+    QPixmap,
+    QRect,
     Qt,
     QTimer,
     Selection,
-    pyqtSignal,
+    pyqtSignal
 )
 
 from .client import Client
@@ -63,6 +67,7 @@ class Script(QObject):
     status_changed = pyqtSignal(str)
     config_updated = pyqtSignal()
     progress_update = pyqtSignal(object)
+    controlnet_preview_annotator_received = pyqtSignal(QPixmap)
 
     def __init__(self):
         super(Script, self).__init__()
@@ -165,25 +170,34 @@ class Script(QObject):
             QImage.Format_RGBA8888,
         ).rgbSwapped()
 
-    def get_mask_image(self) -> Union[QImage, None]:
+    def get_mask_image(self, using_official_api) -> Union[QImage, None]:
         """QImage of mask layer for inpainting"""
         if self.node.type() not in {"paintlayer", "filelayer"}:
             assert False, "Please select a valid layer to use as inpaint mask!"
         elif self.node in self._inserted_layers:
             assert False, "Selected layer was generated. Copy the layer if sure you want to use it as inpaint mask."
 
-        return QImage(
+        mask = QImage(
             self.node.pixelData(self.x, self.y, self.width, self.height),
             self.width,
             self.height,
             QImage.Format_RGBA8888,
-        ).rgbSwapped()
+        )
 
-    def img_inserter(self, x, y, width, height, group=False):
+        if using_official_api:
+            # Official API requires a black and white mask.
+            # Fastest way to do this: Convert to 1 channel alpha, tell it that
+            # it's grayscale, convert that to RGBA.
+            mask = mask.convertToFormat(QImage.Format_Alpha8)
+            mask.reinterpretAsFormat(QImage.Format_Grayscale8)
+            mask = mask.convertToFormat(QImage.Format_RGBA8888)
+
+        return mask.rgbSwapped()
+
+    def img_inserter(self, x, y, width, height, inpaint=False, glayer=None):
         """Return frozen image inserter to insert images as new layer."""
         # Selection may change before callback, so freeze selection region
         has_selection = self.selection is not None
-        glayer = self.doc.createGroupLayer("Unnamed Group") if group else None
 
         def create_layer(name: str):
             """Create new layer in document or group"""
@@ -191,11 +205,10 @@ class Script(QObject):
             parent = self.doc.rootNode()
             if glayer:
                 glayer.addChildNode(layer, None)
-                parent.addChildNode(glayer, None)
             else:
                 parent.addChildNode(layer, None)
             return layer
-
+            
         def insert(layer_name, enc):
             nonlocal x, y, width, height, has_selection
             print(f"inserting layer {layer_name}")
@@ -210,11 +223,11 @@ class Script(QObject):
                 f"image created: {image}, {image.width()}x{image.height()}, depth: {image.depth()}, format: {image.format()}"
             )
 
-            # NOTE: Scaling is usually done by backend (although I am reconsidering this)
-            # The scaling here is for SD Upscale or Upscale on a selection region rather than whole image
+            # NOTE: Scaling must be done by the frontend when using the official API.
+            # The scaling here is for SD Upscale, Upscale on a selection region, or inpainting.
             # Image won't be scaled down ONLY if there is no selection; i.e. selecting whole image will scale down,
             # not selecting anything won't scale down, leading to the canvas being resized afterwards
-            if has_selection and (image.width() != width or image.height() != height):
+            if (has_selection or inpaint) and (image.width() != width or image.height() != height):
                 print(f"Rescaling image to selection: {width}x{height}")
                 image = image.scaled(
                     width, height, transformMode=Qt.SmoothTransformation
@@ -246,14 +259,35 @@ class Script(QObject):
             print(f"inserting at x: {x}, y: {y}, w: {width}, h: {height}")
             layer.setPixelData(ba, x, y, width, height)
             self._inserted_layers.append(layer)
+
             return layer
 
-        return insert, glayer
+        return insert
+    
+    def check_controlnet_enabled(self):
+        for i in range(len(self.cfg("controlnet_unit_list", "QStringList"))):
+            if self.cfg(f"controlnet{i}_enable", bool):
+                return True
+            
+    def get_controlnet_input_images(self, selected):
+        input_images = dict()
+
+        for i in range(len(self.cfg("controlnet_unit_list", "QStringList"))):    
+            if self.cfg(f"controlnet{i}_enable", bool):
+                input_image = b64_to_img(self.cfg(f"controlnet{i}_input_image", str)) if \
+                    self.cfg(f"controlnet{i}_input_image", str) else selected
+                    
+                input_images.update({f"{i}": input_image})
+
+        return input_images
 
     def apply_txt2img(self):
         # freeze selection region
-        insert, glayer = self.img_inserter(
-            self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool)
+        controlnet_enabled = self.check_controlnet_enabled()
+        glayer = self.doc.createGroupLayer("Unnamed Group")
+        self.doc.rootNode().addChildNode(glayer, None)
+        insert = self.img_inserter(
+            self.x, self.y, self.width, self.height, False, glayer
         )
         mask_trigger = self.transparency_mask_inserter()
 
@@ -261,7 +295,8 @@ class Script(QObject):
             if len(self.client.long_reqs) == 1:  # last request
                 self.eta_timer.stop()
             assert response is not None, "Backend Error, check terminal"
-            outputs = response["outputs"]
+            #response key varies for official api used for controlnet
+            outputs = response["outputs"] if not controlnet_enabled else response["images"]
             glayer_name, layer_names = get_desc_from_resp(response, "txt2img")
             layers = [
                 insert(name if name else f"txt2img {i + 1}", output)
@@ -276,16 +311,28 @@ class Script(QObject):
             mask_trigger(layers)
 
         self.eta_timer.start(ETA_REFRESH_INTERVAL)
-        self.client.post_txt2img(
-            cb, self.width, self.height, self.selection is not None
-        )
+
+        if controlnet_enabled:
+            sel_image = self.get_selection_image()
+            self.client.post_official_api_txt2img(
+                cb, self.width, self.height, self.selection is not None, 
+                self.get_controlnet_input_images(sel_image)
+            )
+        else:
+            self.client.post_txt2img(
+                cb, self.width, self.height, self.selection is not None
+            )
 
     def apply_img2img(self, is_inpaint):
-        insert, glayer = self.img_inserter(
-            self.x, self.y, self.width, self.height, not self.cfg("no_groups", bool)
-        )
+        controlnet_enabled = self.check_controlnet_enabled()
+
         mask_trigger = self.transparency_mask_inserter()
-        mask_image = self.get_mask_image()
+        mask_image = self.get_mask_image(controlnet_enabled) if is_inpaint else None
+        glayer = self.doc.createGroupLayer("Unnamed Group")
+        self.doc.rootNode().addChildNode(glayer, None)
+        insert = self.img_inserter(
+            self.x, self.y, self.width, self.height, is_inpaint, glayer
+        )
 
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
         mask_path = os.path.join(
@@ -296,6 +343,7 @@ class Script(QObject):
                 save_img(mask_image, mask_path)
             # auto-hide mask layer before getting selection image
             self.node.setVisible(False)
+            self.controlnet_transparency_mask_inserter(glayer, mask_image)
             self.doc.refreshProjection()
 
         sel_image = self.get_selection_image()
@@ -303,11 +351,42 @@ class Script(QObject):
             save_img(sel_image, path)
 
         def cb(response):
+            def cb_upscale(upscale_response):
+                if len(self.client.long_reqs) == 1:  # last request
+                    self.eta_timer.stop()
+                assert response is not None, "Backend Error, check terminal"
+
+                outputs = upscale_response["images"]
+                layer_name_prefix = "inpaint" if is_inpaint else "img2img"
+                glayer_name, layer_names = get_desc_from_resp(response, layer_name_prefix)
+                layers = [
+                    insert(name if name else f"{layer_name_prefix} {i + 1}", output)
+                    for output, name, i in zip(outputs, layer_names, itertools.count())
+                ]
+                if self.cfg("hide_layers", bool):
+                    for layer in layers[:-1]:
+                        layer.setVisible(False)
+                if glayer:
+                    glayer.setName(glayer_name)
+                self.doc.refreshProjection()
+
             if len(self.client.long_reqs) == 1:  # last request
                 self.eta_timer.stop()
             assert response is not None, "Backend Error, check terminal"
 
-            outputs = response["outputs"]
+            outputs = response["outputs"] if not controlnet_enabled else response["images"]
+
+            if controlnet_enabled: 
+                if min(self.width,self.height) > self.cfg("sd_base_size", int) \
+                    or max(self.width,self.height) > self.cfg("sd_max_size", int):
+                    # this only handles with base/max size enabled
+                    self.client.post_official_api_upscale_postprocess(
+                        cb_upscale, outputs, self.width, self.height)
+                else:
+                    # passing response directly to the callback works fine
+                    cb_upscale(response) 
+                return
+
             layer_name_prefix = "inpaint" if is_inpaint else "img2img"
             glayer_name, layer_names = get_desc_from_resp(response, layer_name_prefix)
             layers = [
@@ -324,17 +403,89 @@ class Script(QObject):
             if not is_inpaint:
                 mask_trigger(layers)
 
-        method = self.client.post_inpaint if is_inpaint else self.client.post_img2img
         self.eta_timer.start()
-        method(
-            cb,
-            sel_image,
-            mask_image,  # is unused by backend in img2img mode
-            self.selection is not None,
-        )
+        if controlnet_enabled:
+            if is_inpaint:
+                self.client.post_official_api_inpaint(
+                    cb, sel_image, mask_image, self.width, self.height, self.selection is not None,
+                    self.get_controlnet_input_images(sel_image))
+            else:
+                self.client.post_official_api_img2img(
+                    cb, sel_image, self.width, self.height, self.selection is not None,
+                    self.get_controlnet_input_images(sel_image))
+        else:
+            method = self.client.post_inpaint if is_inpaint else self.client.post_img2img
+            method(
+                cb,
+                sel_image,
+                mask_image,  # is unused by backend in img2img mode
+                self.selection is not None,
+            )
+    
+    def controlnet_transparency_mask_inserter(self, glayer, mask_image):
+        orig_selection = self.selection.duplicate() if self.selection else None
+        create_mask = self.cfg("create_mask_layer", bool)
+        add_mask_action = self.app.action("add_new_transparency_mask")
+        merge_mask_action = self.app.action("flatten_layer")
+
+        if orig_selection:
+            sx = orig_selection.x()
+            sy = orig_selection.y()
+            sw = orig_selection.width()
+            sh = orig_selection.height()
+        else:
+            sx = 0
+            sy = 0
+            sw = self.doc.width()
+            sh = self.doc.height()
+
+        # must convert mask to single channel format
+        gray_mask = mask_image.convertToFormat(QImage.Format_Grayscale8)
+        
+        mw = gray_mask.width()
+        mh = gray_mask.height()
+        # crop mask to the actual selection size
+        crop_rect = QRect((mw - sw)/2,(mh - sh)/2, sw, sh)
+        crop_mask = gray_mask.copy(crop_rect)
+
+        mask_ba = img_to_ba(crop_mask)
+
+        # Why is sizeInBytes() different from width * height? Just... why?
+        w = crop_mask.bytesPerLine() 
+        h = crop_mask.sizeInBytes()/w
+
+        mask_selection = Selection()
+        mask_selection.setPixelData(mask_ba, sx, sy, w, h)
+
+        def apply_mask_when_ready():
+            # glayer will be selected when it is done being created
+            if self.doc.activeNode() == glayer: 
+                self.doc.setSelection(mask_selection)
+                add_mask_action.trigger()
+                self.doc.setSelection(orig_selection)
+                timer.stop()
+
+        timer = QTimer()
+        timer.timeout.connect(apply_mask_when_ready)
+        timer.start(0.05)
+
+    def apply_controlnet_preview_annotator(self): 
+        unit = self.cfg("controlnet_unit", str)
+        if self.cfg(f"controlnet{unit}_input_image"):
+            image = b64_to_img(self.cfg(f"controlnet{unit}_input_image"))
+        else:
+            image = self.get_selection_image()    
+
+        def cb(response):
+            assert response is not None, "Backend Error, check terminal"
+            output = response["images"][0]
+            pixmap = QPixmap.fromImage(b64_to_img(output))
+            self.controlnet_preview_annotator_received.emit(pixmap)
+
+        self.client.post_controlnet_preview(cb, image, self.width, self.height)
 
     def apply_simple_upscale(self):
-        insert, _ = self.img_inserter(self.x, self.y, self.width, self.height)
+        insert = self.img_inserter(self.x, self.y, self.width, self.height)
         sel_image = self.get_selection_image()
 
         path = os.path.join(self.cfg("sample_path", str), f"{int(time.time())}.png")
@@ -379,7 +530,7 @@ class Script(QObject):
             self.doc.setActiveNode(layer)
             self.doc.setSelection(orig_selection)
             add_mask_action.trigger()
-
+                
             if create_mask:
                 # collapse transparency mask by default
                 layer.setCollapsed(True)
@@ -444,6 +595,31 @@ class Script(QObject):
     def action_update_config(self):
         """Update certain config/state from the backend."""
         self.client.get_config()
+            
+    def action_update_controlnet_config(self):
+        """Update controlnet config from the backend."""
+        self.client.get_controlnet_config()
+
+    def action_preview_controlnet_annotator(self):
+        self.status_changed.emit(STATE_WAIT)
+        self.update_selection()
+        if not self.doc:
+            return
+        self.adjust_selection()
+        self.apply_controlnet_preview_annotator()
+
+            
+    def action_update_controlnet_config(self):
+        """Update controlnet config from the backend."""
+        self.client.get_controlnet_config()
+
+    def action_preview_controlnet_annotator(self):
+        self.status_changed.emit(STATE_WAIT)
+        self.update_selection()
+        if not self.doc:
+            return
+        self.adjust_selection()
+        self.apply_controlnet_preview_annotator()
 
     def action_interrupt(self):
         def cb(resp=None):

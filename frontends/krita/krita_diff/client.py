@@ -14,13 +14,21 @@ from .defaults import (
     LONG_TIMEOUT,
     OFFICIAL_ROUTE_PREFIX,
     ROUTE_PREFIX,
+    CONTROLNET_ROUTE_PREFIX,
     SHORT_TIMEOUT,
     STATE_DONE,
     STATE_READY,
     STATE_URLERROR,
     THREADED,
 )
-from .utils import bytewise_xor, fix_prompt, get_ext_args, get_ext_key, img_to_b64
+from .utils import (
+    bytewise_xor, 
+    fix_prompt, 
+    get_ext_args, 
+    get_ext_key, 
+    img_to_b64, 
+    calculate_resized_image_dimensions
+)
 
 # NOTE: backend queues up responses, so no explicit need to block multiple requests
 # except to prevent user from spamming themselves
@@ -238,6 +246,78 @@ class Client(QObject):
             save_samples=self.cfg("save_temp_images", bool),
         )
         return params
+    
+    def options_params(self):
+        """Parameters that are specific for the official API options endpoint
+        or overriding settings."""
+        params = dict(
+            sd_model_checkpoint=self.cfg("sd_model", str),
+            sd_vae=self.cfg("sd_vae", str),
+            CLIP_stop_at_last_layers=self.cfg("clip_skip", int),
+            upscaler_for_img2img=self.cfg("upscaler_name", str),
+            face_restoration_model=self.cfg("face_restorer_model", str),
+            code_former_weight=self.cfg("codeformer_weight", float),
+            #Couldn't find filter_nsfw option for official API.
+            img2img_fix_steps=self.cfg("do_exact_steps", bool), #Not sure if this is matched correctly.
+            img2img_color_correction=self.cfg("img2img_color_correct", bool),
+            return_grid=self.cfg("include_grid", bool)
+        )
+        return params
+    
+    def official_api_common_params(self, has_selection, width, height,
+                                   controlnet_src_imgs):
+        """Parameters used by most official API endpoints."""
+        tiling = self.cfg("sd_tiling", bool) and not (
+            self.cfg("only_full_img_tiling", bool) and has_selection
+        )
+
+        params = dict(
+            batch_size=self.cfg("sd_batch_size", int),
+            width=width,
+            height=height,
+            tiling=tiling,
+            restore_faces=self.cfg("face_restorer_model", str) != "None",
+            override_settings=self.options_params(),
+            override_settings_restore_afterwards=True,
+            alwayson_scripts={}
+        )
+
+        if controlnet_src_imgs:
+            controlnet_units_param = list()
+
+            for i in range(len(self.cfg("controlnet_unit_list", "QStringList"))):
+                if self.cfg(f"controlnet{i}_enable", bool):
+                    controlnet_units_param.append(
+                        self.controlnet_unit_params(img_to_b64(controlnet_src_imgs[str(i)]), i, width, height)
+                    )
+                else:
+                    controlnet_units_param.append({"enabled": False})
+                
+            params["alwayson_scripts"].update({
+                "controlnet": {
+                    "args": controlnet_units_param
+                }
+            })
+        
+        return params
+    
+    def controlnet_unit_params(self, image: str, unit: int, width: int, height: int):
+        preprocessor_resolution = min(width, height) if self.cfg(f"controlnet{unit}_pixel_perfect", bool)  \
+            else self.cfg(f"controlnet{unit}_preprocessor_resolution", int)
+        params = dict(
+            input_image=image,
+            module=self.cfg(f"controlnet{unit}_preprocessor", str),
+            model=self.cfg(f"controlnet{unit}_model", str),
+            weight=self.cfg(f"controlnet{unit}_weight", float),
+            lowvram=self.cfg(f"controlnet{unit}_low_vram", bool),
+            processor_res=preprocessor_resolution,
+            threshold_a=self.cfg(f"controlnet{unit}_threshold_a", float),
+            threshold_b=self.cfg(f"controlnet{unit}_threshold_b", float),
+            guidance_start=self.cfg(f"controlnet{unit}_guidance_start", float),
+            guidance_end=self.cfg(f"controlnet{unit}_guidance_end", float),
+            control_mode=self.cfg(f"controlnet{unit}_control_mode", str)
+        )
+        return params
 
     def get_config(self):
         def cb(obj):
@@ -294,6 +374,42 @@ class Client(QObject):
 
         self.get("config", cb, ignore_no_connection=True)
 
+    def get_controlnet_config(self):
+        '''Get models and modules for ControlNet'''
+        def check_response(obj, key: str):
+            try:
+                assert key in obj
+            except:
+                self.status.emit(
+                    f"{STATE_URLERROR}: incompatible response, are you running the right API?"
+                )
+                print("Invalid Response:\n", obj)
+                return
+            
+        def set_model_list(obj):
+            key = "model_list"
+            check_response(obj, key)
+            self.cfg.set("controlnet_model_list", ["None"] + obj[key])
+
+        def set_preprocessor_list(obj):
+            key = "module_list"
+            check_response(obj, key)
+            self.cfg.set("controlnet_preprocessor_list", obj[key])
+
+        #Get controlnet API url
+        url = get_url(self.cfg, prefix=CONTROLNET_ROUTE_PREFIX)
+        self.get("model_list", set_model_list, base_url=url)
+        self.get("module_list", set_preprocessor_list, base_url=url)
+
+    # def post_options(self):
+    #     """Sets the options for the backend, using the official API"""
+    #     def cb(response):
+    #         assert response is not None, "Backend Error, check terminal"
+
+    #     params = self.options_params()
+    #     url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
+    #     self.post("options", params, cb, base_url=url)   
+
     def post_txt2img(self, cb, width, height, has_selection):
         params = dict(orig_width=width, orig_height=height)
         if not self.cfg("just_use_yaml", bool):
@@ -320,8 +436,48 @@ class Client(QObject):
 
         self.post("txt2img", params, cb)
 
+    def post_official_api_txt2img(self, cb, width, height, has_selection, 
+                                    controlnet_src_imgs: dict = {}):
+        """Uses official API. Leave controlnet_src_imgs empty to not use controlnet."""
+        if not self.cfg("just_use_yaml", bool):
+            seed = (
+                int(self.cfg("txt2img_seed", str))  # Qt casts int as 32-bit int
+                if not self.cfg("txt2img_seed", str).strip() == ""
+                else -1
+            )
+            ext_name = self.cfg("txt2img_script", str)
+            ext_args = get_ext_args(self.ext_cfg, "scripts_txt2img", ext_name)
+            resized_width, resized_height = calculate_resized_image_dimensions(
+                self.cfg("sd_base_size", int), self.cfg("sd_max_size", int), width, height
+            )
+            disable_base_and_max_size = self.cfg("disable_sddebz_highres", bool)
+            params = self.official_api_common_params(
+                has_selection, 
+                resized_width if not disable_base_and_max_size else width, 
+                resized_height if not disable_base_and_max_size else height, 
+                controlnet_src_imgs
+            )
+            params.update(
+                prompt=fix_prompt(self.cfg("txt2img_prompt", str)),
+                negative_prompt=fix_prompt(self.cfg("txt2img_negative_prompt", str)),
+                sampler_name=self.cfg("txt2img_sampler", str),
+                steps=self.cfg("txt2img_steps", int),
+                cfg_scale=self.cfg("txt2img_cfg_scale", float),
+                seed=seed,
+                enable_hr=self.cfg("txt2img_highres", bool),
+                hr_upscaler=self.cfg("upscaler_name", str),
+                hr_resize_x=width,
+                hr_resize_y=height,
+                denoising_strength=self.cfg("txt2img_denoising_strength", float),
+                script_name=ext_name if ext_name != "None" else None, #Prevent unrecognized "None" script from backend
+                script_args=ext_args if ext_name != "None" else []
+            )
+
+            url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
+            self.post("txt2img", params, cb, base_url=url)
+
     def post_img2img(self, cb, src_img, mask_img, has_selection):
-        params = dict(is_inpaint=False, src_img=img_to_b64(src_img))
+        params = dict(is_inpaint=False, src_img=img_to_b64(src_img))   
         if not self.cfg("just_use_yaml", bool):
             seed = (
                 int(self.cfg("img2img_seed", str))  # Qt casts int as 32-bit int
@@ -346,11 +502,49 @@ class Client(QObject):
 
         self.post("img2img", params, cb)
 
+    def post_official_api_img2img(self, cb, src_img, width, height, has_selection, 
+                                controlnet_src_imgs: dict = {}):
+        """Uses official API. Leave controlnet_src_imgs empty to not use controlnet."""
+        params = dict(init_images=[img_to_b64(src_img)])
+        if not self.cfg("just_use_yaml", bool):
+            seed = (
+                int(self.cfg("img2img_seed", str))  # Qt casts int as 32-bit int
+                if not self.cfg("img2img_seed", str).strip() == ""
+                else -1
+            )
+            ext_name = self.cfg("img2img_script", str)
+            ext_args = get_ext_args(self.ext_cfg, "scripts_img2img", ext_name)
+            resized_width, resized_height = calculate_resized_image_dimensions(
+                self.cfg("sd_base_size", int), self.cfg("sd_max_size", int), width, height
+            )
+            disable_base_and_max_size = self.cfg("disable_sddebz_highres", bool)
+            params.update(self.official_api_common_params(
+                has_selection, 
+                resized_width if not disable_base_and_max_size else width, 
+                resized_height if not disable_base_and_max_size else height, 
+                controlnet_src_imgs
+            ))
+            params.update(
+                prompt=fix_prompt(self.cfg("img2img_prompt", str)),
+                negative_prompt=fix_prompt(self.cfg("img2img_negative_prompt", str)),
+                sampler_name=self.cfg("img2img_sampler", str),
+                steps=self.cfg("img2img_steps", int),
+                cfg_scale=self.cfg("img2img_cfg_scale", float),
+                seed=seed,
+                denoising_strength=self.cfg("img2img_denoising_strength", float),
+                script_name=ext_name if ext_name != "None" else None,
+                script_args=ext_args if ext_name != "None" else []
+            )
+
+        url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
+        self.post("img2img", params, cb, base_url=url)
+
     def post_inpaint(self, cb, src_img, mask_img, has_selection):
         assert mask_img, "Inpaint layer is needed for inpainting!"
         params = dict(
             is_inpaint=True, src_img=img_to_b64(src_img), mask_img=img_to_b64(mask_img)
         )
+
         if not self.cfg("just_use_yaml", bool):
             seed = (
                 int(self.cfg("inpaint_seed", str))  # Qt casts int as 32-bit int
@@ -385,6 +579,57 @@ class Client(QObject):
 
         self.post("img2img", params, cb)
 
+    def post_official_api_inpaint(self, cb, src_img, mask_img, width, height, has_selection, 
+                                controlnet_src_imgs: dict = {}):
+        """Uses official API. Leave controlnet_src_imgs empty to not use controlnet."""
+        assert mask_img, "Inpaint layer is needed for inpainting!"
+        params = dict(
+            init_images=[img_to_b64(src_img)], mask=img_to_b64(mask_img)
+        )
+        if not self.cfg("just_use_yaml", bool):
+            seed = (
+                int(self.cfg("inpaint_seed", str))  # Qt casts int as 32-bit int
+                if not self.cfg("inpaint_seed", str).strip() == ""
+                else -1
+            )
+            fill = self.cfg("inpaint_fill_list", "QStringList").index(
+                self.cfg("inpaint_fill", str)
+            )
+            ext_name = self.cfg("inpaint_script", str)
+            ext_args = get_ext_args(self.ext_cfg, "scripts_inpaint", ext_name)
+            resized_width, resized_height = calculate_resized_image_dimensions(
+                self.cfg("sd_base_size", int), self.cfg("sd_max_size", int), width, height
+            )
+            invert_mask = self.cfg("inpaint_invert_mask", bool)
+            disable_base_and_max_size = self.cfg("disable_sddebz_highres", bool)
+            params.update(self.official_api_common_params(
+                has_selection, 
+                resized_width if not disable_base_and_max_size else width, 
+                resized_height if not disable_base_and_max_size else height, 
+                controlnet_src_imgs
+            ))
+            params.update(
+                prompt=fix_prompt(self.cfg("inpaint_prompt", str)),
+                negative_prompt=fix_prompt(self.cfg("inpaint_negative_prompt", str)),
+                sampler_name=self.cfg("inpaint_sampler", str),
+                steps=self.cfg("inpaint_steps", int),
+                cfg_scale=self.cfg("inpaint_cfg_scale", float),
+                seed=seed,
+                denoising_strength=self.cfg("inpaint_denoising_strength", float),
+                script_name=ext_name if ext_name != "None" else None,
+                script_args=ext_args if ext_name != "None" else [],
+                inpainting_mask_invert=0 if not invert_mask else 1,
+                inpainting_fill=fill,
+                mask_blur=0,
+                inpaint_full_res=False
+                #not sure what's the equivalent of mask weight for official API
+            )
+
+            params["override_settings"]["return_grid"] = False
+
+        url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
+        self.post("img2img", params, cb, base_url=url)
+
     def post_upscale(self, cb, src_img):
         params = (
             {
@@ -396,6 +641,61 @@ class Client(QObject):
             else {"src_img": img_to_b64(src_img)}
         )
         self.post("upscale", params, cb)
+
+    def post_official_api_upscale_postprocess(self, cb, src_imgs: list, width, height):
+        """Uses official API. Intended for finalizing img2img pipeline."""
+
+        params = dict(
+            resize_mode=1,
+            show_extras_results=False,
+            gfpgan_visibility=0,
+            codeformer_visibility=0,
+            codeformer_weight=0,
+            upscaling_resize=1,
+            upscaling_resize_w=width,
+            upscaling_resize_h=height,
+            upscaling_crop=True,
+            upscaler_1=self.cfg("upscaler_name", str),
+            upscaler_2="None", # Todo: would be nice to support blended upscalers
+            extras_upscaler_2_visibility=0,
+            upscale_first=False,
+            imageList=[]
+        )
+
+        for img in src_imgs:
+            params["imageList"].append({
+                "data": img,
+                "name": "example_image"
+            })
+
+        url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
+        self.post("extra-batch-images", params, cb, base_url=url)
+
+    def post_controlnet_preview(self, cb, src_img, width, height):
+        def get_pixel_perfect_preprocessor_resolution():
+            if self.cfg("disable_sddebz_highres", bool):
+                return min(width, height)
+
+            resized_width, resized_height = calculate_resized_image_dimensions(
+                self.cfg("sd_base_size", int), self.cfg("sd_max_size", int), width, height
+            )
+            return min(resized_width, resized_height)
+        
+        unit = self.cfg("controlnet_unit", str)  
+        preprocessor_resolution = get_pixel_perfect_preprocessor_resolution() if self.cfg(f"controlnet{unit}_pixel_perfect", bool)  \
+            else self.cfg(f"controlnet{unit}_preprocessor_resolution", int)
+        
+        params = (
+            {
+                "controlnet_module": self.cfg(f"controlnet{unit}_preprocessor", str),
+                "controlnet_input_images": [img_to_b64(src_img)],
+                "controlnet_processor_res": preprocessor_resolution,
+                "controlnet_threshold_a": self.cfg(f"controlnet{unit}_threshold_a", float),
+                "controlnet_threshold_b": self.cfg(f"controlnet{unit}_threshold_b", float)
+            } #Not sure if it's necessary to make the just_use_yaml validation here
+        )
+        url = get_url(self.cfg, prefix=CONTROLNET_ROUTE_PREFIX)
+        self.post("detect", params, cb, url)
 
     def post_interrupt(self, cb):
         # get official API url
