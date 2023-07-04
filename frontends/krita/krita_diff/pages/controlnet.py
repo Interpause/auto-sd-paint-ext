@@ -1,9 +1,27 @@
-from krita import QPixmap, QImage, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QStackedLayout, Qt
+from krita import (
+    QApplication, 
+    QPixmap, 
+    QImage, 
+    QPushButton, 
+    QWidget, 
+    QVBoxLayout, 
+    QHBoxLayout, 
+    QStackedLayout, 
+    Qt
+)
 
 from functools import partial
 from ..defaults import CONTROLNET_PREPROCESSOR_SETTINGS
 from ..script import script
-from ..widgets import QLabel, StatusBar, ImageLoaderLayout, QCheckBox, TipsLayout, QComboBoxLayout, QSpinBoxLayout
+from ..widgets import (
+    QLabel, 
+    StatusBar, 
+    ImageLoaderLayout, 
+    QCheckBox, 
+    TipsLayout, 
+    QComboBoxLayout, 
+    QSpinBoxLayout
+)
 from ..utils import img_to_b64, b64_to_img
 
 class ControlNetPage(QWidget):                                                      
@@ -54,6 +72,7 @@ class ControlNetUnitSettings(QWidget):
     def __init__(self, cfg_unit_number: int = 0, *args, **kwargs):
         super(ControlNetUnitSettings, self).__init__(*args, **kwargs)           
         self.unit = cfg_unit_number
+        self.preview_result = QPixmap() #This will help us to copy to clipboard the image with original dimensions.
 
         #Top checkbox
         self.enable = QCheckBox(
@@ -71,11 +90,16 @@ class ControlNetUnitSettings(QWidget):
             script.cfg, f"controlnet{self.unit}_low_vram", "Low VRAM"
         )
 
+        self.pixel_perfect = QCheckBox(
+            script.cfg, f"controlnet{self.unit}_pixel_perfect", "Pixel Perfect"
+        )
+
         #Tips
         self.tips = TipsLayout(
             ["Invert colors if your image has white background.",
              "Selection will be used as input if no image has been uploaded or pasted.",
-             "Remember to set multi-controlnet in the backend as well if you want to use more than one unit."]
+             "Remember to set multi-controlnet in the backend as well if you want to use more than one unit.",
+             "Enable pixel perfect if you want the preprocessor to automatically adjust to the selection size (respects base/max size)"]
         )
 
         #Preprocessor list
@@ -138,9 +162,11 @@ class ControlNetUnitSettings(QWidget):
         self.annotator_preview.setAlignment(Qt.AlignCenter)
         self.annotator_preview_button = QPushButton("Preview annotator")
         self.annotator_clear_button = QPushButton("Clear preview")
+        self.copy_result_button = QPushButton("Copy result to clipboard")
 
         main_settings_layout_2 = QHBoxLayout()
         main_settings_layout_2.addWidget(self.low_vram)
+        main_settings_layout_2.addWidget(self.pixel_perfect)
 
         guidance_layout = QHBoxLayout()
         guidance_layout.addLayout(self.guidance_start_layout)
@@ -166,6 +192,7 @@ class ControlNetUnitSettings(QWidget):
         layout.addLayout(threshold_layout)
         layout.addWidget(self.annotator_preview)
         layout.addWidget(self.annotator_preview_button)
+        layout.addWidget(self.copy_result_button)
         layout.addWidget(self.annotator_clear_button)
         layout.addStretch()
 
@@ -243,10 +270,34 @@ class ControlNetUnitSettings(QWidget):
     def image_loaded(self):
         image = self.image_loader.preview.pixmap().toImage().convertToFormat(QImage.Format_RGBA8888)
         script.cfg.set(f"controlnet{self.unit}_input_image", img_to_b64(image)) 
+
+    def annotator_preview_received(self, pixmap):
+        self.preview_result = pixmap
+        if pixmap.width() > self.annotator_preview.width():
+            pixmap = pixmap.scaledToWidth(self.annotator_preview.width(), Qt.SmoothTransformation)
+        self.annotator_preview.setPixmap(pixmap)
+    
+    def annotator_clear_button_released(self):
+        self.annotator_preview.setPixmap(QPixmap())
+        self.preview_result = QPixmap()
+
+    def copy_result_released(self):
+        if self.preview_result:
+            clipboard = QApplication.clipboard()
+            clipboard.setImage(self.preview_result.toImage())
+
+    def hide_or_show_preprocessor_resolution(self, pixel_perfect):
+        if pixel_perfect:
+            self.annotator_resolution.qlabel.hide()
+            self.annotator_resolution.qspin.hide()
+        else:
+            self.annotator_resolution.qlabel.show()
+            self.annotator_resolution.qspin.show()
            
     def cfg_init(self):  
         self.enable.cfg_init()
         self.low_vram.cfg_init()
+        self.pixel_perfect.cfg_init()
         self.preprocessor_layout.cfg_init()
         self.model_layout.cfg_init()
         self.weight_layout.cfg_init()
@@ -257,7 +308,9 @@ class ControlNetUnitSettings(QWidget):
         self.threshold_a.cfg_init()
         self.threshold_b.cfg_init()
 
-        if (self.preprocessor_layout.qcombo.currentText() == "none"):
+        self.hide_or_show_preprocessor_resolution(self.pixel_perfect.isChecked())
+
+        if self.preprocessor_layout.qcombo.currentText() == "none":
             self.annotator_preview_button.setEnabled(False)
         else:
             self.annotator_preview_button.setEnabled(True)
@@ -265,6 +318,7 @@ class ControlNetUnitSettings(QWidget):
     def cfg_connect(self):
         self.enable.cfg_connect()
         self.low_vram.cfg_connect()
+        self.pixel_perfect.cfg_connect()
         self.preprocessor_layout.cfg_connect()
         self.model_layout.cfg_connect()
         self.weight_layout.cfg_connect()
@@ -280,6 +334,9 @@ class ControlNetUnitSettings(QWidget):
         self.image_loader.clear_button.released.connect(
             partial(script.cfg.set, f"controlnet{self.unit}_input_image", "")
         )
+        self.pixel_perfect.stateChanged.connect(
+            lambda: self.hide_or_show_preprocessor_resolution(self.pixel_perfect.isChecked())
+        )
         self.preprocessor_layout.qcombo.currentTextChanged.connect(self.set_preprocessor_options)
         self.preprocessor_layout.qcombo.currentTextChanged.connect(
             lambda: self.annotator_preview_button.setEnabled(False) if 
@@ -287,6 +344,8 @@ class ControlNetUnitSettings(QWidget):
         )
         self.refresh_button.released.connect(lambda: script.action_update_controlnet_config())
         self.annotator_preview_button.released.connect(
-            lambda: script.action_preview_controlnet_annotator(self.annotator_preview)
+            lambda: script.action_preview_controlnet_annotator()
         )
+        self.copy_result_button.released.connect(self.copy_result_released)
         self.annotator_clear_button.released.connect(lambda: self.annotator_preview.setPixmap(QPixmap()))
+        script.controlnet_preview_annotator_received.connect(self.annotator_preview_received)
