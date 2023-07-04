@@ -278,7 +278,7 @@ class Client(QObject):
             tiling=tiling,
             restore_faces=self.cfg("face_restorer_model", str) != "None",
             override_settings=self.options_params(),
-            override_settings_restore_afterwards=False,
+            override_settings_restore_afterwards=True,
             alwayson_scripts={}
         )
 
@@ -642,15 +642,44 @@ class Client(QObject):
         )
         self.post("upscale", params, cb)
 
+    def post_official_api_upscale_postprocess(self, cb, src_imgs: list, width, height):
+        """Uses official API. Intended for finalizing img2img pipeline."""
+
+        params = dict(
+            resize_mode=1,
+            show_extras_results=False,
+            gfpgan_visibility=0,
+            codeformer_visibility=0,
+            codeformer_weight=0,
+            upscaling_resize=1,
+            upscaling_resize_w=width,
+            upscaling_resize_h=height,
+            upscaling_crop=True,
+            upscaler_1=self.cfg("upscaler_name", str),
+            upscaler_2="None", # Todo: would be nice to support blended upscalers
+            extras_upscaler_2_visibility=0,
+            upscale_first=False,
+            imageList=[]
+        )
+
+        for img in src_imgs:
+            params["imageList"].append({
+                "data": img,
+                "name": "example_image"
+            })
+
+        url = get_url(self.cfg, prefix=OFFICIAL_ROUTE_PREFIX)
+        self.post("extra-batch-images", params, cb, base_url=url)
+
     def post_controlnet_preview(self, cb, src_img, width, height):
         def get_pixel_perfect_preprocessor_resolution():
             if self.cfg("disable_sddebz_highres", bool):
-                return width if width <= height else height
+                return min(width, height)
 
             resized_width, resized_height = calculate_resized_image_dimensions(
                 self.cfg("sd_base_size", int), self.cfg("sd_max_size", int), width, height
             )
-            return resized_width if resized_width <= resized_height else resized_height
+            return min(resized_width, resized_height)
         
         unit = self.cfg("controlnet_unit", str)  
         preprocessor_resolution = get_pixel_perfect_preprocessor_resolution() if self.cfg(f"controlnet{unit}_pixel_perfect", bool)  \
