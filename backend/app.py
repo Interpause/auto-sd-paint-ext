@@ -153,7 +153,11 @@ def f_txt2img(req: Txt2ImgRequest):
         0,  # hr_second_pass_steps: 0 uses same num of steps as generation to refine details
         req.orig_width,  # hr_resize_x
         req.orig_height,  # hr_resize_y
+        get_sampler_index(req.sampler_name), # hr_sampler_index (different hr sampler not supported yet)
+        parse_prompt(req.prompt), # hr_prompt (different hr prompt not supported yet)
+        parse_prompt(req.negative_prompt), # hr_negative_prompt (different hr negative prompt not supported yet)
         [],  # override_settings_texts (unsupported)
+        req, # request, txt2img expects a gradio request object. Not 100% on what I'm even passing here but it works(TM).
         *args,
     )
     images = output[0]
@@ -241,9 +245,7 @@ def f_img2img(req: Img2ImgRequest):
 
     output = wrap_gradio_gpu_call(modules.img2img.img2img)(
         "",  # id_task (used by wrap_gradio_gpu_call for some sort of job id system)
-        4
-        if req.is_inpaint
-        else 0,  # mode (we use 0 (img2img with init_img) & 4 (inpaint uploaded mask))
+        4 if req.is_inpaint else 0,  # mode (we use 0 (img2img with init_img) & 4 (inpaint uploaded mask))
         parse_prompt(req.prompt),  # prompt
         parse_prompt(req.negative_prompt),  # negative_prompt
         "None",  # prompt_styles: saved prompt styles (unsupported)
@@ -272,7 +274,7 @@ def f_img2img(req: Img2ImgRequest):
         req.seed_resize_from_h,  # seed_resize_from_h
         req.seed_resize_from_w,  # seed_resize_from_w
         req.seed_enable_extras,  # seed_enable_extras
-        1,  # selected_scale_tab
+        0,  # selected_scale_tab
         height,  # height
         width,  # width
         1.0,  # scale_by
@@ -284,6 +286,10 @@ def f_img2img(req: Img2ImgRequest):
         "",  # img2img_batch_output_dir (unsupported)
         "",  # img2img_batch_inpaint_mask_dir (unsupported)
         [],  # override_settings_texts (unsupported)
+        False, # img2img_batch_use_png_info (unsupported)
+        [], # img2img_batch_png_info_props (unsupported)
+        "", # img2img_batch_png_info_dir (unsupported)
+        req, # request, img2img also expects a gradio request object. Not 100% on what I'm even passing here but it works(TM).
         *args,
     )
     images = output[0]
