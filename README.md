@@ -2,9 +2,30 @@
 
 Formerly known as `auto-sd-krita`.
 
-> Extension for AUTOMATIC1111's webUI with Krita Plugin (other drawing studios soon?)
+> Extension for AUTOMATIC1111's webUI **and** SD.Next with Krita Plugin
 
 ![demo image](./docs/demo.webp)
+
+## Update resilient!
+
+Prior versions of auto-sd-paint-ext were incredibly prone to breaking when A1111 or SD.Next updated, due to tapping into internal API calls. This resulted in lots of downtime on the extension, and a version that worked for A1111 would break on SD.Next.
+
+With this update, the extension is far more robust:
+
+- Programatically checks what parameters are required by the backend it is connected to.
+  - The same extension can now work for A1111 and SD.Next
+  - Possible parameters are stored in a single dictionary, only required parameters are used for each call
+  - The extension can now be forward and backwards compatible, being able to work on older and newer backends
+- If there is no matching parameter, the extension will now try to guess a default value for the new parameter.
+  - Most new parameters are for new features unsupported by the plugin, a generic default will usually not effect the results
+  - Providing a default will generally allow the plugin to get a result rather than crashing
+- Added debugging output for the new values.
+  - Lists the missing parameter names, as well as their data types and what defaults were tried.
+  - Lists the directory for the user's version of auto-sd-paint-ext\backend\app.py for them to make changes
+
+![warning image](./docs/missing-params-warning.png)
+
+> An example image of the new parameter warning system.
 
 Why use this?
 

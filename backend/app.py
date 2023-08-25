@@ -5,6 +5,8 @@ import os
 import time
 
 import modules
+import gradio as gr # Used for A1111 api calls
+import inspect # Used to determine what parameters are needed/missing
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from modules import shared
@@ -69,6 +71,170 @@ log = logging.getLogger(LOGGER_NAME)
 # TODO: Consider using pipeline directly instead of Gradio API for less surprises & better control
 
 
+def get_required_params(function_path, req, height, width, image=None, mask=None):
+    """Return the params for ANY version of A1111 or SD.Next
+        If a parameter is not found, it'll try to autocomplete the missing parameter
+        Returns the parameters required for this UI (A1111, SD.Next, or other clones)
+
+    Args:
+        function_path: the function used by the Gradio API (such as modules.txt2txt.txt2txt or modules.img2img.img2img)
+        req: either Txt2ImgRequest or Img2ImgRequest
+        height: int
+        width: int
+        image: Image
+        mask: Image
+    Returns:
+        List: params,
+        Dict: warnings
+    """
+
+    # NOTE:
+    # - image & mask repeated due to Gradio API have separate tabs for each mode...
+    # - mask is used only in inpaint mode
+    # - mask_mode determines whethere init_img_with_mask or init_img_inpaint is used,
+    #   I dont know why
+    # - new color sketch functionality in webUI is irrelevant so None is used for their options.
+    # - the internal code for img2img is confusing and duplicative...
+
+    # NOTE: DO NOT REMOVE PARAMS! Only add to this list.
+    # Even if they've been depricated by the version of WebUI you use, old params are still helpful for others running other UIs on other versions.
+    params = {
+        'batch_size': req.batch_size,
+        'cfg_scale': req.cfg_scale,
+        'clip_skip': req.clip_skip,
+        'denoising_strength': req.denoising_strength, # Used for img2img, and txt2img only when high res fix in use
+        'diffusers_guidance_rescale': 0.7, # 0.7 is the default value in SD.Next's UI
+        'enable_hr': req.highres_fix, # High res fix
+        'full_quality': True,
+        'height': height,
+        'hr_negative_prompt': '',
+        'hr_prompt': '',
+        'hr_resize_x': req.orig_width if hasattr(req, 'orig_width') else width,
+        'hr_resize_y': req.orig_height if hasattr(req, 'orig_height') else height,
+        'hr_sampler_index': 0,
+        'hr_scale': 0, # overrided by hr_resize_x/y
+        'hr_second_pass_steps': 0, # 0 uses same num of steps as generation to refine details
+        'hr_upscaler': req.upscaler_name, # upscaler to use for highres fix
+        'id_task': '', # used by wrap_gradio_gpu_call for some sort of job id system
+        'image_cfg_scale': 1.5, # 1.5 is the default value used in SD.Next's UI
+        'img2img_batch_files': [],
+        'img2img_batch_inpaint_mask_dir': '',
+        'img2img_batch_input_dir': '',
+        'img2img_batch_output_dir': '',
+        'img2img_batch_png_info_dir': '', # (unsupported)
+        'img2img_batch_png_info_props': [], # (unsupported)
+        'img2img_batch_use_png_info': False, # (unsupported)
+        'init_img_inpaint': image,
+        'init_img_with_mask': None,
+        'init_img': image,
+        'init_mask_inpaint': mask,
+        'inpaint_color_sketch_orig': None,
+        'inpaint_color_sketch': None,
+        'inpaint_full_res_padding': 0,
+        'inpaint_full_res': False,
+        'inpainting_fill': req.inpainting_fill if hasattr(req, 'inpainting_fill') else None,
+        'inpainting_mask_invert': req.invert_mask if hasattr(req, 'invert_mask') else None,
+        'latent_index': 0, 
+        'mask_alpha': None, # only used by webUI color sketch if init_img_with_mask isn't dict
+        'mask_blur': 0, # req.mask_blur,
+        'mode': 4 if hasattr(req, 'is_inpaint') and req.is_inpaint else 0, # we use 0 (img2img with init_img) & 4 (inpaint uploaded mask)
+        'n_iter': req.batch_count,
+        'negative_prompt': parse_prompt(req.negative_prompt),
+        'override_settings_texts': [],
+        'prompt_styles': 'None', # Name of the saved style, with the string 'None' being the default
+        'prompt': parse_prompt(req.prompt),
+        'refiner_denoise_end': 1.0,
+        'refiner_denoise_start': 0,
+        'refiner_negative': '',
+        'refiner_prompt': '',
+        'refiner_start': 0.0,
+        'request': gr.Request(), # A1111 has an option to use the username from here, but doesn't use the rest of the request
+        'resize_mode': req.resize_mode if hasattr(req, 'resize_mode') else 0,
+        'restore_faces': req.restore_faces if hasattr(req, 'restore_faces') else False,
+        'sampler_index': get_sampler_index(req.sampler_name),
+        'scale_by': 1.0,
+        'seed_enable_extras': req.seed_enable_extras if hasattr(req, 'seed_enable_extras') else True, # SD.Next defaults this to True in img2img and txt2txt
+        'seed_resize_from_h': req.seed_resize_from_h if hasattr(req, 'seed_resize_from_h') else height,
+        'seed_resize_from_w': req.seed_resize_from_w if hasattr(req, 'seed_resize_from_w') else width,
+        'seed': req.seed,
+        'selected_scale_tab': 1,
+        'sketch': None,
+        'steps': req.steps,
+        'subseed_strength': req.subseed_strength,
+        'subseed': req.subseed,
+        'tiling': req.tiling if hasattr(req, 'tiling') else False,
+        'width': width,
+    }
+
+    required_params = inspect.getfullargspec(function_path)
+    matching_params = {i:params[i] for i in required_params.args if i in params} # Make a dict with only the params that are required, omitting any that aren't known
+    warnings = {
+        'missing': {
+            'size': 0,
+            'annotated': {},
+            'non-annotated': [],
+            'guesses': {},
+        },
+    }
+
+    if len(required_params.args) != len(matching_params.keys()):
+        missing_required = set(required_params.args).difference(set(matching_params.keys()))
+        if len(missing_required) > 0:
+            warnings['missing']['size'] = len(missing_required)
+            # Find out which ones have annotations for their type
+            have_annotation = {i:required_params.annotations[i] for i in missing_required if i in required_params.annotations}
+            no_annotation = [i for i in missing_required if not i in have_annotation]
+            if have_annotation:
+                warnings['missing']['annotated'] = have_annotation
+            if no_annotation:
+                warnings['missing']['non-annotated'] = no_annotation
+            
+            # Attempt to fill in default values for the missing parameters. It's probably not ideal, but better than a crash.
+            guesses = {}
+            for i in have_annotation:
+                if have_annotation[i] == int:
+                    guesses[i] = 0
+                elif have_annotation[i] == float:
+                    guesses[i] = 0.0
+                elif have_annotation[i] == str:
+                    guesses[i] = ''
+                elif have_annotation[i] == bool:
+                    guesses[i] = False
+                elif have_annotation[i] == list:
+                    guesses[i] = []
+                elif have_annotation[i] == gr.Request:
+                    guesses[i] = gr.Request()
+                else:
+                    guesses[i] = None
+
+            for i in no_annotation:
+                guesses[i] = None
+            warnings['missing']['guesses'] = guesses
+
+            matching_params = {**matching_params, **guesses} # Add the guesses to the response
+        else:       
+            print('Somehow got extra parameters?') # This shouldn't be possible, leaving it in for debugging.
+
+    # Convert matching_params back into a list in correct arg order.
+    return [matching_params[i] for i in required_params.args], warnings
+
+
+def handle_param_warnings(warnings):
+    """Logs the warnings from missing params
+    Args:
+        warnings: Dict returned by get_required_params()
+    """
+    if warnings['missing']['size'] > 0:
+        log.warning('Auto-SD-Paint-Ext: Missing parameters were detected!')
+        if warnings['missing']['annotated']:
+            log.warning(warnings['missing']['annotated'])
+        if warnings['missing']['non-annotated']:
+            log.warning(warnings['missing']['non-annotated'])
+        log.warning('Default values were guessed at to completed the request. These values might be incorrect, resulting in poor image quality or no result at all.')
+        log.warning(warnings['missing']['guesses'])
+        log.warning('Correct these values in {}'.format(os.path.realpath(__file__)))
+
+
 @router.get("/config", response_model=ConfigResponse)
 async def get_state():
     """Get information about backend API.
@@ -126,36 +292,9 @@ def f_txt2img(req: Txt2ImgRequest):
         req.disable_sddebz_highres,
     )
 
-    output = wrap_gradio_gpu_call(modules.txt2img.txt2img)(
-        "",  # id_task (used by wrap_gradio_gpu_call for some sort of job id system)
-        parse_prompt(req.prompt),  # prompt
-        parse_prompt(req.negative_prompt),  # negative_prompt
-        "None",  # prompt_styles: saved prompt styles (unsupported)
-        req.steps,  # steps
-        get_sampler_index(req.sampler_name),  # sampler_index
-        req.restore_faces,  # restore_faces
-        req.tiling,  # tiling
-        req.batch_count,  # n_iter
-        req.batch_size,  # batch_size
-        req.cfg_scale,  # cfg_scale
-        req.seed,  # seed
-        req.subseed,  # subseed
-        req.subseed_strength,  # subseed_strength
-        req.seed_resize_from_h,  # seed_resize_from_h
-        req.seed_resize_from_w,  # seed_resize_from_w
-        req.seed_enable_extras,  # seed_enable_extras
-        height,  # height
-        width,  # width
-        req.highres_fix,  # enable_hr: high res fix
-        req.denoising_strength,  # denoising_strength: only applicable if high res fix in use
-        0,  # hr_scale (overrided by hr_resize_x/y)
-        req.upscaler_name,  # hr_upscaler: upscaler to use for highres fix
-        0,  # hr_second_pass_steps: 0 uses same num of steps as generation to refine details
-        req.orig_width,  # hr_resize_x
-        req.orig_height,  # hr_resize_y
-        [],  # override_settings_texts (unsupported)
-        *args,
-    )
+    params, warnings = get_required_params(modules.txt2img.txt2img, req, height, width)
+    output = wrap_gradio_gpu_call(modules.txt2img.txt2img)(*params, *args)
+
     images = output[0]
     info = output[1]
 
@@ -188,6 +327,7 @@ def f_txt2img(req: Txt2ImgRequest):
 
     log.info(f"output sizes: {[len(i) for i in images]}")
     log.info(f"finished txt2img!")
+    handle_param_warnings(warnings)
     return {"outputs": images, "info": info}
 
 
@@ -231,61 +371,9 @@ def f_img2img(req: Img2ImgRequest):
             req.disable_sddebz_highres,
         )
 
-    # NOTE:
-    # - image & mask repeated due to Gradio API have separate tabs for each mode...
-    # - mask is used only in inpaint mode
-    # - mask_mode determines whethere init_img_with_mask or init_img_inpaint is used,
-    #   I dont know why
-    # - new color sketch functionality in webUI is irrelevant so None is used for their options.
-    # - the internal code for img2img is confusing and duplicative...
+    params, warnings = get_required_params(modules.img2img.img2img, req, height, width, image, mask)
+    output = wrap_gradio_gpu_call(modules.img2img.img2img)(*params, *args)
 
-    output = wrap_gradio_gpu_call(modules.img2img.img2img)(
-        "",  # id_task (used by wrap_gradio_gpu_call for some sort of job id system)
-        4
-        if req.is_inpaint
-        else 0,  # mode (we use 0 (img2img with init_img) & 4 (inpaint uploaded mask))
-        parse_prompt(req.prompt),  # prompt
-        parse_prompt(req.negative_prompt),  # negative_prompt
-        "None",  # prompt_styles: saved prompt styles (unsupported)
-        image,  # init_img
-        None,  # sketch (unused by us)
-        None,  # init_img_with_mask (unused by us)
-        None,  # inpaint_color_sketch (unused by us)
-        None,  # inpaint_color_sketch_orig (unused by us)
-        image,  # init_img_inpaint
-        mask,  # init_mask_inpaint
-        req.steps,  # steps
-        get_sampler_index(req.sampler_name),  # sampler_index
-        0,  # req.mask_blur,  # mask_blur
-        None,  # mask_alpha (unused by us) # only used by webUI color sketch if init_img_with_mask isn't dict
-        req.inpainting_fill,  # inpainting_fill
-        req.restore_faces,  # restore_faces
-        req.tiling,  # tiling
-        req.batch_count,  # n_iter
-        req.batch_size,  # batch_size
-        req.cfg_scale,  # cfg_scale
-        0, # img_cfg_scale (unsupported)
-        req.denoising_strength,  # denoising_strength
-        req.seed,  # seed
-        req.subseed,  # subseed
-        req.subseed_strength,  # subseed_strength
-        req.seed_resize_from_h,  # seed_resize_from_h
-        req.seed_resize_from_w,  # seed_resize_from_w
-        req.seed_enable_extras,  # seed_enable_extras
-        1,  # selected_scale_tab
-        height,  # height
-        width,  # width
-        1.0,  # scale_by
-        req.resize_mode,  # resize_mode
-        False,  # req.inpaint_full_res,  # inpaint_full_res
-        0,  # req.inpaint_full_res_padding,  # inpaint_full_res_padding
-        req.invert_mask,  # inpainting_mask_invert
-        "",  # img2img_batch_input_dir (unspported)
-        "",  # img2img_batch_output_dir (unsupported)
-        "",  # img2img_batch_inpaint_mask_dir (unsupported)
-        [],  # override_settings_texts (unsupported)
-        *args,
-    )
     images = output[0]
     info = output[1]
 
@@ -334,6 +422,7 @@ def f_img2img(req: Img2ImgRequest):
 
     log.info(f"output sizes: {[len(i) for i in images]}")
     log.info(f"finished img2img!")
+    handle_param_warnings(warnings)
     return {"outputs": images, "info": info}
 
 
