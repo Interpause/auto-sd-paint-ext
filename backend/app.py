@@ -77,7 +77,7 @@ def get_required_params(function_path, req, height, width, image=None, mask=None
         Returns the parameters required for this UI (A1111, SD.Next, or other clones)
 
     Args:
-        function_path: the function used by the Gradio API (such as modules.txt2txt.txt2txt or modules.img2img.img2img)
+        function_path: the function used by the Gradio API (such as modules.txt2img.txt2img or modules.img2img.img2img)
         req: either Txt2ImgRequest or Img2ImgRequest
         height: int
         width: int
@@ -145,8 +145,8 @@ def get_required_params(function_path, req, height, width, image=None, mask=None
         'prompt': parse_prompt(req.prompt),
         'refiner_denoise_end': 1.0,
         'refiner_denoise_start': 0,
-        'refiner_negative': '',
-        'refiner_prompt': '',
+        'refiner_negative': parse_prompt(req.negative_prompt),
+        'refiner_prompt': parse_prompt(req.prompt),
         'refiner_start': 0.0,
         'request': gr.Request(), # A1111 has an option to use the username from here, but doesn't use the rest of the request
         'resize_mode': req.resize_mode if hasattr(req, 'resize_mode') else 0,
@@ -157,7 +157,7 @@ def get_required_params(function_path, req, height, width, image=None, mask=None
         'seed_resize_from_h': req.seed_resize_from_h if hasattr(req, 'seed_resize_from_h') else height,
         'seed_resize_from_w': req.seed_resize_from_w if hasattr(req, 'seed_resize_from_w') else width,
         'seed': req.seed,
-        'selected_scale_tab': 1,
+        'selected_scale_tab': 0,
         'sketch': None,
         'steps': req.steps,
         'subseed_strength': req.subseed_strength,
