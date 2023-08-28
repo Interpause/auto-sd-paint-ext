@@ -148,7 +148,7 @@ def get_required_params(function_path, req, height, width, image=None, mask=None
         'refiner_negative': parse_prompt(req.negative_prompt),
         'refiner_prompt': parse_prompt(req.prompt),
         'refiner_start': 0.0,
-        'request': gr.Request(), # A1111 has an option to use the username from here, but doesn't use the rest of the request
+        'request': gr.Request(username="krita", headers={}, client={"host":"0.0.0.0"}), # A1111 has an option to use the username from here, but doesn't use the rest of the request
         'resize_mode': req.resize_mode if hasattr(req, 'resize_mode') else 0,
         'restore_faces': req.restore_faces if hasattr(req, 'restore_faces') else False,
         'sampler_index': get_sampler_index(req.sampler_name),
@@ -203,7 +203,7 @@ def get_required_params(function_path, req, height, width, image=None, mask=None
                 elif have_annotation[i] == list:
                     guesses[i] = []
                 elif have_annotation[i] == gr.Request:
-                    guesses[i] = gr.Request()
+                    guesses[i] = gr.Request(username="krita", headers={}, client={"host":"0.0.0.0"})
                 else:
                     guesses[i] = None
 
