@@ -1,5 +1,18 @@
 # UI Changelog
 
+## 2023-08-27
+
+Prior versions of auto-sd-paint-ext were incredibly prone to breaking when A1111 or SD.Next updated, due to tapping into internal API calls. This resulted in lots of downtime on the extension, and a version that worked for A1111 would break on SD.Next.
+
+With this update, the extension is far more robust:
+- The extension now works for A1111 and SD.Next
+- The extension is now forward and backwards compatible, being able to work on older and newer 
+- Add a parameter warning system when the backend expects a parameter which the plugin does not have (yet)
+
+![warning image](./docs/missing-params-warning.png)
+
+> An example image of the new parameter warning system.
+
 ## 2023-01-25
 
 - Add ability to disable base size/max size system; Image generated will be same size as selection.
