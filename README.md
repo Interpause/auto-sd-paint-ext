@@ -16,7 +16,7 @@ This update should make the extension a lot more flexible in terms of which vers
 
 ## Quick Jump
 
- > Please refer to the original fork's wiki for information while I remake these sections in the fork
+ > Please refer to the original's wiki for information while I remake these sections in the fork
 - Full Installation & Workflow Tutorial Video! (Coming Soon...)
 - [Installation Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Install-Guide)
 - [Usage Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Usage-Guide)
