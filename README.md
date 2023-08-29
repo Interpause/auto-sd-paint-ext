@@ -1,6 +1,6 @@
-# auto-sd-paint-ext
+# auto-sd-krita-ext-xl
 
-Formerly known as `auto-sd-krita`.
+Forked from https://github.com/Interpause/auto-sd-paint-ext
 
 > Extension for AUTOMATIC1111's webUI **and** SD.Next with Krita Plugin
 
@@ -9,25 +9,14 @@ Formerly known as `auto-sd-krita`.
 
 This update should make the extension a lot more flexible in terms of which version of A1111 or SD.Next you can use! If it doesn't work with your version, open an issue and we'll look into it. 
 
-Why use this?
+## Why use this?
 
 - Optimized workflow (txt2img, img2img, inpaint, upscale) & UI design.
 - Only drawing studio plugin that exposes the Script API.
 
-## Notice
-
-Refer to <https://github.com/ClashSAN/sd-webui-extension-records> for current working extension & webUI commits and how to switch commits. This is useful when upstream webUI changes break the extension.
-
-Currently stuck on two things with regards to further development:
-
-- Config preset system: <https://github.com/Interpause/auto-sd-paint-ext/tree/feat-config-presets>
-  - Currently having issues figuring out how to implement it without needing to overhaul everything.
-- Switch to official API
-
-See <https://github.com/Interpause/auto-sd-paint-ext/issues/41> for planned developments.
-
 ## Quick Jump
 
+ > Please refer to the original fork's wiki for information while I remake these sections in the fork
 - Full Installation & Workflow Tutorial Video! (Coming Soon...)
 - [Installation Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Install-Guide)
 - [Usage Guide](https://github.com/Interpause/auto-sd-paint-ext/wiki/Usage-Guide)
@@ -50,11 +39,11 @@ Q: How does the base_size, max_size system work?
 
 A:
 
-It is an alternative to AUTO's highres fix that works for all modes, not just txt2img.
+It's an alternative to AUTO's highres fix that works for all modes, not just txt2img.
 
-The selection will be resized such that the shorter dimension is base_size. However, if the aforementioned resize causes the longer dimension to exceed max_size, the shorter dimension will be resized to less than base_size. Setting base_size and max_size higher can be used to generate higher resolution images (along with their issues), essentially **disabling the system**, _though it might make sense for img2img mode_.
+The selection will be resized such that the shorter dimension is base_size. However, if the aforementioned resize causes the longer dimension to exceed max_size, the shorter dimension will be resized to less than base_size. I recommend not setting base_size lower than 512.
 
-This is actually smarter than the builtin highres fix + firstphase width/height system. Thank the original plugin writer, @sddebz, for writing this.
+According to Interpause, this is smarter than the builtin highres fix + firstphase width/height system. Thank the original plugin writer, @sddebz, for writing this.
 
 <hr/>
 
@@ -74,16 +63,6 @@ Q: Is the model loaded into memory twice?
 A: No, it shares the same backend. Both the Krita plugin and webUI can be used concurrently.
 
 <hr/>
-
-Q: How can you commit to updating regularly?
-
-A: It is easy for me.
-
-<hr/>
-
-Q: Will it work with other Krita plugin backends?
-
-A: Unfortunately no, all plugins so far have different APIs. The official API is coming soon though...
 
 ## UI Changelog
 
