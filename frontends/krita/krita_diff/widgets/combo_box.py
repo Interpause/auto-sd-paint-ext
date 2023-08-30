@@ -68,9 +68,9 @@ class QComboBoxLayout(QHBoxLayout):
     def cfg_init(self):
         opts = sorted(
             set(
-                self.cfg(self.options_cfg, "QStringList")
-                if isinstance(self.options_cfg, str)
-                else self.options_cfg
+                self.cfg(self.options_cfg, "QStringList") if isinstance(self.options_cfg, str)
+                else self.options_cfg if type(self.options_cfg) is not list
+                else '%s' % self.options_cfg
             ),
             key=str.casefold,
         )

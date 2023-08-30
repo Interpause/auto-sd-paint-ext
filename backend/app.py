@@ -107,11 +107,11 @@ def get_required_params(function_path, req, height, width, image=None, mask=None
         'enable_hr': req.highres_fix, # High res fix
         'full_quality': True,
         'height': height,
-        'hr_negative_prompt': '',
-        'hr_prompt': '',
+        'hr_negative_prompt': parse_prompt(req.negative_prompt),
+        'hr_prompt': parse_prompt(req.prompt),
         'hr_resize_x': req.orig_width if hasattr(req, 'orig_width') else width,
         'hr_resize_y': req.orig_height if hasattr(req, 'orig_height') else height,
-        'hr_sampler_index': 0,
+        'hr_sampler_index': get_sampler_index(req.sampler_name),
         'hr_scale': 0, # overrided by hr_resize_x/y
         'hr_second_pass_steps': 0, # 0 uses same num of steps as generation to refine details
         'hr_upscaler': req.upscaler_name, # upscaler to use for highres fix
