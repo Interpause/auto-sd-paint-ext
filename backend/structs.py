@@ -22,6 +22,8 @@ class Txt2ImgRequest(DefaultTxt2ImgOptions):
     """Requested image width."""
     orig_height: int
     """Requested image height."""
+    username: str = "krita"
+    """Expected field in the request by txt2img and img2img for some high IQ reason, indubitably"""
 
 
 @optional
@@ -38,6 +40,8 @@ class Img2ImgRequest(DefaultImg2ImgOptions):
     """Image being used."""
     mask_img: Optional[str] = None
     """Image mask being used."""
+    username: str = "krita"
+    """Expected field in the request by txt2img and img2img for some high IQ reason, indubitably"""
 
 
 @optional
