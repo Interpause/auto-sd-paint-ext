@@ -1,5 +1,6 @@
 import json
 import socket
+import ssl
 from typing import Any, Dict, List
 from urllib.error import URLError
 from urllib.parse import urljoin, urlparse
@@ -27,6 +28,8 @@ from .utils import bytewise_xor, fix_prompt, get_ext_args, get_ext_key, img_to_b
 
 # TODO: tab showing all queued up requests (local plugin instance only)
 
+# Allow self-signed certs to be used. Self-signed certs allow some WebUI features (like controlnet's camera) over local network, but would break the Krita extension
+ssl._create_default_https_context = ssl._create_unverified_context
 
 def get_url(cfg: Config, route: str = ..., prefix: str = ROUTE_PREFIX):
     base = cfg("base_url", str)
