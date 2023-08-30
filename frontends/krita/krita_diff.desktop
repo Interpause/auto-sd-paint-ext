@@ -5,4 +5,4 @@ X-KDE-Library=krita_diff
 X-Python-2-Compatible=false
 X-Krita-Manual=manual.html
 Name=Stable Diffusion Plugin
-Comment=Expose the power of AUTOMATIC1111's Stable Diffusion fork for creating to your heart's desire.
+Comment=Expose the power of AUTOMATIC1111's and SD.Next's Stable Diffusion forks for creating to your heart's desire.

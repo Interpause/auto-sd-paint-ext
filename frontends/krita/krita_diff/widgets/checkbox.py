@@ -60,6 +60,8 @@ class QMultiCheckBoxLayout(QVBoxLayout):
         self.row = QHBoxLayout()
         self.qcheckboxes = []
         for opt in self.options_cfg:
+            if type(opt) == list: # Some poorly configured scripts passed a list in here instead of booleans
+                continue
             checkbox = _QCheckBox(opt)
             self.qcheckboxes.append(checkbox)
             self.row.addWidget(checkbox)
