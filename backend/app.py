@@ -111,7 +111,9 @@ def get_required_params(function_path, req, height, width, image=None, mask=None
         'hr_prompt': '',
         'hr_resize_x': req.orig_width if hasattr(req, 'orig_width') else width,
         'hr_resize_y': req.orig_height if hasattr(req, 'orig_height') else height,
+        'hr_checkpoint_name': req.sd_model,
         'hr_sampler_index': 0,
+        'hr_sampler_name': req.sampler_name,
         'hr_scale': 0, # overrided by hr_resize_x/y
         'hr_second_pass_steps': 0, # 0 uses same num of steps as generation to refine details
         'hr_upscaler': req.upscaler_name, # upscaler to use for highres fix
@@ -151,6 +153,7 @@ def get_required_params(function_path, req, height, width, image=None, mask=None
         'request': gr.Request(username="krita", headers={}, client={"host":"0.0.0.0"}), # A1111 has an option to use the username from here, but doesn't use the rest of the request
         'resize_mode': req.resize_mode if hasattr(req, 'resize_mode') else 0,
         'restore_faces': req.restore_faces if hasattr(req, 'restore_faces') else False,
+        'sampler_name': req.sampler_name,
         'sampler_index': get_sampler_index(req.sampler_name),
         'scale_by': 1.0,
         'seed_enable_extras': req.seed_enable_extras if hasattr(req, 'seed_enable_extras') else True, # SD.Next defaults this to True in img2img and txt2txt
