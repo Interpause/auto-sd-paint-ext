@@ -279,6 +279,14 @@ class Client(QObject):
             for ext_type in {"scripts_txt2img", "scripts_img2img", "scripts_inpaint"}:
                 metadata: Dict[str, List[dict]] = obj[ext_type]
                 for ext_name, ext_meta in metadata.items():
+                    # Meta processing to remove lists of lists in multiple choice options
+                    for item in ext_meta:
+                        if item["type"] in ["combo", "multiselect"]:
+                            if isinstance(item['opts'], list) and any(isinstance(opt, list) for opt in item['opts']):
+                                item["opts"] = [opt for sublist in item['opts'] if isinstance(sublist, list) for opt in sublist]
+                            # Remove duplicates from combo and multiselect items
+                            item["opts"] = list(set(item["opts"]))
+
                     old_val = self.ext_cfg(get_ext_key(ext_type, ext_name))
                     new_val = json.dumps(ext_meta)
                     # Don't overwrite saved script values unless script options changed
