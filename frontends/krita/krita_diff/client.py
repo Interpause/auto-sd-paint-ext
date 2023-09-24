@@ -282,8 +282,8 @@ class Client(QObject):
                     # Meta processing to remove lists of lists in multiple choice options
                     for item in ext_meta:
                         if item["type"] in ["combo", "multiselect"]:
-                            if isinstance(item['opts'], list) and any(isinstance(opt, list) for opt in item['opts']):
-                                item["opts"] = [opt for sublist in item['opts'] if isinstance(sublist, list) for opt in sublist]
+                            if isinstance(item["opts"], list) and any(isinstance(opt, list) for opt in item["opts"]):
+                                item["opts"] = [opt for sublist in item["opts"] if isinstance(sublist, list) for opt in sublist]
                             # Remove duplicates from combo and multiselect items
                             item["opts"] = list(set(item["opts"]))
 
