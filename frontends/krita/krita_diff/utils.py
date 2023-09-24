@@ -130,7 +130,7 @@ def find_optimal_selection_region(
     for x in range(1, xpad_limit + 1):
         for y in range(1, ypad_limit + 1):
             # account for boundary of canvas
-            # padding is on both sides i.e the selection grows while center anchored
+            # padding is on both sides i.e. the selection grows while center anchored
             x1 = max(0, orig_x - x // 2)
             x2 = min(canvas_width, x1 + orig_width + x)
             y1 = max(0, orig_y - y // 2)
