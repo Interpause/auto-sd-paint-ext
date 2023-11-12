@@ -74,6 +74,11 @@ log = logging.getLogger(LOGGER_NAME)
 #    - option to select poor man, mk 2 or self-sketch
 # TODO: Consider using pipeline directly instead of Gradio API for less surprises & better control
 
+def get_all_params(cls):
+    params = set(inspect.signature(cls).parameters)
+    for base in cls.__bases__:
+        params.update(get_all_params(base))
+    return params
 
 def get_required_params(function_path, req, height, width, image=None, mask=None):
     """Return the params for ANY version of A1111 or SD.Next
@@ -183,8 +188,10 @@ def get_required_params(function_path, req, height, width, image=None, mask=None
         'width': width,
     }
 
+    all_params = get_all_params(function_path)
+
     matching_params = {}
-    for param_name, param in inspect.signature(function_path).parameters.items():
+    for param_name in all_params:
         if param_name in params:
             matching_params[param_name] = params[param_name]
 
@@ -268,12 +275,13 @@ def f_txt2img(req: Txt2ImgRequest):
         shared.total_tqdm.clear()
 
         generation_info_js = processed.js()
-        if opts.samples_log_stdout:
-            print(generation_info_js)
+        # Makes SD.Next crash as it doesn't have opts.samples_log_stdout 2023-11-02
+        #if opts.samples_log_stdout:
+        #    print(generation_info_js)
 
         return processed.images, generation_info_js, ""
 
-    images, info, _ = wrap_gradio_gpu_call(txt2img_setup)()
+    images, info, *_ = wrap_gradio_gpu_call(txt2img_setup)()
 
     if images is None or len(images) < 1:
         log.warning("Interrupted!")
@@ -369,12 +377,13 @@ def f_img2img(req: Img2ImgRequest):
         shared.total_tqdm.clear()
 
         generation_info_js = processed.js()
-        if opts.samples_log_stdout:
-            print(generation_info_js)
+        # Makes SD.Next crash as it doesn't have opts.samples_log_stdout 2023-11-02
+        #if opts.samples_log_stdout:
+        #    print(generation_info_js)
 
         return processed.images,  generation_info_js, ""  # Empty string because wrap_gradio_gpu_call hijacks the last return value of the function it wraps to add html info (actually another wrapper does, but it's the first wrapper that tells the second to do it)
 
-    images, info, _ = wrap_gradio_gpu_call(img2img_setup)()
+    images, info, *_ = wrap_gradio_gpu_call(img2img_setup)()
 
     if images is None or len(images) < 1:
         log.warning("Interrupted!")

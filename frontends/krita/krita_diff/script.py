@@ -333,6 +333,25 @@ class Script(QObject):
             self.selection is not None,
         )
 
+    def apply_prepare_inpaint(self):
+        layer = self.doc.createNode("Inpaint Mask", "paintLayer")
+        layer.setOpacity(204) # 80% opacity so the user can see the content behind the inpaint layer
+        parent = self.doc.activeNode().parentNode()
+        parent.addChildNode(layer, None) # We don't keep track of this layer because we're intending to use it for future generations
+
+        # Switch to the brush too in case another tool was selected, so the user can immediately draw their inpaint mask
+        self.app.action("KritaShape/KisToolBrush").trigger()
+
+        all_brushes = self.app.resources('preset')
+        # Check if they've defined a custom inpaint brush using our naming, otherwise switch to the builtin Pencil-2 brush, which is pretty good for inpainting
+        brush_name = "Inpaint Brush"
+        if brush_name in all_brushes.keys():
+            brush = all_brushes[brush_name]
+        else:
+            brush = all_brushes['c) Pencil-2']
+
+        self.app.activeWindow().activeView().setCurrentBrushPreset(brush)
+
     def apply_simple_upscale(self):
         insert, _ = self.img_inserter(self.x, self.y, self.width, self.height)
         sel_image = self.get_selection_image()
@@ -433,6 +452,13 @@ class Script(QObject):
             return
         self.adjust_selection()
         self.apply_img2img(True)
+
+    def action_prepare_inpaint(self):
+        self.status_changed.emit(STATE_WAIT)
+        self.update_selection()
+        if not self.doc:
+            return
+        self.apply_prepare_inpaint()
 
     def action_simple_upscale(self):
         self.status_changed.emit(STATE_WAIT)

@@ -68,6 +68,10 @@ A: No, it shares the same backend. Both the Krita plugin and webUI can be used c
 
 See [CHANGELOG.md](./CHANGELOG.md) for the full changelog.
 
+## 2023-11-12
+- Added script to add an inpaint layer for faster and better workflow integration.
+  This script also automatically switches to the brush tool and selects the "Inpaint Brush" brush preset if it is present. Otherwise, the Pencil-2 brush is selected. This allows you to configure one brush specifically for inpaint and never have to worry about it again. This script is currently bound to <ctrl+alt+a>.
+
 ## 2023-08-27
 
 Prior versions of auto-sd-paint-ext were incredibly prone to breaking when A1111 or SD.Next updated, due to tapping into internal API calls. This resulted in lots of downtime on the extension, and a version that worked for A1111 would break on SD.Next.
