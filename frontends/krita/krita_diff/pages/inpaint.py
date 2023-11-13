@@ -55,12 +55,20 @@ class InpaintPage(SDImgPageBase):
             ],
             prefix="",
         )
-        self.btn = QPushButton("Start inpaint")
+
+        # Create new buttons for adding an inpaint mask and starting inpaint
+        self.add_mask_btn = QPushButton("Add inpaint mask")
+        self.inpaint_btn = QPushButton("Start inpaint")
+
+        # Add a layout for adding inpaint mask and starting inpaint
+        inline3 = QHBoxLayout()
+        inline3.addWidget(self.add_mask_btn)
+        inline3.addWidget(self.inpaint_btn)
 
         self.layout.addLayout(self.fill_layout)
         self.layout.addLayout(inline1)
         self.layout.addLayout(inline2)
-        self.layout.addWidget(self.btn)
+        self.layout.addLayout(inline3)
         self.layout.addLayout(self.tips2)
         self.layout.addLayout(self.tips)
         self.layout.addStretch()
@@ -94,4 +102,5 @@ class InpaintPage(SDImgPageBase):
         # self.full_res.toggled.connect(toggle_fullres)
         # toggle_fullres(self.full_res.isChecked())
 
-        self.btn.released.connect(lambda: script.action_inpaint())
+        self.add_mask_btn.released.connect(lambda: script.action_prepare_inpaint())
+        self.inpaint_btn.released.connect(lambda: script.action_inpaint())
