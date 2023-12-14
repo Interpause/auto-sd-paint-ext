@@ -316,7 +316,12 @@ def f_img2img(req: Img2ImgRequest):
 
         def apply_mask(img):
             """Mask inpaint using original mask, including alpha."""
-            r, g, b = img.split()  # img2img/inpaint gives rgb image
+            # img2img/inpaint gives rgb image
+            r, g, b = img.split()[:3]
+            
+            # (a1111 > settings > img2img > include masked composite) enabled will return rgba
+            # we can use the alpha channel instead of the mask or cut it off after rgb
+            
             a = ImageOps.invert(mask) if req.invert_mask else mask
             return Image.merge("RGBA", (r, g, b, a))
 
